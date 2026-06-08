@@ -1,0 +1,83 @@
+{
+  "name": "@graphrs/g6",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "AntV G6 5.x adapter for @graphrs — layout, community detection, and centrality on G6 graphs",
+  "keywords": [
+    "graph",
+    "g6",
+    "antv",
+    "layout",
+    "community-detection",
+    "centrality",
+    "adapter"
+  ],
+  "author": "Totoro-jam <moqiuchen66@gmail.com>",
+  "homepage": "https://github.com/Totoro-jam/graphrs#readme",
+  "bugs": {
+    "url": "https://github.com/Totoro-jam/graphrs/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Totoro-jam/graphrs",
+    "directory": "packages/g6"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./layout": {
+      "types": "./dist/layout.d.ts",
+      "import": "./dist/layout.js"
+    },
+    "./analysis": {
+      "types": "./dist/analysis.d.ts",
+      "import": "./dist/analysis.js"
+    },
+    "./adapters": {
+      "types": "./dist/adapters.d.ts",
+      "import": "./dist/adapters.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run --passWithNoTests",
+    "test:ci": "vitest run --reporter=default --passWithNoTests",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "@graphrs/core": "workspace:^",
+    "@graphrs/layout": "workspace:^",
+    "@graphrs/community": "workspace:^",
+    "@graphrs/centrality": "workspace:^",
+    "@antv/g6": ">=5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@graphrs/layout": {
+      "optional": true
+    },
+    "@graphrs/community": {
+      "optional": true
+    },
+    "@graphrs/centrality": {
+      "optional": true
+    },
+    "@antv/g6": {
+      "optional": true
+    }
+  }
+}

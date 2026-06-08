@@ -1,0 +1,76 @@
+# 快速开始
+
+## 安装
+
+安装核心包和你需要的算法包：
+
+```bash
+# 核心包（必需）
+npm install @graphrs/core
+
+# 算法包（按需选择）
+npm install @graphrs/community
+npm install @graphrs/centrality
+npm install @graphrs/path
+npm install @graphrs/layout
+npm install @graphrs/generators
+npm install @graphrs/io
+npm install @graphrs/operators
+npm install @graphrs/flow
+npm install @graphrs/isomorphism
+```
+
+::: tip
+每个包都可以独立安装，并支持 tree-shaking。只导入你需要的部分 —— 打包工具会自动排除其余内容。
+:::
+
+## 快速示例
+
+```typescript
+import { Graph } from '@graphrs/core';
+import { louvain } from '@graphrs/community';
+import { pagerank } from '@graphrs/centrality';
+
+// Create a graph
+const graph = Graph.fromEdges([
+  [0, 1],
+  [1, 2],
+  [2, 0], // cluster 1
+  [3, 4],
+  [4, 5],
+  [5, 3], // cluster 2
+  [2, 3], // bridge
+]);
+
+// Detect communities
+const communities = await louvain(graph);
+console.log(communities.membership); // [0, 0, 0, 1, 1, 1]
+console.log(communities.modularity); // ~0.357
+
+// Compute PageRank
+const pr = await pagerank(graph);
+console.log(pr.scores); // importance scores per node
+```
+
+## 工作原理
+
+graphrs 是 [igraph](https://igraph.org/) 的 TypeScript 封装，igraph 是一个成熟的 C 语言图算法库，通过 Rust 编译为 WebAssembly。当你调用一个算法函数时：
+
+1. WASM 模块在首次使用时惰性加载
+2. 你的图数据被序列化到 WASM 内存中
+3. 算法在 WASM 沙箱中以原生速度运行
+4. 结果被解析回类型化的 TypeScript 对象
+
+所有算法函数都是 `async` 的，因为 WASM 模块在首次调用时异步加载。后续调用会立即执行。
+
+## 环境要求
+
+- **Node.js** >= 20.0.0
+- **浏览器**：任何支持 WebAssembly 的现代浏览器
+- **TypeScript** >= 5.0（推荐，非必需）
+
+## 下一步
+
+- [图基础](/zh/guide/graph-basics) — 学习如何创建和操作图
+- [算法概览](/zh/guide/algorithms) — 所有可用算法包的总览
+- [集成示例](/zh/examples/antv-g6) — 将 graphrs 与流行的可视化库配合使用
