@@ -1,6 +1,12 @@
 import { defineConfig } from 'vitepress';
+import { container } from 'vitepress-plugin-sandpack';
 
 export default defineConfig({
+  markdown: {
+    config(md) {
+      md.use(container as never);
+    },
+  },
   title: 'graphrs',
   description:
     'Modular TypeScript graph library powered by Rust/WASM — 400+ algorithms at native speed',
@@ -15,7 +21,7 @@ export default defineConfig({
         nav: [
           { text: 'Guide', link: '/guide/getting-started' },
           { text: 'API', link: '/api/core' },
-          { text: 'Examples', link: '/examples/antv-g6' },
+          { text: 'Examples', link: '/examples/playground' },
         ],
 
         sidebar: {
@@ -49,6 +55,12 @@ export default defineConfig({
           ],
           '/examples/': [
             {
+              text: 'Interactive',
+              items: [
+                { text: 'Playground', link: '/examples/playground' },
+              ],
+            },
+            {
               text: 'Integration Examples',
               items: [
                 { text: 'AntV G6', link: '/examples/antv-g6' },
@@ -70,7 +82,7 @@ export default defineConfig({
         nav: [
           { text: '指南', link: '/zh/guide/getting-started' },
           { text: 'API', link: '/zh/api/core' },
-          { text: '示例', link: '/zh/examples/antv-g6' },
+          { text: '示例', link: '/zh/examples/playground' },
         ],
 
         sidebar: {
@@ -103,6 +115,12 @@ export default defineConfig({
             },
           ],
           '/zh/examples/': [
+            {
+              text: '交互式',
+              items: [
+                { text: '演练场', link: '/zh/examples/playground' },
+              ],
+            },
             {
               text: '集成示例',
               items: [
