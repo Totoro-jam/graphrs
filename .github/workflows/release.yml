@@ -13,7 +13,7 @@ jobs:
     name: Build WASM
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           repository: Totoro-jam/rust-igraph
           path: rust-igraph
@@ -36,7 +36,7 @@ jobs:
       - name: Optimize WASM
         run: wasm-opt -O3 rust-igraph/crates/igraph-wasm/pkg/igraph_wasm_bg.wasm -o rust-igraph/crates/igraph-wasm/pkg/igraph_wasm_bg.wasm
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: wasm-pkg
           path: rust-igraph/crates/igraph-wasm/pkg/
@@ -47,14 +47,14 @@ jobs:
     needs: build-wasm
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: wasm-pkg
           path: wasm-pkg
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -82,6 +82,6 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
