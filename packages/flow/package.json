@@ -1,0 +1,28 @@
+{
+  "name": "@graphrs/flow",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Network flow and connectivity algorithms (max-flow, min-cut) for @graphrs",
+  "keywords": ["graph", "max-flow", "min-cut", "connectivity", "network-flow"],
+  "repository": { "type": "git", "url": "https://github.com/Totoro-jam/graphrs", "directory": "packages/flow" },
+  "sideEffects": false,
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./max-flow": { "types": "./dist/max-flow.d.ts", "import": "./dist/max-flow.js" },
+    "./min-cut": { "types": "./dist/min-cut.d.ts", "import": "./dist/min-cut.js" },
+    "./connectivity": { "types": "./dist/connectivity.d.ts", "import": "./dist/connectivity.js" }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:ci": "vitest run --reporter=default",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": { "@graphrs/core": "workspace:^" }
+}

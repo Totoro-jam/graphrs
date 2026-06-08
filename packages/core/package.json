@@ -1,0 +1,44 @@
+{
+  "name": "@graphrs/core",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Core graph data structure and WASM runtime for @graphrs — high-performance graph algorithms via WebAssembly",
+  "keywords": ["graph", "wasm", "webassembly", "graph-algorithms", "network-analysis"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Totoro-jam/graphrs",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/Totoro-jam/graphrs#readme",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./worker": {
+      "types": "./dist/worker.d.ts",
+      "import": "./dist/worker.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "wasm/*.wasm",
+    "wasm/*.js",
+    "wasm/*.d.ts"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:ci": "vitest run --reporter=default",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

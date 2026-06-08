@@ -1,0 +1,33 @@
+{
+  "name": "@graphrs/community",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Community detection algorithms (Louvain, Leiden, Infomap, Walktrap, etc.) for @graphrs",
+  "keywords": ["graph", "community-detection", "louvain", "leiden", "clustering"],
+  "repository": { "type": "git", "url": "https://github.com/Totoro-jam/graphrs", "directory": "packages/community" },
+  "sideEffects": false,
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./louvain": { "types": "./dist/louvain.d.ts", "import": "./dist/louvain.js" },
+    "./leiden": { "types": "./dist/leiden.d.ts", "import": "./dist/leiden.js" },
+    "./infomap": { "types": "./dist/infomap.d.ts", "import": "./dist/infomap.js" },
+    "./label-propagation": { "types": "./dist/label-propagation.d.ts", "import": "./dist/label-propagation.js" },
+    "./walktrap": { "types": "./dist/walktrap.d.ts", "import": "./dist/walktrap.js" },
+    "./fast-greedy": { "types": "./dist/fast-greedy.d.ts", "import": "./dist/fast-greedy.js" },
+    "./spinglass": { "types": "./dist/spinglass.d.ts", "import": "./dist/spinglass.js" },
+    "./fluid": { "types": "./dist/fluid.d.ts", "import": "./dist/fluid.js" }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:ci": "vitest run --reporter=default",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": { "@graphrs/core": "workspace:^" }
+}

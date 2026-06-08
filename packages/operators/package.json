@@ -1,0 +1,28 @@
+{
+  "name": "@graphrs/operators",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Graph operators (union, intersection, complement, simplify, reverse) for @graphrs",
+  "keywords": ["graph", "operators", "union", "intersection", "complement"],
+  "repository": { "type": "git", "url": "https://github.com/Totoro-jam/graphrs", "directory": "packages/operators" },
+  "sideEffects": false,
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./set-operations": { "types": "./dist/set-operations.d.ts", "import": "./dist/set-operations.js" },
+    "./transforms": { "types": "./dist/transforms.d.ts", "import": "./dist/transforms.js" },
+    "./subgraph": { "types": "./dist/subgraph.d.ts", "import": "./dist/subgraph.js" }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:ci": "vitest run --reporter=default",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": { "@graphrs/core": "workspace:^" }
+}

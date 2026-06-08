@@ -1,0 +1,32 @@
+{
+  "name": "@graphrs/centrality",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Centrality measures (PageRank, betweenness, closeness, eigenvector, HITS, Katz, harmonic) for @graphrs",
+  "keywords": ["graph", "centrality", "pagerank", "betweenness", "network-analysis"],
+  "repository": { "type": "git", "url": "https://github.com/Totoro-jam/graphrs", "directory": "packages/centrality" },
+  "sideEffects": false,
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./pagerank": { "types": "./dist/pagerank.d.ts", "import": "./dist/pagerank.js" },
+    "./betweenness": { "types": "./dist/betweenness.d.ts", "import": "./dist/betweenness.js" },
+    "./closeness": { "types": "./dist/closeness.d.ts", "import": "./dist/closeness.js" },
+    "./eigenvector": { "types": "./dist/eigenvector.d.ts", "import": "./dist/eigenvector.js" },
+    "./hits": { "types": "./dist/hits.d.ts", "import": "./dist/hits.js" },
+    "./katz": { "types": "./dist/katz.d.ts", "import": "./dist/katz.js" },
+    "./harmonic": { "types": "./dist/harmonic.d.ts", "import": "./dist/harmonic.js" }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:ci": "vitest run --reporter=default",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": { "@graphrs/core": "workspace:^" }
+}

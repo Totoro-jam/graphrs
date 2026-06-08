@@ -1,0 +1,6 @@
+dist
+node_modules
+*.wasm
+*.js.map
+pnpm-lock.yaml
+CHANGELOG.md

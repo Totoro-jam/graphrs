@@ -1,0 +1,30 @@
+{
+  "name": "@graphrs/io",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Graph I/O formats (GraphML, GML, DOT, edgelist, Pajek) for @graphrs",
+  "keywords": ["graph", "graphml", "gml", "dot", "import-export"],
+  "repository": { "type": "git", "url": "https://github.com/Totoro-jam/graphrs", "directory": "packages/io" },
+  "sideEffects": false,
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./graphml": { "types": "./dist/graphml.d.ts", "import": "./dist/graphml.js" },
+    "./gml": { "types": "./dist/gml.d.ts", "import": "./dist/gml.js" },
+    "./dot": { "types": "./dist/dot.d.ts", "import": "./dist/dot.js" },
+    "./edgelist": { "types": "./dist/edgelist.d.ts", "import": "./dist/edgelist.js" },
+    "./pajek": { "types": "./dist/pajek.d.ts", "import": "./dist/pajek.js" }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:ci": "vitest run --reporter=default",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": { "@graphrs/core": "workspace:^" }
+}

@@ -1,0 +1,87 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  build-wasm:
+    name: Build WASM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: Totoro-jam/rust-igraph
+          path: rust-igraph
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack
+
+      - name: Build WASM
+        run: |
+          cd rust-igraph
+          wasm-pack build crates/igraph-wasm --target web --out-dir pkg --release
+
+      - name: Install binaryen (wasm-opt)
+        run: sudo apt-get install -y binaryen
+
+      - name: Optimize WASM
+        run: wasm-opt -O3 rust-igraph/crates/igraph-wasm/pkg/igraph_wasm_bg.wasm -o rust-igraph/crates/igraph-wasm/pkg/igraph_wasm_bg.wasm
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wasm-pkg
+          path: rust-igraph/crates/igraph-wasm/pkg/
+          retention-days: 1
+
+  publish:
+    name: Publish to npm
+    needs: build-wasm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: wasm-pkg
+          path: wasm-pkg
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Copy WASM artifacts
+        run: |
+          cp wasm-pkg/igraph_wasm_bg.wasm packages/core/wasm/
+          cp wasm-pkg/igraph_wasm.js packages/core/wasm/
+          cp wasm-pkg/igraph_wasm.d.ts packages/core/wasm/ 2>/dev/null || true
+          cp wasm-pkg/igraph_wasm_bg.wasm.d.ts packages/core/wasm/ 2>/dev/null || true
+
+      - name: Build all packages
+        run: pnpm turbo build
+
+      - name: Run tests
+        run: pnpm turbo test:ci
+
+      - name: Publish to npm
+        run: pnpm -r publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

@@ -1,0 +1,27 @@
+{
+  "name": "@graphrs/generators",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Graph generators (Erdos-Renyi, Barabasi-Albert, Watts-Strogatz, lattice, etc.) for @graphrs",
+  "keywords": ["graph", "generators", "random-graph", "barabasi-albert", "erdos-renyi"],
+  "repository": { "type": "git", "url": "https://github.com/Totoro-jam/graphrs", "directory": "packages/generators" },
+  "sideEffects": false,
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./random": { "types": "./dist/random.d.ts", "import": "./dist/random.js" },
+    "./deterministic": { "types": "./dist/deterministic.d.ts", "import": "./dist/deterministic.js" }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:ci": "vitest run --reporter=default",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": { "@graphrs/core": "workspace:^" }
+}
