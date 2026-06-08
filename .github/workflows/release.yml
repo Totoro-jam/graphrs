@@ -36,7 +36,7 @@ jobs:
       - name: Optimize WASM
         run: wasm-opt -O3 rust-igraph/crates/igraph-wasm/pkg/igraph_wasm_bg.wasm -o rust-igraph/crates/igraph-wasm/pkg/igraph_wasm_bg.wasm
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: wasm-pkg
           path: rust-igraph/crates/igraph-wasm/pkg/
