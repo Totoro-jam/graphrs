@@ -89,6 +89,13 @@ jobs:
         if: github.event_name == 'push'
         run: pnpm turbo test:ci
 
+      - name: Debug npm environment
+        run: |
+          echo "npm version: $(npm --version)"
+          echo "node version: $(node --version)"
+          echo "npmrc location: $NPM_CONFIG_USERCONFIG"
+          cat "$NPM_CONFIG_USERCONFIG" | sed 's/_authToken=.*/_authToken=***/'
+
       - name: Set canary versions
         if: github.event_name == 'workflow_dispatch'
         run: |
@@ -104,11 +111,23 @@ jobs:
 
       - name: Publish release
         if: github.event_name == 'push'
-        run: pnpm -r publish --access public --no-git-checks --provenance
+        run: |
+          for pkg in packages/*/; do
+            echo "Publishing $(basename $pkg)..."
+            cd "$pkg"
+            npm publish --access public --provenance
+            cd "$GITHUB_WORKSPACE"
+          done
 
       - name: Publish canary
         if: github.event_name == 'workflow_dispatch'
-        run: pnpm -r publish --access public --tag canary --no-git-checks --provenance
+        run: |
+          for pkg in packages/*/; do
+            echo "Publishing $(basename $pkg)..."
+            cd "$pkg"
+            npm publish --access public --tag canary --provenance
+            cd "$GITHUB_WORKSPACE"
+          done
 
       - name: Create GitHub Release
         if: github.event_name == 'push'
