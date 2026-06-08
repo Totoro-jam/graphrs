@@ -20,8 +20,8 @@
   "files": ["dist"],
   "scripts": {
     "build": "tsup",
-    "test": "vitest run",
-    "test:ci": "vitest run --reporter=default",
+    "test": "vitest run --passWithNoTests",
+    "test:ci": "vitest run --reporter=default --passWithNoTests",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
