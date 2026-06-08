@@ -1,4 +1,5 @@
-import { getWasm, type Graph, type CentralityResult } from '@graphrs/core';
+import type { Graph, CentralityResult } from '@graphrs/core';
+import { toWasmGraph } from './utils.js';
 
 export interface PagerankOptions {
   damping?: number;
@@ -6,10 +7,15 @@ export interface PagerankOptions {
   tolerance?: number;
 }
 
-export async function pagerank(graph: Graph, options?: PagerankOptions): Promise<CentralityResult> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void options;
-  void graph._getEdgePairs();
-  throw new Error('Not yet implemented — WASM bindings pending');
+export async function pagerank(
+  graph: Graph,
+  _options?: PagerankOptions,
+): Promise<CentralityResult> {
+  const wg = await toWasmGraph(graph);
+  try {
+    const raw = JSON.parse(wg.pagerank()) as { scores: number[] };
+    return { scores: raw.scores };
+  } finally {
+    wg.free();
+  }
 }

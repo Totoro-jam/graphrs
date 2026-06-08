@@ -1,26 +1,35 @@
-import { getWasm, type Graph } from '@graphrs/core';
+import type { Graph } from '@graphrs/core';
+import { toWasmGraph } from './utils.js';
 
 export async function vertexConnectivity(
   graph: Graph,
-  source?: number,
-  target?: number,
+  _source?: number,
+  _target?: number,
 ): Promise<number> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void source;
-  void target;
-  void graph._getEdgePairs();
-  throw new Error('Not yet implemented — WASM bindings pending');
+  const wg = await toWasmGraph(graph);
+  try {
+    const raw = JSON.parse(wg.vertexConnectivity()) as { value: number };
+    return raw.value;
+  } finally {
+    wg.free();
+  }
 }
+
 export async function edgeConnectivity(graph: Graph): Promise<number> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void graph._getEdgePairs();
-  throw new Error('Not yet implemented — WASM bindings pending');
+  const wg = await toWasmGraph(graph);
+  try {
+    const raw = JSON.parse(wg.edgeConnectivity()) as { value: number };
+    return raw.value;
+  } finally {
+    wg.free();
+  }
 }
+
 export async function isConnected(graph: Graph): Promise<boolean> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void graph._getEdgePairs();
-  throw new Error('Not yet implemented — WASM bindings pending');
+  const wg = await toWasmGraph(graph);
+  try {
+    return wg.isConnected('weak');
+  } finally {
+    wg.free();
+  }
 }

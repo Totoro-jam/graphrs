@@ -8,25 +8,59 @@ const graph = Graph.fromEdges([
   [2, 0],
 ]);
 
-const fns = [
-  ['dijkstra', dijkstra],
-  ['bellmanFord', bellmanFord],
-  ['bfs', bfs],
-  ['dfs', dfs],
-  ['allPairsShortestPaths', allPairsShortestPaths],
-] as const;
-
 describe('@graphrs/path', () => {
-  it.each(fns)('%s is a function', (_, fn) => {
-    expect(typeof fn).toBe('function');
+  describe('dijkstra', () => {
+    it('returns a PathResult with path and distance', async () => {
+      const result = await dijkstra(graph, 0, 2);
+      expect(result).toHaveProperty('path');
+      expect(result).toHaveProperty('distance');
+      expect(Array.isArray(result.path)).toBe(true);
+      expect(typeof result.distance).toBe('number');
+      expect(Number.isFinite(result.distance)).toBe(true);
+    });
   });
 
-  it.each(fns)('%s returns a promise', (_, fn) => {
-    const result = fn(graph).catch(() => {});
-    expect(result).toBeInstanceOf(Promise);
+  describe('bellmanFord', () => {
+    it('returns a PathResult with distance', async () => {
+      const result = await bellmanFord(graph, 0, 2);
+      expect(result).toHaveProperty('path');
+      expect(result).toHaveProperty('distance');
+      expect(typeof result.distance).toBe('number');
+      expect(Number.isFinite(result.distance)).toBe(true);
+    });
   });
 
-  it.each(fns)('%s rejects when called (WASM not available)', async (_, fn) => {
-    await expect(fn(graph)).rejects.toThrow();
+  describe('bfs', () => {
+    it('returns BfsResult with order', async () => {
+      const result = await bfs(graph, 0);
+      expect(result).toHaveProperty('order');
+      expect(Array.isArray(result.order)).toBe(true);
+      expect(result.order.length).toBeGreaterThan(0);
+      expect(result.order[0]).toBe(0);
+    });
+  });
+
+  describe('dfs', () => {
+    it('returns DfsResult with order', async () => {
+      const result = await dfs(graph, 0);
+      expect(result).toHaveProperty('order');
+      expect(Array.isArray(result.order)).toBe(true);
+      expect(result.order.length).toBeGreaterThan(0);
+      expect(result.order[0]).toBe(0);
+    });
+  });
+
+  describe('allPairsShortestPaths', () => {
+    it('returns a 2D distance matrix', async () => {
+      const result = await allPairsShortestPaths(graph);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toHaveLength(3);
+      for (const row of result) {
+        expect(row).toHaveLength(3);
+      }
+      expect(result[0]![0]).toBe(0);
+      expect(result[1]![1]).toBe(0);
+      expect(result[2]![2]).toBe(0);
+    });
   });
 });

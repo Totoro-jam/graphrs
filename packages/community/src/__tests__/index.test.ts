@@ -25,7 +25,6 @@ const fns = [
   ['walktrap', walktrap],
   ['fastGreedy', fastGreedy],
   ['spinglass', spinglass],
-  ['fluidCommunities', fluidCommunities],
 ] as const;
 
 describe('@graphrs/community', () => {
@@ -33,12 +32,23 @@ describe('@graphrs/community', () => {
     expect(typeof fn).toBe('function');
   });
 
-  it.each(fns)('%s returns a promise', (_, fn) => {
-    const result = fn(graph).catch(() => {});
-    expect(result).toBeInstanceOf(Promise);
+  it('fluidCommunities is a function', () => {
+    expect(typeof fluidCommunities).toBe('function');
   });
 
-  it.each(fns)('%s rejects when called (WASM not available)', async (_, fn) => {
-    await expect(fn(graph)).rejects.toThrow();
+  it.each(fns)('%s returns a CommunityResult', async (_, fn) => {
+    const result = await fn(graph);
+    expect(result).toHaveProperty('membership');
+    expect(result).toHaveProperty('modularity');
+    expect(result).toHaveProperty('clusters');
+    expect(result.membership).toHaveLength(3);
+  });
+
+  it('fluidCommunities returns a CommunityResult', async () => {
+    const result = await fluidCommunities(graph, { numCommunities: 2 });
+    expect(result).toHaveProperty('membership');
+    expect(result).toHaveProperty('modularity');
+    expect(result).toHaveProperty('clusters');
+    expect(result.membership).toHaveLength(3);
   });
 });

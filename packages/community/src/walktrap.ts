@@ -1,13 +1,24 @@
-import { getWasm, type Graph, type CommunityResult } from '@graphrs/core';
+import type { Graph, CommunityResult } from '@graphrs/core';
+import { toWasmGraph } from './utils.js';
 
 export interface WalktrapOptions {
   steps?: number;
 }
 
-export async function walktrap(graph: Graph, options?: WalktrapOptions): Promise<CommunityResult> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void options;
-  void graph._getEdgePairs();
-  throw new Error('Not yet implemented — WASM bindings pending');
+export async function walktrap(graph: Graph, _options?: WalktrapOptions): Promise<CommunityResult> {
+  const wg = await toWasmGraph(graph);
+  try {
+    const raw = JSON.parse(wg.walktrap()) as {
+      membership: number[];
+      nb_clusters: number;
+      modularity: number;
+    };
+    return {
+      membership: raw.membership,
+      modularity: raw.modularity,
+      clusters: raw.nb_clusters,
+    };
+  } finally {
+    wg.free();
+  }
 }

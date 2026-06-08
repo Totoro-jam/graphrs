@@ -1,4 +1,5 @@
-import { getWasm, type Graph, type CommunityResult } from '@graphrs/core';
+import type { Graph, CommunityResult } from '@graphrs/core';
+import { toWasmGraph } from './utils.js';
 
 export interface SpinglassOptions {
   spins?: number;
@@ -7,11 +8,21 @@ export interface SpinglassOptions {
 
 export async function spinglass(
   graph: Graph,
-  options?: SpinglassOptions,
+  _options?: SpinglassOptions,
 ): Promise<CommunityResult> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void options;
-  void graph._getEdgePairs();
-  throw new Error('Not yet implemented — WASM bindings pending');
+  const wg = await toWasmGraph(graph);
+  try {
+    const raw = JSON.parse(wg.spinglass()) as {
+      membership: number[];
+      modularity: number;
+      nb_clusters: number;
+    };
+    return {
+      membership: raw.membership,
+      modularity: raw.modularity,
+      clusters: raw.nb_clusters,
+    };
+  } finally {
+    wg.free();
+  }
 }

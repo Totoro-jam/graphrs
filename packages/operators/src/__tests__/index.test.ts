@@ -17,42 +17,86 @@ const graph = Graph.fromEdges([
   [1, 2],
 ]);
 
-const unaryFns = [
-  ['simplify', simplify],
-  ['reverse', reverse],
-  ['toDirected', toDirected],
-  ['toUndirected', toUndirected],
-  ['complement', complement],
-] as const;
-
-const binaryFns = [
-  ['union', union],
-  ['intersection', intersection],
-  ['difference', difference],
-] as const;
+const graph2 = Graph.fromEdges([
+  [1, 2],
+  [2, 3],
+]);
 
 describe('@graphrs/operators', () => {
-  it.each(unaryFns)('%s is a function', (_, fn) => {
-    expect(typeof fn).toBe('function');
+  describe('transforms', () => {
+    it('simplify returns a Graph', async () => {
+      const g = await simplify(graph);
+      expect(g).toBeInstanceOf(Graph);
+      expect(g.nodeCount()).toBe(3);
+    });
+
+    it('reverse returns a Graph', async () => {
+      const directed = Graph.fromEdges(
+        [
+          [0, 1],
+          [1, 2],
+        ],
+        { directed: true },
+      );
+      const g = await reverse(directed);
+      expect(g).toBeInstanceOf(Graph);
+      expect(g.nodeCount()).toBe(3);
+      expect(g.edgeCount()).toBe(2);
+    });
+
+    it('toDirected returns a directed Graph', async () => {
+      const g = await toDirected(graph);
+      expect(g).toBeInstanceOf(Graph);
+      expect(g.directed).toBe(true);
+      expect(g.nodeCount()).toBe(3);
+    });
+
+    it('toUndirected returns an undirected Graph', async () => {
+      const directed = Graph.fromEdges(
+        [
+          [0, 1],
+          [1, 0],
+          [1, 2],
+          [2, 1],
+        ],
+        { directed: true },
+      );
+      const g = await toUndirected(directed);
+      expect(g).toBeInstanceOf(Graph);
+      expect(g.directed).toBe(false);
+      expect(g.nodeCount()).toBe(3);
+    });
   });
 
-  it.each(binaryFns)('%s is a function', (_, fn) => {
-    expect(typeof fn).toBe('function');
+  describe('set operations', () => {
+    it('union returns a Graph', async () => {
+      const g = await union(graph, graph2);
+      expect(g).toBeInstanceOf(Graph);
+      expect(g.nodeCount()).toBeGreaterThanOrEqual(3);
+    });
+
+    it('intersection returns a Graph', async () => {
+      const g = await intersection(graph, graph2);
+      expect(g).toBeInstanceOf(Graph);
+    });
+
+    it('difference returns a Graph', async () => {
+      const g = await difference(graph, graph2);
+      expect(g).toBeInstanceOf(Graph);
+    });
   });
 
-  it('inducedSubgraph is a function', () => {
-    expect(typeof inducedSubgraph).toBe('function');
-  });
+  describe('subgraph & complement', () => {
+    it('inducedSubgraph returns a Graph', async () => {
+      const g = await inducedSubgraph(graph, [0, 1]);
+      expect(g).toBeInstanceOf(Graph);
+      expect(g.nodeCount()).toBe(2);
+    });
 
-  it.each(unaryFns)('%s rejects when called (WASM not available)', async (_, fn) => {
-    await expect(fn(graph)).rejects.toThrow();
-  });
-
-  it.each(binaryFns)('%s rejects when called (WASM not available)', async (_, fn) => {
-    await expect(fn(graph, graph)).rejects.toThrow();
-  });
-
-  it('inducedSubgraph rejects when called (WASM not available)', async () => {
-    await expect(inducedSubgraph(graph, [0, 1])).rejects.toThrow();
+    it('complement returns a Graph', async () => {
+      const g = await complement(graph);
+      expect(g).toBeInstanceOf(Graph);
+      expect(g.nodeCount()).toBe(3);
+    });
   });
 });

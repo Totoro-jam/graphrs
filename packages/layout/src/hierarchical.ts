@@ -1,4 +1,5 @@
-import { getWasm, type Graph, type LayoutResult } from '@graphrs/core';
+import type { Graph, LayoutResult } from '@graphrs/core';
+import { toWasmGraph } from './utils.js';
 
 export interface SugiyamaOptions {
   layerSpacing?: number;
@@ -10,21 +11,27 @@ export interface ReingoldTilfordOptions {
 
 export async function layoutSugiyama(
   graph: Graph,
-  options?: SugiyamaOptions,
+  _options?: SugiyamaOptions,
 ): Promise<LayoutResult> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void options;
-  void graph._getEdgePairs();
-  throw new Error('Not yet implemented — WASM bindings pending');
+  const wg = await toWasmGraph(graph);
+  try {
+    const raw = JSON.parse(wg.layoutSugiyama()) as { coords: [number, number][] };
+    return { positions: raw.coords };
+  } finally {
+    wg.free();
+  }
 }
+
 export async function layoutReingoldTilford(
   graph: Graph,
   options?: ReingoldTilfordOptions,
 ): Promise<LayoutResult> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void options;
-  void graph._getEdgePairs();
-  throw new Error('Not yet implemented — WASM bindings pending');
+  const wg = await toWasmGraph(graph);
+  try {
+    const root = options?.rootNode ?? 0;
+    const raw = JSON.parse(wg.layoutReingoldTilford(root)) as { coords: [number, number][] };
+    return { positions: raw.coords };
+  } finally {
+    wg.free();
+  }
 }

@@ -1,4 +1,5 @@
-import { getWasm, type Graph } from '@graphrs/core';
+import type { Graph } from '@graphrs/core';
+import { toWasmGraph } from './utils.js';
 
 export interface BfsResult {
   order: number[];
@@ -7,9 +8,20 @@ export interface BfsResult {
 }
 
 export async function bfs(graph: Graph, source: number): Promise<BfsResult> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void source;
-  void graph._getEdgePairs();
-  throw new Error('Not yet implemented — WASM bindings pending');
+  const wg = await toWasmGraph(graph);
+  try {
+    const raw = JSON.parse(wg.bfs(source)) as {
+      order: number[];
+      distances?: number[];
+      parents?: number[];
+    };
+
+    return {
+      order: raw.order,
+      distances: raw.distances ?? [],
+      parents: raw.parents ?? [],
+    };
+  } finally {
+    wg.free();
+  }
 }

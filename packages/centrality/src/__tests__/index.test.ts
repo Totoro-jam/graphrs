@@ -8,27 +8,38 @@ const graph = Graph.fromEdges([
   [2, 0],
 ]);
 
-const fns = [
+const centralityFns = [
   ['pagerank', pagerank],
   ['betweenness', betweenness],
   ['closeness', closeness],
   ['eigenvector', eigenvector],
-  ['hits', hits],
   ['katz', katz],
   ['harmonic', harmonic],
 ] as const;
 
 describe('@graphrs/centrality', () => {
-  it.each(fns)('%s is a function', (_, fn) => {
+  it.each(centralityFns)('%s is a function', (_, fn) => {
     expect(typeof fn).toBe('function');
   });
 
-  it.each(fns)('%s returns a promise', (_, fn) => {
-    const result = fn(graph).catch(() => {});
-    expect(result).toBeInstanceOf(Promise);
+  it('hits is a function', () => {
+    expect(typeof hits).toBe('function');
   });
 
-  it.each(fns)('%s rejects when called (WASM not available)', async (_, fn) => {
-    await expect(fn(graph)).rejects.toThrow();
+  it.each(centralityFns)('%s returns CentralityResult with scores', async (_, fn) => {
+    const result = await fn(graph);
+    expect(result).toHaveProperty('scores');
+    expect(result.scores).toHaveLength(3);
+    for (const s of result.scores) {
+      expect(typeof s).toBe('number');
+    }
+  });
+
+  it('hits returns hubs and authorities', async () => {
+    const result = await hits(graph);
+    expect(result).toHaveProperty('hubs');
+    expect(result).toHaveProperty('authorities');
+    expect(result.hubs).toHaveLength(3);
+    expect(result.authorities).toHaveLength(3);
   });
 });

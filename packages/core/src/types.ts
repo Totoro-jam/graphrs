@@ -68,7 +68,3 @@ export interface CytoscapeData {
     edges: Array<{ data: { source: string; target: string; [key: string]: unknown } }>;
   };
 }
-
-export interface WasmExports {
-  [key: string]: unknown;
-}

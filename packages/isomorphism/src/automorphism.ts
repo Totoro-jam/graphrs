@@ -1,8 +1,12 @@
-import { getWasm, type Graph } from '@graphrs/core';
+import type { Graph } from '@graphrs/core';
+import { toWasmGraph } from './utils.js';
 
 export async function automorphismGroupSize(graph: Graph): Promise<number> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void graph._getEdgePairs();
-  throw new Error('Not yet implemented — WASM bindings pending');
+  const wg = await toWasmGraph(graph);
+  try {
+    const raw = JSON.parse(wg.countAutomorphisms()) as { count: number };
+    return raw.count;
+  } finally {
+    wg.free();
+  }
 }

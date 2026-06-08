@@ -39,6 +39,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Fetch WASM binary
+        run: bash tools/fetch-wasm.sh
       - run: pnpm turbo build
       - run: pnpm turbo test:ci
 
@@ -53,6 +55,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Fetch WASM binary
+        run: bash tools/fetch-wasm.sh
       - run: pnpm turbo build
       - name: Check package exports
         run: |

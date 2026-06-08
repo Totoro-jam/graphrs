@@ -1,4 +1,5 @@
-import { getWasm, type Graph, type CentralityResult } from '@graphrs/core';
+import type { Graph, CentralityResult } from '@graphrs/core';
+import { toWasmGraph } from './utils.js';
 
 export interface EigenvectorOptions {
   scale?: boolean;
@@ -6,11 +7,13 @@ export interface EigenvectorOptions {
 
 export async function eigenvector(
   graph: Graph,
-  options?: EigenvectorOptions,
+  _options?: EigenvectorOptions,
 ): Promise<CentralityResult> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void options;
-  void graph._getEdgePairs();
-  throw new Error('Not yet implemented — WASM bindings pending');
+  const wg = await toWasmGraph(graph);
+  try {
+    const raw = JSON.parse(wg.eigenvectorCentrality()) as { scores: number[] };
+    return { scores: raw.scores };
+  } finally {
+    wg.free();
+  }
 }

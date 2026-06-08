@@ -1,14 +1,21 @@
-import { getWasm, type Graph, type PathResult } from '@graphrs/core';
+import type { Graph, PathResult } from '@graphrs/core';
+import { toWasmGraph, getWeightsArray } from './utils.js';
 
 export async function bellmanFord(
   graph: Graph,
   source: number,
   target: number,
 ): Promise<PathResult> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void source;
-  void target;
-  void graph._getEdgePairs();
-  throw new Error('Not yet implemented — WASM bindings pending');
+  const wg = await toWasmGraph(graph);
+  try {
+    const weights = getWeightsArray(graph);
+    const raw = JSON.parse(wg.bellmanFordDistances(source, weights)) as {
+      distances: number[];
+    };
+
+    const distance = raw.distances[target] ?? Infinity;
+    return { path: [], distance };
+  } finally {
+    wg.free();
+  }
 }

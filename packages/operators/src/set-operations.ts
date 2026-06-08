@@ -1,23 +1,59 @@
-import { getWasm, Graph } from '@graphrs/core';
+import { Graph } from '@graphrs/core';
+import { toWasmGraph, wasmGraphToGraph } from './utils.js';
 
 export async function union(g1: Graph, g2: Graph): Promise<Graph> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void g1;
-  void g2;
-  throw new Error('Not yet implemented — WASM bindings pending');
+  const wg1 = await toWasmGraph(g1);
+  try {
+    const wg2 = await toWasmGraph(g2);
+    try {
+      const result = wg1.union(wg2);
+      try {
+        return wasmGraphToGraph(result);
+      } finally {
+        result.free();
+      }
+    } finally {
+      wg2.free();
+    }
+  } finally {
+    wg1.free();
+  }
 }
+
 export async function intersection(g1: Graph, g2: Graph): Promise<Graph> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void g1;
-  void g2;
-  throw new Error('Not yet implemented — WASM bindings pending');
+  const wg1 = await toWasmGraph(g1);
+  try {
+    const wg2 = await toWasmGraph(g2);
+    try {
+      const result = wg1.intersection(wg2);
+      try {
+        return wasmGraphToGraph(result);
+      } finally {
+        result.free();
+      }
+    } finally {
+      wg2.free();
+    }
+  } finally {
+    wg1.free();
+  }
 }
+
 export async function difference(g1: Graph, g2: Graph): Promise<Graph> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void g1;
-  void g2;
-  throw new Error('Not yet implemented — WASM bindings pending');
+  const wg1 = await toWasmGraph(g1);
+  try {
+    const wg2 = await toWasmGraph(g2);
+    try {
+      const result = wg1.difference(wg2);
+      try {
+        return wasmGraphToGraph(result);
+      } finally {
+        result.free();
+      }
+    } finally {
+      wg2.free();
+    }
+  } finally {
+    wg1.free();
+  }
 }

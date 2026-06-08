@@ -6,9 +6,10 @@ node_modules/
 dist/
 *.tsbuildinfo
 
-# WASM artifacts (fetched from rust-igraph CI, not committed)
+# WASM artifacts (fetched from rust-igraph CI or npm, not committed)
 packages/core/wasm/*.wasm
 packages/core/wasm/*.js
+packages/core/wasm/*.d.ts
 !packages/core/wasm/.gitkeep
 
 # IDE

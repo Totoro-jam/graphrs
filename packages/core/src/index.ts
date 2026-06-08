@@ -1,5 +1,6 @@
 export { Graph } from './graph.js';
 export { getWasm, isWasmInitialized } from './wasm-loader.js';
+export type { WasmModule, WasmGraphInstance } from './wasm-loader.js';
 export {
   GraphError,
   WasmNotInitializedError,
@@ -23,5 +24,4 @@ export type {
   G6GraphData,
   ReactFlowData,
   CytoscapeData,
-  WasmExports,
 } from './types.js';

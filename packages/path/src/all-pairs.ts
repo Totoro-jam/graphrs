@@ -1,4 +1,5 @@
-import { getWasm, type Graph } from '@graphrs/core';
+import type { Graph } from '@graphrs/core';
+import { toWasmGraph } from './utils.js';
 
 export interface AllPairsOptions {
   weighted?: boolean;
@@ -6,11 +7,16 @@ export interface AllPairsOptions {
 
 export async function allPairsShortestPaths(
   graph: Graph,
-  options?: AllPairsOptions,
+  _options?: AllPairsOptions,
 ): Promise<number[][]> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void options;
-  void graph._getEdgePairs();
-  throw new Error('Not yet implemented — WASM bindings pending');
+  const wg = await toWasmGraph(graph);
+  try {
+    const raw = JSON.parse(wg.floydWarshallDistances()) as {
+      matrix: number[][];
+    };
+
+    return raw.matrix;
+  } finally {
+    wg.free();
+  }
 }

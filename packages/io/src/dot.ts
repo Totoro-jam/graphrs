@@ -1,14 +1,21 @@
 import { getWasm, Graph } from '@graphrs/core';
+import { toWasmGraph, wasmGraphToGraph } from './utils.js';
 
 export async function readDOT(text: string): Promise<Graph> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void text;
-  throw new Error('Not yet implemented — WASM bindings pending');
+  const { WasmGraph } = await getWasm();
+  const wg = WasmGraph.readDot(text);
+  try {
+    return wasmGraphToGraph(wg);
+  } finally {
+    wg.free();
+  }
 }
+
 export async function writeDOT(graph: Graph): Promise<string> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void graph;
-  throw new Error('Not yet implemented — WASM bindings pending');
+  const wg = await toWasmGraph(graph);
+  try {
+    return wg.writeDot();
+  } finally {
+    wg.free();
+  }
 }

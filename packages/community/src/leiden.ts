@@ -1,4 +1,5 @@
-import { getWasm, type Graph, type CommunityResult } from '@graphrs/core';
+import type { Graph, CommunityResult } from '@graphrs/core';
+import { toWasmGraph } from './utils.js';
 
 export interface LeidenOptions {
   resolution?: number;
@@ -6,10 +7,20 @@ export interface LeidenOptions {
   iterations?: number;
 }
 
-export async function leiden(graph: Graph, options?: LeidenOptions): Promise<CommunityResult> {
-  const _wasm = await getWasm();
-  void _wasm;
-  void options;
-  void graph._getEdgePairs();
-  throw new Error('Not yet implemented — WASM bindings pending');
+export async function leiden(graph: Graph, _options?: LeidenOptions): Promise<CommunityResult> {
+  const wg = await toWasmGraph(graph);
+  try {
+    const raw = JSON.parse(wg.leiden()) as {
+      membership: number[];
+      quality: number;
+      nb_clusters: number;
+    };
+    return {
+      membership: raw.membership,
+      modularity: raw.quality,
+      clusters: raw.nb_clusters,
+    };
+  } finally {
+    wg.free();
+  }
 }
