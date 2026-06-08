@@ -1,6 +1,6 @@
 {
   "name": "@graphrs/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "license": "MIT",
   "description": "Core graph data structure and WASM runtime for @graphrs — high-performance graph algorithms via WebAssembly",

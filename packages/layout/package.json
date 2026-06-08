@@ -1,6 +1,6 @@
 {
   "name": "@graphrs/layout",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "license": "MIT",
   "description": "Graph layout algorithms (force-directed, hierarchical, geometric, MDS) for @graphrs",

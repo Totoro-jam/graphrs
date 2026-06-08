@@ -1,6 +1,6 @@
 {
   "name": "@graphrs/community",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "license": "MIT",
   "description": "Community detection algorithms (Louvain, Leiden, Infomap, Walktrap, etc.) for @graphrs",

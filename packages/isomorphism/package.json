@@ -1,6 +1,6 @@
 {
   "name": "@graphrs/isomorphism",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "license": "MIT",
   "description": "Graph isomorphism algorithms (VF2, canonical form, automorphism) for @graphrs",

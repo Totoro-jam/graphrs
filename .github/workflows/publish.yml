@@ -94,6 +94,8 @@ jobs:
         run: |
           SHA=$(git rev-parse --short HEAD)
           for pkg in packages/*/package.json; do
+            IS_PRIVATE=$(node -e "const p=require('./$pkg'); console.log(p.private||false)")
+            if [ "$IS_PRIVATE" = "true" ]; then continue; fi
             node -e "
               const fs = require('fs');
               const p = JSON.parse(fs.readFileSync('$pkg','utf8'));
@@ -106,6 +108,11 @@ jobs:
         if: github.event_name == 'push'
         run: |
           for pkg in packages/*/; do
+            IS_PRIVATE=$(node -e "const p=require('./${pkg}package.json'); console.log(p.private||false)")
+            if [ "$IS_PRIVATE" = "true" ]; then
+              echo "Skipping private $(basename $pkg)"
+              continue
+            fi
             echo "Publishing $(basename $pkg)..."
             cd "$pkg"
             npm publish --access public --provenance
@@ -116,6 +123,11 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: |
           for pkg in packages/*/; do
+            IS_PRIVATE=$(node -e "const p=require('./${pkg}package.json'); console.log(p.private||false)")
+            if [ "$IS_PRIVATE" = "true" ]; then
+              echo "Skipping private $(basename $pkg)"
+              continue
+            fi
             echo "Publishing $(basename $pkg)..."
             cd "$pkg"
             npm publish --access public --tag canary --provenance
