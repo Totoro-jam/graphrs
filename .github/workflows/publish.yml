@@ -1,8 +1,16 @@
-name: Release
+name: Publish
 
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      canary:
+        description: 'Publish as canary (0.0.0-canary.<sha>)'
+        required: false
+        default: 'true'
+        type: choice
+        options: ['true', 'false']
 
 permissions:
   contents: write
@@ -11,6 +19,7 @@ permissions:
 jobs:
   build-wasm:
     name: Build WASM
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -45,14 +54,24 @@ jobs:
   publish:
     name: Publish to npm
     needs: build-wasm
+    if: always() && (needs.build-wasm.result == 'success' || needs.build-wasm.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
       - uses: actions/download-artifact@v8
+        if: needs.build-wasm.result == 'success'
         with:
           name: wasm-pkg
           path: wasm-pkg
+
+      - name: Copy WASM artifacts
+        if: needs.build-wasm.result == 'success'
+        run: |
+          cp wasm-pkg/igraph_wasm_bg.wasm packages/core/wasm/
+          cp wasm-pkg/igraph_wasm.js packages/core/wasm/
+          cp wasm-pkg/igraph_wasm.d.ts packages/core/wasm/ 2>/dev/null || true
+          cp wasm-pkg/igraph_wasm_bg.wasm.d.ts packages/core/wasm/ 2>/dev/null || true
 
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v6
@@ -63,23 +82,36 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Copy WASM artifacts
-        run: |
-          cp wasm-pkg/igraph_wasm_bg.wasm packages/core/wasm/
-          cp wasm-pkg/igraph_wasm.js packages/core/wasm/
-          cp wasm-pkg/igraph_wasm.d.ts packages/core/wasm/ 2>/dev/null || true
-          cp wasm-pkg/igraph_wasm_bg.wasm.d.ts packages/core/wasm/ 2>/dev/null || true
-
       - name: Build all packages
         run: pnpm turbo build
 
       - name: Run tests
+        if: github.event_name == 'push'
         run: pnpm turbo test:ci
 
-      - name: Publish to npm (Trusted Publishing / OIDC)
+      - name: Set canary versions
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          for pkg in packages/*/package.json; do
+            node -e "
+              const fs = require('fs');
+              const p = JSON.parse(fs.readFileSync('$pkg','utf8'));
+              p.version = '0.0.0-canary.' + '$SHA';
+              fs.writeFileSync('$pkg', JSON.stringify(p, null, 2) + '\n');
+            "
+          done
+
+      - name: Publish release
+        if: github.event_name == 'push'
         run: pnpm -r publish --access public --no-git-checks --provenance
 
+      - name: Publish canary
+        if: github.event_name == 'workflow_dispatch'
+        run: pnpm -r publish --access public --tag canary --no-git-checks --provenance
+
       - name: Create GitHub Release
+        if: github.event_name == 'push'
         uses: softprops/action-gh-release@v3
         with:
           generate_release_notes: true
