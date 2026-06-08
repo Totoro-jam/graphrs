@@ -12,6 +12,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   canary:
@@ -44,7 +45,5 @@ jobs:
             "
           done
 
-      - name: Publish canary
-        run: pnpm -r publish --access public --tag canary --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish canary (Trusted Publishing / OIDC)
+        run: pnpm -r publish --access public --tag canary --no-git-checks --provenance
