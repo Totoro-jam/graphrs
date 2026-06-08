@@ -5,6 +5,9 @@
   "license": "MIT",
   "description": "Graph operators (union, intersection, complement, simplify, reverse) for @graphrs",
   "keywords": ["graph", "operators", "union", "intersection", "complement"],
+  "author": "Totoro-jam <moqiuchen66@gmail.com>",
+  "homepage": "https://github.com/Totoro-jam/graphrs#readme",
+  "bugs": { "url": "https://github.com/Totoro-jam/graphrs/issues" },
   "repository": { "type": "git", "url": "https://github.com/Totoro-jam/graphrs", "directory": "packages/operators" },
   "sideEffects": false,
   "exports": {

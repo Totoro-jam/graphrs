@@ -5,6 +5,9 @@
   "license": "MIT",
   "description": "Community detection algorithms (Louvain, Leiden, Infomap, Walktrap, etc.) for @graphrs",
   "keywords": ["graph", "community-detection", "louvain", "leiden", "clustering"],
+  "author": "Totoro-jam <moqiuchen66@gmail.com>",
+  "homepage": "https://github.com/Totoro-jam/graphrs#readme",
+  "bugs": { "url": "https://github.com/Totoro-jam/graphrs/issues" },
   "repository": { "type": "git", "url": "https://github.com/Totoro-jam/graphrs", "directory": "packages/community" },
   "sideEffects": false,
   "exports": {

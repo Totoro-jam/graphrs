@@ -5,6 +5,9 @@
   "license": "MIT",
   "description": "Graph isomorphism algorithms (VF2, canonical form, automorphism) for @graphrs",
   "keywords": ["graph", "isomorphism", "vf2", "canonical", "automorphism"],
+  "author": "Totoro-jam <moqiuchen66@gmail.com>",
+  "homepage": "https://github.com/Totoro-jam/graphrs#readme",
+  "bugs": { "url": "https://github.com/Totoro-jam/graphrs/issues" },
   "repository": { "type": "git", "url": "https://github.com/Totoro-jam/graphrs", "directory": "packages/isomorphism" },
   "sideEffects": false,
   "exports": {

@@ -5,6 +5,9 @@
   "license": "MIT",
   "description": "Graph I/O formats (GraphML, GML, DOT, edgelist, Pajek) for @graphrs",
   "keywords": ["graph", "graphml", "gml", "dot", "import-export"],
+  "author": "Totoro-jam <moqiuchen66@gmail.com>",
+  "homepage": "https://github.com/Totoro-jam/graphrs#readme",
+  "bugs": { "url": "https://github.com/Totoro-jam/graphrs/issues" },
   "repository": { "type": "git", "url": "https://github.com/Totoro-jam/graphrs", "directory": "packages/io" },
   "sideEffects": false,
   "exports": {
