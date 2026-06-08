@@ -89,13 +89,6 @@ jobs:
         if: github.event_name == 'push'
         run: pnpm turbo test:ci
 
-      - name: Debug npm environment
-        run: |
-          echo "npm version: $(npm --version)"
-          echo "node version: $(node --version)"
-          echo "npmrc location: $NPM_CONFIG_USERCONFIG"
-          cat "$NPM_CONFIG_USERCONFIG" | sed 's/_authToken=.*/_authToken=***/'
-
       - name: Set canary versions
         if: github.event_name == 'workflow_dispatch'
         run: |
