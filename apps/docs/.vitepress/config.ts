@@ -3,7 +3,8 @@ import { defineConfig } from 'vitepress';
 export default defineConfig({
   title: 'graphrs',
   description: 'Modular TypeScript graph library powered by Rust/WASM — 400+ algorithms at native speed',
-  head: [['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }]],
+  base: '/graphrs/',
+  head: [['link', { rel: 'icon', type: 'image/svg+xml', href: '/graphrs/logo.svg' }]],
 
   themeConfig: {
     nav: [
