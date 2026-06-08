@@ -410,7 +410,12 @@ describe('Graph', () => {
     it('includes layout positions', () => {
       const g = new Graph();
       g.addNode(0).addNode(1);
-      const layout: LayoutResult = { positions: [[10, 20], [30, 40]] };
+      const layout: LayoutResult = {
+        positions: [
+          [10, 20],
+          [30, 40],
+        ],
+      };
       const data = g.toG6Format(layout);
       expect(data.nodes[0]!.x).toBe(10);
       expect(data.nodes[0]!.y).toBe(20);
@@ -436,7 +441,12 @@ describe('Graph', () => {
     it('uses layout positions', () => {
       const g = new Graph();
       g.addNode(0).addNode(1);
-      const layout: LayoutResult = { positions: [[100, 200], [300, 400]] };
+      const layout: LayoutResult = {
+        positions: [
+          [100, 200],
+          [300, 400],
+        ],
+      };
       const data = g.toReactFlowFormat(layout);
       expect(data.nodes[0]!.position).toEqual({ x: 100, y: 200 });
     });

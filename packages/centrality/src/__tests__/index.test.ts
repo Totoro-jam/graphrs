@@ -1,16 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { Graph } from '@graphrs/core';
-import {
-  pagerank,
-  betweenness,
-  closeness,
-  eigenvector,
-  hits,
-  katz,
-  harmonic,
-} from '../index.js';
+import { pagerank, betweenness, closeness, eigenvector, hits, katz, harmonic } from '../index.js';
 
-const graph = Graph.fromEdges([[0, 1], [1, 2], [2, 0]]);
+const graph = Graph.fromEdges([
+  [0, 1],
+  [1, 2],
+  [2, 0],
+]);
 
 const fns = [
   ['pagerank', pagerank],

@@ -1,14 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { Graph } from '@graphrs/core';
-import {
-  maxFlow,
-  minCut,
-  vertexConnectivity,
-  edgeConnectivity,
-  isConnected,
-} from '../index.js';
+import { maxFlow, minCut, vertexConnectivity, edgeConnectivity, isConnected } from '../index.js';
 
-const graph = Graph.fromEdges([[0, 1], [1, 2], [2, 0]]);
+const graph = Graph.fromEdges([
+  [0, 1],
+  [1, 2],
+  [2, 0],
+]);
 
 const fns = [
   ['maxFlow', maxFlow],

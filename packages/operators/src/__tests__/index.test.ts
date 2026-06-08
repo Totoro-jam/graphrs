@@ -12,7 +12,10 @@ import {
   complement,
 } from '../index.js';
 
-const graph = Graph.fromEdges([[0, 1], [1, 2]]);
+const graph = Graph.fromEdges([
+  [0, 1],
+  [1, 2],
+]);
 
 const unaryFns = [
   ['simplify', simplify],

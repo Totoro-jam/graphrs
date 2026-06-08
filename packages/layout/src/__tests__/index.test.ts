@@ -14,7 +14,11 @@ import {
   layoutDRL,
 } from '../index.js';
 
-const graph = Graph.fromEdges([[0, 1], [1, 2], [2, 0]]);
+const graph = Graph.fromEdges([
+  [0, 1],
+  [1, 2],
+  [2, 0],
+]);
 
 const fns = [
   ['layoutFR', layoutFR],
