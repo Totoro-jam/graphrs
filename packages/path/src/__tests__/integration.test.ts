@@ -74,6 +74,25 @@ describe('@graphrs/path integration', () => {
     });
   });
 
+  describe('disconnected graph', () => {
+    it('dijkstra returns Infinity for unreachable target', async () => {
+      const result = await dijkstra(disconnected, 0, 5);
+      expect(result.distance).toBe(Infinity);
+    });
+
+    it('bfs only visits reachable component', async () => {
+      const result = await bfs(disconnected, 0);
+      expect(result.order).toHaveLength(3);
+      expect(new Set(result.order)).toEqual(new Set([0, 1, 2]));
+    });
+
+    it('dfs only visits reachable component', async () => {
+      const result = await dfs(disconnected, 3);
+      expect(result.order).toHaveLength(3);
+      expect(new Set(result.order)).toEqual(new Set([3, 4, 5]));
+    });
+  });
+
   describe('allPairsShortestPaths', () => {
     it('returns symmetric matrix for undirected graph', async () => {
       const result = await allPairsShortestPaths(line);
