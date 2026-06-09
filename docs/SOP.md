@@ -155,7 +155,70 @@ For testing before a full release:
 
 ---
 
-## 5. SOP Evolution
+## 5. Documentation Site
+
+### 5.1 Local Development
+
+```bash
+cd apps/docs && pnpm dev    # dev server with HMR
+pnpm build                   # production build (validates all pages)
+```
+
+### 5.2 Playground Demos
+
+Playground uses Sandpack (`sandpack-vue3`) with `vanilla-ts` template.
+
+**Critical rules** (CI tests enforce these):
+
+1. Entry file must be `/index.ts` (not `/src/main.ts`)
+2. Custom `/index.html` must include `<script type="module">` — required
+   for `import.meta` support in `@graphrs/core`
+3. Never put literal `</script>` inside a Vue SFC `<script>` block — use
+   `<\/script>` in strings to avoid the Vue parser closing early
+4. Demo code in markdown `<script setup>` must use backtick template strings
+   without nested backticks (no `\`` escaping — use string concatenation)
+
+### 5.3 Vue SFC Gotchas
+
+- `</script>` in a template literal breaks the Vue SFC compiler
+- Nested backtick template literals in VitePress markdown `<script setup>` break Babel
+- Solution: keep demo code in simple backtick strings, use `'` + concatenation inside
+
+### 5.4 Deployment
+
+- Docs deploy automatically on push to `main` (GitHub Pages via `.github/workflows/docs.yml`)
+- CI builds docs as part of the test matrix — build failures block the pipeline
+
+---
+
+## 6. CI/CD Troubleshooting
+
+### 6.1 `ERR_PNPM_TARBALL_INTEGRITY`
+
+When npm republishes a package with the same version but different tarball:
+1. Run `pnpm install` locally (regenerates lockfile with new hash)
+2. Commit `pnpm-lock.yaml`
+3. Push
+
+### 6.2 Docs Build Failure
+
+Most common causes:
+- Vue SFC parse error (`Invalid end tag`) — check for `</script>` in template strings
+- Babel parse error in markdown `<script setup>` — check for nested backtick escaping
+- Missing dependency — run `pnpm install` and commit lockfile
+
+### 6.3 Pre-push Validation
+
+Before pushing, run locally:
+```bash
+pnpm -w format:check             # formatting
+pnpm --filter @graphrs/core test -- --run   # unit tests
+cd apps/docs && pnpm build        # docs build
+```
+
+---
+
+## 7. SOP Evolution
 
 This document is versioned alongside the codebase. When updating:
 
