@@ -90,7 +90,12 @@ describe('graphToG6', () => {
       [0, 'n1'],
       [1, 'n2'],
     ]);
-    const layout = { positions: [[10, 20], [30, 40]] as [number, number][] };
+    const layout = {
+      positions: [
+        [10, 20],
+        [30, 40],
+      ] as [number, number][],
+    };
     const g6Data = graphToG6(graph, indexToId, layout);
     expect(g6Data.nodes[0]!.style?.x).toBe(10);
     expect(g6Data.nodes[0]!.style?.y).toBe(20);
@@ -109,7 +114,12 @@ describe('graphToG6', () => {
 
 describe('layoutResultToPositions', () => {
   it('should normalize positions within width and height', () => {
-    const layout = { positions: [[0, 0], [10, 10]] as [number, number][] };
+    const layout = {
+      positions: [
+        [0, 0],
+        [10, 10],
+      ] as [number, number][],
+    };
     const nodeIds = ['a', 'b'];
     const positions = layoutResultToPositions(layout, nodeIds, [0, 0], 100, 100);
     expect(positions['a']!.x).toBe(-50);
@@ -119,7 +129,12 @@ describe('layoutResultToPositions', () => {
   });
 
   it('should center positions at given center point', () => {
-    const layout = { positions: [[0, 0], [10, 10]] as [number, number][] };
+    const layout = {
+      positions: [
+        [0, 0],
+        [10, 10],
+      ] as [number, number][],
+    };
     const nodeIds = ['a', 'b'];
     const positions = layoutResultToPositions(layout, nodeIds, [500, 300], 200, 200);
     expect(positions['a']!.x).toBe(400);

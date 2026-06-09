@@ -332,7 +332,7 @@ function run() {
     // Edges — intra-community edges brighter
     for (const e of graph.edges()) {
       const same = labels.get(e.source) === labels.get(e.target);
-      const color = same ? commColor.get(labels.get(e.source)!) || '#556' : '#556';
+      const color = same ? commColor.get(labels.get(e.source)!) || '#555566' : '#555566';
       ctx.beginPath();
       ctx.moveTo(pos[e.source][0] * sx, pos[e.source][1] * sy);
       ctx.lineTo(pos[e.target][0] * sx, pos[e.target][1] * sy);
@@ -344,7 +344,7 @@ function run() {
     // Nodes
     for (const id of graph.nodes()) {
       const x = pos[id][0] * sx, y = pos[id][1] * sy;
-      const color = commColor.get(labels.get(id)!) || '#555';
+      const color = commColor.get(labels.get(id)!) || '#555555';
       const d = graph.degree(id);
       const r = (3.5 + d * 0.5) * Math.min(scale, 2);
 
@@ -372,7 +372,7 @@ function run() {
     const sorted = [...commMap.entries()].sort((a, b) => b[1].length - a[1].length).slice(0, 6);
     sorted.forEach(([lbl, members], i) => {
       const y = cH - 16 - i * 18;
-      const color = commColor.get(lbl) || '#555';
+      const color = commColor.get(lbl) || '#555555';
       ctx.fillStyle = color;
       ctx.beginPath(); ctx.arc(18, y - 3, 5, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#aaa';

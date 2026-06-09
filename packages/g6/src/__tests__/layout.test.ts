@@ -99,7 +99,7 @@ describe('registerGraphrsLayouts', () => {
   it('should register classes with working execute method', () => {
     const layouts: Record<string, new () => { execute: (data: G6GraphData) => Promise<unknown> }> =
       {};
-    const mockRegister = (type: string, cls: typeof layouts[string]) => {
+    const mockRegister = (type: string, cls: (typeof layouts)[string]) => {
       layouts[type] = cls;
     };
 

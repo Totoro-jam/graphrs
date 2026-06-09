@@ -9,6 +9,11 @@ const PLAYGROUND_VUE_PATH = resolve(
 
 const PLAYGROUND_MD_PATH = resolve(__dirname, '../../../../apps/docs/examples/playground.md');
 
+const PLAYGROUND_ZH_MD_PATH = resolve(
+  __dirname,
+  '../../../../apps/docs/zh/examples/playground.md',
+);
+
 describe('Playground Sandpack configuration', () => {
   const vueContent = readFileSync(PLAYGROUND_VUE_PATH, 'utf-8');
   const mdContent = readFileSync(PLAYGROUND_MD_PATH, 'utf-8');
@@ -58,5 +63,50 @@ describe('Playground Sandpack configuration', () => {
   it('should provide /index.html with type="module"', () => {
     expect(vueContent).toContain("'/index.html'");
     expect(vueContent).toContain('type="module"');
+  });
+});
+
+describe('Playground color safety', () => {
+  const mdContent = readFileSync(PLAYGROUND_MD_PATH, 'utf-8');
+  const zhContent = readFileSync(PLAYGROUND_ZH_MD_PATH, 'utf-8');
+
+  function findHexAlphaConcatIssues(content: string): string[] {
+    const issues: string[] = [];
+    const lines = content.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]!;
+      if (line.includes("+ '") && /color\s*\+\s*'[0-9a-fA-F]{2}'/.test(line)) {
+        const fallbackMatch = line.match(/'#[0-9a-fA-F]{3}'/g);
+        if (fallbackMatch) {
+          issues.push(`Line ${i + 1}: 3-char hex ${fallbackMatch[0]} used with alpha concat`);
+        }
+      }
+    }
+    const fallbackLines = content.match(/\|\|\s*'#[0-9a-fA-F]{3}'/g);
+    if (fallbackLines) {
+      for (const m of fallbackLines) {
+        issues.push(`Fallback with 3-char hex: ${m}`);
+      }
+    }
+    return issues;
+  }
+
+  it('English playground should not have 3-char hex fallbacks', () => {
+    const issues = findHexAlphaConcatIssues(mdContent);
+    expect(issues).toEqual([]);
+  });
+
+  it('Chinese playground should not have 3-char hex fallbacks', () => {
+    const issues = findHexAlphaConcatIssues(zhContent);
+    expect(issues).toEqual([]);
+  });
+
+  it('all hex colors used with alpha concat should be 6-char format', () => {
+    const hexAlphaPattern = /\b(\w+)\s*\+\s*'([0-9a-fA-F]{2})'/g;
+    const colorAssignments = mdContent.matchAll(/const color\s*=\s*[^;]*\|\|\s*'(#[0-9a-fA-F]+)'/g);
+    for (const match of colorAssignments) {
+      const hex = match[1]!;
+      expect(hex.length).toBeGreaterThanOrEqual(7);
+    }
   });
 });

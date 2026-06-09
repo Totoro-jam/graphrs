@@ -48,10 +48,7 @@ describe('reactFlowToGraph', () => {
   });
 
   it('should skip edges referencing unknown nodes', () => {
-    const edgesWithBadRef = [
-      ...mockEdges,
-      { id: 'e3', source: 'n1', target: 'unknown' },
-    ];
+    const edgesWithBadRef = [...mockEdges, { id: 'e3', source: 'n1', target: 'unknown' }];
     const { graph } = reactFlowToGraph(mockNodes, edgesWithBadRef);
     expect(graph.edgeCount()).toBe(2);
   });
@@ -120,9 +117,7 @@ describe('applyLayout', () => {
     const layout = {
       positions: [[1, 2]] as [number, number][],
     };
-    const nodes = [
-      { id: 'n1', position: { x: 0, y: 0 }, data: { label: 'Test' }, type: 'custom' },
-    ];
+    const nodes = [{ id: 'n1', position: { x: 0, y: 0 }, data: { label: 'Test' }, type: 'custom' }];
     const result = applyLayout(nodes, layout);
     expect(result[0]!.data).toEqual({ label: 'Test' });
     expect((result[0] as Record<string, unknown>).type).toBe('custom');
