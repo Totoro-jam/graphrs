@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Sandpack } from 'sandpack-vue3';
 import { useData } from 'vitepress';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps<{ code: string }>();
 const { isDark } = useData();
+const showCode = ref(false);
 
 const graphShimCode = `
 class NodeNotFoundError extends Error {
@@ -50,7 +51,6 @@ export class Graph {
     this._adjacency.delete(id);
     this._edges = this._edges.filter(e => e.source !== id && e.target !== id);
     for (const [, neighbors] of this._adjacency) {
-      const idx = neighbors.indexOf(id);
       while (neighbors.indexOf(id) !== -1) neighbors.splice(neighbors.indexOf(id), 1);
     }
     return this;
@@ -98,7 +98,6 @@ export function enableZoomPan(canvas, drawFn) {
   let scale = 1, offsetX = 0, offsetY = 0;
   let dragging = false, lastX = 0, lastY = 0;
 
-  // Wheel zoom (works in most environments)
   canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -111,9 +110,9 @@ export function enableZoomPan(canvas, drawFn) {
     drawFn(scale, offsetX, offsetY);
   }, { passive: false });
 
-  // Drag to pan
   canvas.addEventListener('mousedown', (e) => {
     e.preventDefault();
+    e.stopPropagation();
     dragging = true; lastX = e.clientX; lastY = e.clientY;
     canvas.style.cursor = 'grabbing';
   });
@@ -127,7 +126,6 @@ export function enableZoomPan(canvas, drawFn) {
   canvas.addEventListener('mouseup', () => { dragging = false; canvas.style.cursor = 'grab'; });
   canvas.addEventListener('mouseleave', () => { dragging = false; canvas.style.cursor = 'grab'; });
 
-  // Touch support for mobile
   let lastTouchDist = 0;
   canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
@@ -172,11 +170,13 @@ export function enableZoomPan(canvas, drawFn) {
   canvas.style.cursor = 'grab';
   canvas.style.touchAction = 'none';
 
-  // Add zoom controls overlay
   const wrapper = canvas.parentElement;
   const controls = document.createElement('div');
   controls.style.cssText = 'position:absolute;bottom:8px;right:8px;display:flex;gap:4px;z-index:10';
-  controls.innerHTML = '<button id="zin" style="width:28px;height:28px;border:1px solid #333;background:#1a1a2e;color:#ccc;border-radius:4px;cursor:pointer;font-size:16px">+</button><button id="zout" style="width:28px;height:28px;border:1px solid #333;background:#1a1a2e;color:#ccc;border-radius:4px;cursor:pointer;font-size:16px">−</button><button id="zreset" style="height:28px;padding:0 8px;border:1px solid #333;background:#1a1a2e;color:#ccc;border-radius:4px;cursor:pointer;font-size:11px">Reset</button>';
+  controls.innerHTML = '<button class="zctrl" id="zin">+</button><button class="zctrl" id="zout">−</button><button class="zctrl" id="zreset" style="padding:0 8px;width:auto">Reset</button>';
+  const style = document.createElement('style');
+  style.textContent = '.zctrl{width:28px;height:28px;border:1px solid rgba(255,255,255,0.15);background:rgba(10,10,30,0.8);color:#ccc;border-radius:6px;cursor:pointer;font-size:14px;backdrop-filter:blur(4px);transition:all 0.15s}.zctrl:hover{background:rgba(60,120,255,0.3);border-color:rgba(100,180,255,0.4)}';
+  document.head.appendChild(style);
   if (wrapper) { wrapper.style.position = 'relative'; wrapper.appendChild(controls); }
   document.getElementById('zin')?.addEventListener('click', () => {
     const cx = canvas.clientWidth/2, cy = canvas.clientHeight/2;
@@ -230,6 +230,14 @@ const customSetup = {
 <template>
   <ClientOnly>
     <div class="playground-wrapper">
+      <div class="playground-toolbar">
+        <button class="toggle-code-btn" @click="showCode = !showCode">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
+          </svg>
+          {{ showCode ? 'Hide Code' : 'Show Code' }}
+        </button>
+      </div>
       <Sandpack
         template="vanilla-ts"
         :theme="isDark ? 'dark' : 'light'"
@@ -238,8 +246,8 @@ const customSetup = {
         :options="{
           showConsole: true,
           showConsoleButton: true,
-          editorHeight: 560,
-          layout: 'preview',
+          editorHeight: 480,
+          layout: showCode ? 'console' : 'preview',
         }"
       />
     </div>
@@ -249,7 +257,32 @@ const customSetup = {
 <style scoped>
 .playground-wrapper {
   margin: 16px 0;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
+  border: 1px solid var(--vp-c-divider);
+}
+.playground-toolbar {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: var(--vp-c-bg-soft);
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+.toggle-code-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.toggle-code-btn:hover {
+  border-color: var(--vp-c-brand-1);
+  color: var(--vp-c-brand-1);
 }
 </style>

@@ -223,6 +223,64 @@ describe('Playground demo scenarios', () => {
     });
   });
 
+  describe('PageRank edge pool safety', () => {
+    it('should handle empty topEdges filter gracefully', () => {
+      const graph = Graph.fromEdges(
+        [
+          [0, 1],
+          [1, 2],
+          [2, 3],
+        ],
+        { directed: true },
+      );
+      const allEdges = graph.edges();
+      const ranks = new Map<number, number>();
+      for (const id of graph.nodes()) ranks.set(id, 0.001);
+      const maxRank = 0.001;
+
+      // Simulate the filter that caused the crash: no edges pass threshold
+      const topEdges = allEdges.filter(
+        (e) =>
+          (ranks.get(e.source) || 0) / maxRank > 0.1 || (ranks.get(e.target) || 0) / maxRank > 0.1,
+      );
+      // Guard: fall back to allEdges slice
+      const edgePool =
+        topEdges.length > 0 ? topEdges : allEdges.slice(0, Math.min(20, allEdges.length));
+      expect(edgePool.length).toBeGreaterThan(0);
+
+      // Accessing edgePool[random] should always return a valid edge
+      const e = edgePool[Math.floor(Math.random() * edgePool.length)]!;
+      expect(e).toBeDefined();
+      expect(e).toHaveProperty('source');
+      expect(e).toHaveProperty('target');
+    });
+
+    it('should handle graph with high-rank nodes in edge pool', () => {
+      const graph = Graph.fromEdges(
+        [
+          [0, 1],
+          [1, 2],
+          [2, 0],
+          [0, 3],
+        ],
+        { directed: true },
+      );
+      const ranks = new Map<number, number>([
+        [0, 0.5],
+        [1, 0.2],
+        [2, 0.2],
+        [3, 0.1],
+      ]);
+      const maxRank = 0.5;
+      const allEdges = graph.edges();
+      const topEdges = allEdges.filter(
+        (e) =>
+          (ranks.get(e.source) || 0) / maxRank > 0.1 || (ranks.get(e.target) || 0) / maxRank > 0.1,
+      );
+      expect(topEdges.length).toBeGreaterThan(0);
+    });
+  });
+
   describe('PageRank computation', () => {
     it('should compute PageRank on a directed graph', () => {
       const graph = Graph.fromEdges(
