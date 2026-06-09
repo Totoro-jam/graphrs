@@ -1,10 +1,15 @@
 import { defineConfig } from 'vitepress';
-import { container } from 'vitepress-plugin-sandpack';
+import container from 'markdown-it-container';
+import { renderSandbox } from 'vitepress-plugin-sandpack';
 
 export default defineConfig({
   markdown: {
     config(md) {
-      md.use(container as never);
+      md.use(container, 'sandbox', {
+        render(tokens: unknown[], idx: number) {
+          return renderSandbox(tokens, idx, 'sandbox');
+        },
+      });
     },
   },
   title: 'graphrs',
