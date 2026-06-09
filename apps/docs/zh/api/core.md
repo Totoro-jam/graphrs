@@ -77,7 +77,7 @@ static fromJSON<N, E>(data: SerializedGraph): Graph<N, E>
 
 ### 图创建与查询
 
-::: sandbox
+::: sandbox {template=vanilla-ts}
 
 ```ts /src/index.ts
 import { Graph } from '@graphrs/core';
@@ -120,7 +120,7 @@ console.log(`子图 {0,1,2}: ${sub.nodeCount()} 节点, ${sub.edgeCount()} 边`)
 
 ### 序列化往返
 
-::: sandbox
+::: sandbox {template=vanilla-ts}
 
 ```ts /src/index.ts
 import { Graph } from '@graphrs/core';

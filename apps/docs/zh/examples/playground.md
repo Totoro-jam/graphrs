@@ -6,7 +6,7 @@
 
 创建图、添加节点和边，查看图的属性：
 
-::: sandbox
+::: sandbox {template=vanilla-ts}
 
 ```ts /src/index.ts
 import { Graph } from '@graphrs/core';
@@ -50,7 +50,7 @@ console.log(`存在边 1→0: ${graph.hasEdge(1, 0)}`);
 
 快速从边列表构建图：
 
-::: sandbox
+::: sandbox {template=vanilla-ts}
 
 ```ts /src/index.ts
 import { Graph } from '@graphrs/core';
@@ -89,7 +89,7 @@ console.log(`  节点: ${sub.nodeCount()}, 边: ${sub.edgeCount()}`);
 
 从邻接矩阵构建图并转换为 JSON：
 
-::: sandbox
+::: sandbox {template=vanilla-ts}
 
 ```ts /src/index.ts
 import { Graph } from '@graphrs/core';
@@ -132,7 +132,7 @@ console.log(`\n恢复的图: ${restored.nodeCount()} 节点, ${restored.edgeCoun
 
 导出为不同可视化库的格式：
 
-::: sandbox
+::: sandbox {template=vanilla-ts}
 
 ```ts /src/index.ts
 import { Graph } from '@graphrs/core';

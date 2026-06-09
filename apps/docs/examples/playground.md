@@ -6,7 +6,7 @@ Try graphrs in your browser — edit the code below and see results instantly.
 
 Create a graph, add nodes and edges, and inspect its properties:
 
-::: sandbox
+::: sandbox {template=vanilla-ts}
 
 ```ts /src/index.ts
 import { Graph } from '@graphrs/core';
@@ -50,7 +50,7 @@ console.log(`Has edge 1→0: ${graph.hasEdge(1, 0)}`);
 
 Quickly construct graphs from an edge list:
 
-::: sandbox
+::: sandbox {template=vanilla-ts}
 
 ```ts /src/index.ts
 import { Graph } from '@graphrs/core';
@@ -89,7 +89,7 @@ console.log(`  Nodes: ${sub.nodeCount()}, Edges: ${sub.edgeCount()}`);
 
 Build graphs from adjacency matrices and convert to JSON:
 
-::: sandbox
+::: sandbox {template=vanilla-ts}
 
 ```ts /src/index.ts
 import { Graph } from '@graphrs/core';
@@ -132,7 +132,7 @@ console.log(`\nRestored graph: ${restored.nodeCount()} nodes, ${restored.edgeCou
 
 Export to different visualization library formats:
 
-::: sandbox
+::: sandbox {template=vanilla-ts}
 
 ```ts /src/index.ts
 import { Graph } from '@graphrs/core';

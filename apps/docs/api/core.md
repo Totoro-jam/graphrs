@@ -77,7 +77,7 @@ Creates a graph from a serialized JSON object.
 
 ### Graph Creation & Querying
 
-::: sandbox
+::: sandbox {template=vanilla-ts}
 
 ```ts /src/index.ts
 import { Graph } from '@graphrs/core';
@@ -120,7 +120,7 @@ console.log(`Subgraph {0,1,2}: ${sub.nodeCount()} nodes, ${sub.edgeCount()} edge
 
 ### Serialization Round-trip
 
-::: sandbox
+::: sandbox {template=vanilla-ts}
 
 ```ts /src/index.ts
 import { Graph } from '@graphrs/core';
