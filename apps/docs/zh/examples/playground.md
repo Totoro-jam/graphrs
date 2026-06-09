@@ -917,6 +917,226 @@ async function runBench() {
 drawChart();
 setTimeout(() => { document.getElementById('go')!.addEventListener('click', runBench); }, 30);
 `;
+
+const generatorsViz = `import { Graph } from './graphrs-core.js';
+import { enableZoomPan } from './zoom-pan.js';
+import { createCanvas } from './canvas-util.js';
+
+function erdosRenyi(n: number, p: number): Graph {
+  const edges: [number, number][] = [];
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    if (Math.random() < p) edges.push([i, j]);
+  }
+  return Graph.fromEdges(edges);
+}
+
+function barabasiAlbert(n: number, m: number): Graph {
+  const edges: [number, number][] = [];
+  const degree: number[] = new Array(n).fill(0);
+  for (let i = 0; i <= m; i++) for (let j = i + 1; j <= m; j++) {
+    edges.push([i, j]); degree[i]++; degree[j]++;
+  }
+  for (let i = m + 1; i < n; i++) {
+    const targets = new Set<number>();
+    const total = degree.reduce((a, b) => a + b, 0);
+    while (targets.size < m) {
+      let r = Math.random() * total;
+      for (let j = 0; j < i; j++) { r -= degree[j]; if (r <= 0) { targets.add(j); break; } }
+    }
+    for (const t of targets) { edges.push([i, t]); degree[i]++; degree[t]++; }
+  }
+  return Graph.fromEdges(edges);
+}
+
+function wattsStrogatz(n: number, k: number, beta: number): Graph {
+  const edges: [number, number][] = [];
+  for (let i = 0; i < n; i++) {
+    for (let j = 1; j <= k / 2; j++) {
+      const target = (i + j) % n;
+      if (Math.random() < beta) {
+        let newTarget: number;
+        do { newTarget = Math.floor(Math.random() * n); }
+        while (newTarget === i || edges.some(e => (e[0] === i && e[1] === newTarget) || (e[0] === newTarget && e[1] === i)));
+        edges.push([i, newTarget]);
+      } else {
+        edges.push([i, target]);
+      }
+    }
+  }
+  return Graph.fromEdges(edges);
+}
+
+function ringGraph(n: number): Graph {
+  const edges: [number, number][] = [];
+  for (let i = 0; i < n; i++) edges.push([i, (i + 1) % n]);
+  return Graph.fromEdges(edges);
+}
+
+function starGraph(n: number): Graph {
+  const edges: [number, number][] = [];
+  for (let i = 1; i < n; i++) edges.push([0, i]);
+  return Graph.fromEdges(edges);
+}
+
+function completeGraph(n: number): Graph {
+  const edges: [number, number][] = [];
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) edges.push([i, j]);
+  return Graph.fromEdges(edges);
+}
+
+type GeneratorType = 'barabasi-albert' | 'erdos-renyi' | 'watts-strogatz' | 'ring' | 'star' | 'complete';
+
+function generate(type: GeneratorType, n: number): Graph {
+  switch (type) {
+    case 'barabasi-albert': return barabasiAlbert(n, 2);
+    case 'erdos-renyi': return erdosRenyi(n, 3 / n);
+    case 'watts-strogatz': return wattsStrogatz(n, 4, 0.3);
+    case 'ring': return ringGraph(n);
+    case 'star': return starGraph(n);
+    case 'complete': return completeGraph(Math.min(n, 20));
+  }
+}
+
+function forceLayout(graph: Graph, W: number, H: number, iter = 150) {
+  const nodes = graph.nodes(), n = nodes.length;
+  if (n === 0) return {};
+  const k = Math.sqrt(W * H / n) * 0.9;
+  const pos: Record<number, [number, number]> = {};
+  for (const id of nodes) pos[id] = [50 + Math.random() * (W - 100), 50 + Math.random() * (H - 100)];
+  let temp = W / 4;
+  for (let it = 0; it < iter; it++) {
+    const disp: Record<number, [number, number]> = {};
+    for (const v of nodes) disp[v] = [0, 0];
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      const vi = nodes[i], vj = nodes[j];
+      const dx = pos[vi][0] - pos[vj][0], dy = pos[vi][1] - pos[vj][1];
+      const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 0.1);
+      const f = (k * k) / dist;
+      disp[vi][0] += (dx / dist) * f; disp[vi][1] += (dy / dist) * f;
+      disp[vj][0] -= (dx / dist) * f; disp[vj][1] -= (dy / dist) * f;
+    }
+    for (const e of graph.edges()) {
+      const dx = pos[e.source][0] - pos[e.target][0], dy = pos[e.source][1] - pos[e.target][1];
+      const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 0.1);
+      const f = (dist * dist) / k;
+      disp[e.source][0] -= (dx / dist) * f; disp[e.source][1] -= (dy / dist) * f;
+      disp[e.target][0] += (dx / dist) * f; disp[e.target][1] += (dy / dist) * f;
+    }
+    for (const v of nodes) {
+      const d = Math.sqrt(disp[v][0] ** 2 + disp[v][1] ** 2) || 1;
+      pos[v][0] += (disp[v][0] / d) * Math.min(d, temp);
+      pos[v][1] += (disp[v][1] / d) * Math.min(d, temp);
+      pos[v][0] = Math.max(30, Math.min(W - 30, pos[v][0]));
+      pos[v][1] = Math.max(30, Math.min(H - 30, pos[v][1]));
+    }
+    temp *= 0.95;
+  }
+  return pos;
+}
+
+const app = document.getElementById('app')!;
+const ctrl = document.createElement('div');
+ctrl.innerHTML = '<div style="position:absolute;top:8px;left:8px;z-index:10;display:flex;gap:8px;align-items:center"><select id="model" style="padding:4px 8px;border-radius:4px;border:1px solid #444;background:#1a1d24;color:#ddd;font-size:12px"><option value="barabasi-albert">Barabási–Albert</option><option value="erdos-renyi">Erdős–Rényi</option><option value="watts-strogatz">Watts–Strogatz</option><option value="ring">Ring</option><option value="star">Star</option><option value="complete">Complete</option></select><input id="slider" type="range" min="10" max="80" value="40" style="width:100px;accent-color:#5B8FF9"><span id="lbl" style="color:#aaa;font-size:11px">n=40</span><button id="go" style="padding:4px 12px;border-radius:4px;border:1px solid #5B8FF9;background:#1a2a40;color:#8ac;font-size:12px;cursor:pointer">Generate</button></div>';
+app.appendChild(ctrl);
+const cv = createCanvas(app);
+const { ctx } = cv;
+
+let graph: Graph | null = null;
+let pos: Record<number, [number, number]> = {};
+let currentType: GeneratorType = 'barabasi-albert';
+let N = 40;
+
+const descriptions: Record<GeneratorType, string> = {
+  'barabasi-albert': 'Scale-free: preferential attachment (power-law degree)',
+  'erdos-renyi': 'Random: each edge with probability p = 3/n',
+  'watts-strogatz': 'Small-world: high clustering, short paths (k=4, β=0.3)',
+  'ring': 'Regular ring lattice: each node connects to next',
+  'star': 'Star topology: one hub connected to all others',
+  'complete': 'Complete graph: every node connected to every other',
+};
+
+function run() {
+  graph = generate(currentType, N);
+  pos = forceLayout(graph, cv.width, cv.height);
+  draw();
+}
+
+function draw(scale = 1, ox = 0, oy = 0) {
+  if (!graph) return;
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.save();
+  ctx.translate(ox, oy);
+  ctx.scale(scale, scale);
+
+  const nodes = graph.nodes();
+  const deg: Record<number, number> = {};
+  for (const id of nodes) deg[id] = graph.degree(id);
+  const maxDeg = Math.max(...Object.values(deg), 1);
+
+  // Edges
+  ctx.lineCap = 'round';
+  for (const e of graph.edges()) {
+    const p1 = pos[e.source], p2 = pos[e.target];
+    if (!p1 || !p2) continue;
+    const strength = (deg[e.source] + deg[e.target]) / (2 * maxDeg);
+    ctx.strokeStyle = 'rgba(91,143,249,' + (0.15 + strength * 0.35) + ')';
+    ctx.lineWidth = 0.8 + strength * 1.2;
+    ctx.beginPath(); ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]); ctx.stroke();
+  }
+
+  // Nodes
+  for (const id of nodes) {
+    const p = pos[id];
+    if (!p) continue;
+    const d = deg[id] / maxDeg;
+    const r = 3 + d * 8;
+
+    // Glow for high-degree nodes
+    if (d > 0.5) {
+      ctx.beginPath(); ctx.arc(p[0], p[1], r + 4, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(91,143,249,' + (d * 0.2) + ')'; ctx.fill();
+    }
+
+    ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, Math.PI * 2);
+    const hue = 210 + d * 30;
+    const sat = 60 + d * 30;
+    const lgt = 50 + d * 20;
+    ctx.fillStyle = 'hsl(' + hue + ',' + sat + '%,' + lgt + '%)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 0.5; ctx.stroke();
+  }
+
+  // Info panel
+  ctx.restore();
+  ctx.save();
+  ctx.fillStyle = 'rgba(10,14,20,0.85)';
+  ctx.beginPath(); ctx.roundRect(W - 260, H - 64, 252, 56, 6); ctx.fill();
+  ctx.strokeStyle = 'rgba(91,143,249,0.3)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect(W - 260, H - 64, 252, 56, 6); ctx.stroke();
+  ctx.font = '11px system-ui'; ctx.textAlign = 'left';
+  ctx.fillStyle = '#8ac';
+  ctx.fillText(descriptions[currentType], W - 250, H - 44);
+  ctx.fillStyle = '#aaa';
+  ctx.fillText('Nodes: ' + graph.nodeCount() + '  Edges: ' + graph.edgeCount() + '  Max degree: ' + maxDeg, W - 250, H - 24);
+  ctx.restore();
+}
+
+const zp = enableZoomPan(cv.canvas, draw);
+cv.onResize(() => { const t = zp.getTransform(); draw(t.scale, t.offsetX, t.offsetY); });
+
+document.getElementById('slider')!.addEventListener('input', (e) => {
+  N = +(e.target as HTMLInputElement).value;
+  document.getElementById('lbl')!.textContent = 'n=' + N;
+});
+document.getElementById('model')!.addEventListener('change', (e) => {
+  currentType = (e.target as HTMLSelectElement).value as GeneratorType;
+});
+document.getElementById('go')!.addEventListener('click', run);
+
+run();
+`;
 </script>
 
 # 交互式演练场
@@ -946,6 +1166,12 @@ Brandes 算法计算每个节点被最短路径经过的频率。暖色调（红
 对有向网页图运行幂迭代 PageRank 算法。节点大小和颜色编码权威度 — 金色节点是被链接最多的枢纽。边透明度反映连接重要性：
 
 <Playground :code="pageRankViz" />
+
+## 图生成器
+
+比较不同随机图模型 — Barabási–Albert（无标度枢纽）、Erdős–Rényi（均匀随机）、Watts–Strogatz（小世界聚类）以及经典拓扑结构（环形、星形、完全图）。节点大小反映度数：
+
+<Playground :code="generatorsViz" />
 
 ## 性能基准测试
 
