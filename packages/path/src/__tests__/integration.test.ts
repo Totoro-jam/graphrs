@@ -3,16 +3,25 @@ import { Graph } from '@graphrs/core';
 import { dijkstra, bellmanFord, bfs, dfs, allPairsShortestPaths } from '../index.js';
 
 const line = Graph.fromEdges([
-  [0, 1], [1, 2], [2, 3], [3, 4],
+  [0, 1],
+  [1, 2],
+  [2, 3],
+  [3, 4],
 ]);
 
 const cycle = Graph.fromEdges([
-  [0, 1], [1, 2], [2, 3], [3, 4], [4, 0],
+  [0, 1],
+  [1, 2],
+  [2, 3],
+  [3, 4],
+  [4, 0],
 ]);
 
 const disconnected = Graph.fromEdges([
-  [0, 1], [1, 2],
-  [3, 4], [4, 5],
+  [0, 1],
+  [1, 2],
+  [3, 4],
+  [4, 5],
 ]);
 
 describe('@graphrs/path integration', () => {
