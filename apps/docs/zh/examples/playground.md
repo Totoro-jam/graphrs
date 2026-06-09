@@ -304,10 +304,10 @@ console.log('Communities detected: ' + commMap.size + ' (in ' + elapsed + 'ms)')
   .slice(0, 10)
   .forEach(([lbl, members], i) => console.log('  Community ' + (i+1) + ': ' + members.length + ' members'));
 
-// Full-viewport canvas with zoom/pan
+// Animated canvas with zoom/pan
 const app = document.getElementById('app')!;
 const cW = app.clientWidth || 800, cH = app.clientHeight || 560;
-app.innerHTML = '<canvas id="c" width="' + (cW*2) + '" height="' + (cH*2) + '" style="background:#06061a;display:block;width:' + cW + 'px;height:' + cH + 'px"></canvas>';
+app.innerHTML = '<div id="wrap" style="position:relative;width:100%;height:100%"><canvas id="c" width="' + (cW*2) + '" height="' + (cH*2) + '" style="background:#06061a;display:block;width:' + cW + 'px;height:' + cH + 'px"></canvas></div>';
 const canvas = document.getElementById('c') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 ctx.scale(2, 2);
@@ -320,46 +320,75 @@ for (const [lbl] of [...commMap.entries()].sort((a,b) => b[1].length - a[1].leng
   ci++;
 }
 
-function draw(scale = 1, ox = 0, oy = 0) {
+let frame = 0;
+let currentScale = 1, currentOx = 0, currentOy = 0;
+
+function draw(scale = currentScale, ox = currentOx, oy = currentOy) {
+  currentScale = scale; currentOx = ox; currentOy = oy;
   const sx = cW / W * scale, sy = cH / H * scale;
+  const pulse = Math.sin(frame * 0.03) * 0.5 + 0.5;
   ctx.clearRect(0, 0, cW, cH);
   ctx.save();
   ctx.translate(ox, oy);
+
+  // Edges with animated inter-community pulses
   for (const e of graph.edges()) {
     const sameComm = labels.get(e.source) === labels.get(e.target);
-    const color = sameComm ? (commColor.get(labels.get(e.source)!) || '#444444') : '#222222';
+    const color = sameComm ? (commColor.get(labels.get(e.source)!) || '#444444') : '#555555';
     ctx.beginPath();
     ctx.moveTo(pos[e.source][0]*sx, pos[e.source][1]*sy);
     ctx.lineTo(pos[e.target][0]*sx, pos[e.target][1]*sy);
-    ctx.strokeStyle = hexToRgba(color, sameComm ? 0.25 : 0.08);
-    ctx.lineWidth = sameComm ? 0.8 : 0.3;
+    const alpha = sameComm ? 0.2 : (0.03 + pulse * 0.08);
+    ctx.strokeStyle = hexToRgba(color, alpha);
+    ctx.lineWidth = sameComm ? 0.7 : (0.3 + pulse * 0.5);
     ctx.stroke();
   }
+
+  // Nodes with gentle breathing glow
   for (const id of graph.nodes()) {
     const x = pos[id][0]*sx, y = pos[id][1]*sy;
     const color = commColor.get(labels.get(id)!) || '#666666';
     const deg = graph.degree(id);
     const r = (2.5 + (deg / 25) * 5) * Math.min(scale, 2);
+    const isHub = deg > 15;
+
+    if (isHub) {
+      const glowR = r + 4 + pulse * 4;
+      const grad = ctx.createRadialGradient(x, y, r * 0.3, x, y, glowR);
+      grad.addColorStop(0, hexToRgba(color, 0.2 + pulse * 0.15));
+      grad.addColorStop(1, hexToRgba(color, 0));
+      ctx.beginPath();
+      ctx.arc(x, y, glowR, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
   }
   ctx.restore();
+
   ctx.fillStyle = '#bbb';
-  ctx.font = '12px monospace';
-  ctx.fillText(commMap.size + ' communities · ' + graph.nodeCount() + ' nodes · ' + elapsed + 'ms | Scroll to zoom, drag to pan', 10, cH - 10);
+  ctx.font = '11px monospace';
+  ctx.fillText(commMap.size + ' communities · ' + graph.nodeCount() + ' nodes · ' + elapsed + 'ms | Drag to pan, scroll/buttons to zoom', 10, cH - 10);
 }
 
 enableZoomPan(canvas, draw);
-draw();
+
+function animate() {
+  frame++;
+  draw();
+  requestAnimationFrame(animate);
+}
+animate();
 `;
 
 const centralityViz = `import { Graph } from './graphrs-core.js';
 import { enableZoomPan } from './zoom-pan.js';
 
 // Fraud detection network: 6 clusters with gateway nodes (200 nodes)
-// Real scenario: identify key money-laundering intermediaries
 function buildFraudNetwork(): Graph {
   const edges: [number, number][] = [];
   const seen = new Set<string>();
@@ -379,7 +408,6 @@ function buildFraudNetwork(): Graph {
     offset += size;
     offsets.push(offset);
   }
-  // Gateway nodes connecting clusters (the fraud intermediaries)
   const gateways = [10, 18, 45, 72, 105, 138, 160, 185];
   for (let i = 0; i < gateways.length; i++) {
     for (let j = i+1; j < gateways.length; j++) {
@@ -395,7 +423,7 @@ function buildFraudNetwork(): Graph {
   return Graph.fromEdges(edges);
 }
 
-// Brandes betweenness centrality (O(nm) — the real algorithm)
+// Brandes betweenness centrality
 function betweenness(graph: Graph): Map<number, number> {
   const nodes = graph.nodes();
   const cb = new Map<number, number>();
@@ -484,56 +512,125 @@ for (let iter = 0; iter < 100; iter++) {
   temp *= 0.94;
 }
 
-// Render
+// Animated render with pulsing glow + particle flow
 const app = document.getElementById('app')!;
 const cW = app.clientWidth || 800, cH = app.clientHeight || 560;
-app.innerHTML = '<canvas id="c" width="' + (cW*2) + '" height="' + (cH*2) + '" style="background:#0a0e1a;display:block;width:' + cW + 'px;height:' + cH + 'px"></canvas>';
+app.innerHTML = '<div id="wrap" style="position:relative;width:100%;height:100%"><canvas id="c" width="' + (cW*2) + '" height="' + (cH*2) + '" style="background:#0a0e1a;display:block;width:' + cW + 'px;height:' + cH + 'px"></canvas></div>';
 const canvas = document.getElementById('c') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 ctx.scale(2, 2);
 
-function draw(scale = 1, ox = 0, oy = 0) {
+const clusterColors = ['#4ecdc4','#45b7d1','#feca57','#a29bfe','#ff6b6b','#00b894'];
+
+// Particles flowing along suspicious edges
+interface Particle { x: number; y: number; tx: number; ty: number; progress: number; speed: number; }
+const particles: Particle[] = [];
+const suspiciousEdges = graph.edges().filter(e => (bc.get(e.source)||0) > 0.2 || (bc.get(e.target)||0) > 0.2);
+for (let i = 0; i < 40; i++) {
+  const e = suspiciousEdges[Math.floor(Math.random() * suspiciousEdges.length)];
+  particles.push({
+    x: pos[e.source][0], y: pos[e.source][1],
+    tx: pos[e.target][0], ty: pos[e.target][1],
+    progress: Math.random(), speed: 0.005 + Math.random() * 0.01
+  });
+}
+
+let frame = 0;
+let currentScale = 1, currentOx = 0, currentOy = 0;
+
+function draw(scale = currentScale, ox = currentOx, oy = currentOy) {
+  currentScale = scale; currentOx = ox; currentOy = oy;
   const sx = cW / W * scale, sy = cH / H * scale;
   ctx.clearRect(0, 0, cW, cH);
   ctx.save();
   ctx.translate(ox, oy);
+
+  // Edges
   for (const e of graph.edges()) {
-    const isBridge = (bc.get(e.source) || 0) > 0.3 || (bc.get(e.target) || 0) > 0.3;
+    const isBridge = (bc.get(e.source) || 0) > 0.2 || (bc.get(e.target) || 0) > 0.2;
     ctx.beginPath();
     ctx.moveTo(pos[e.source][0]*sx, pos[e.source][1]*sy);
     ctx.lineTo(pos[e.target][0]*sx, pos[e.target][1]*sy);
-    ctx.strokeStyle = isBridge ? 'rgba(255,107,107,0.3)' : 'rgba(80,140,240,0.06)';
-    ctx.lineWidth = isBridge ? 1.2 : 0.4;
+    ctx.strokeStyle = isBridge ? 'rgba(255,107,107,0.2)' : 'rgba(80,140,240,0.05)';
+    ctx.lineWidth = isBridge ? 1 : 0.3;
     ctx.stroke();
   }
-  const clusterColors = ['#4ecdc4','#45b7d1','#feca57','#a29bfe','#ff6b6b','#00b894'];
+
+  // Particles (animated money flow)
+  const pulse = Math.sin(frame * 0.05) * 0.5 + 0.5;
+  for (const p of particles) {
+    const px = (p.x + (p.tx - p.x) * p.progress) * sx;
+    const py = (p.y + (p.ty - p.y) * p.progress) * sy;
+    ctx.beginPath();
+    ctx.arc(px, py, 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,200,80,' + (0.4 + pulse * 0.4) + ')';
+    ctx.fill();
+  }
+
+  // Nodes with animated glow on high-betweenness
   for (const id of nodes) {
     const x = pos[id][0]*sx, y = pos[id][1]*sy;
     const score = bc.get(id) || 0;
     const cluster = Math.floor(id / 35);
-    const r = (3 + score * 14) * Math.min(scale, 2);
-    if (score > 0.3) {
-      const grad = ctx.createRadialGradient(x, y, 0, x, y, r + 10);
-      grad.addColorStop(0, 'rgba(255,107,107,0.4)');
-      grad.addColorStop(1, 'rgba(255,107,107,0)');
+    const r = (2.5 + score * 12) * Math.min(scale, 2);
+
+    if (score > 0.2) {
+      const glowR = r + 8 + pulse * 6;
+      const grad = ctx.createRadialGradient(x, y, r * 0.5, x, y, glowR);
+      grad.addColorStop(0, 'rgba(255,80,80,' + (0.3 + pulse * 0.2) + ')');
+      grad.addColorStop(1, 'rgba(255,80,80,0)');
       ctx.beginPath();
-      ctx.arc(x, y, r + 10, 0, Math.PI * 2);
+      ctx.arc(x, y, glowR, 0, Math.PI * 2);
       ctx.fillStyle = grad;
       ctx.fill();
     }
+
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fillStyle = score > 0.3 ? '#ff6b6b' : score > 0.1 ? '#feca57' : clusterColors[cluster % 6];
+    if (score > 0.3) {
+      ctx.fillStyle = '#ff4444';
+      ctx.shadowColor = '#ff4444';
+      ctx.shadowBlur = 8;
+    } else if (score > 0.1) {
+      ctx.fillStyle = '#feca57';
+      ctx.shadowBlur = 0;
+    } else {
+      ctx.fillStyle = clusterColors[cluster % 6];
+      ctx.shadowBlur = 0;
+    }
     ctx.fill();
+    ctx.shadowBlur = 0;
   }
+
   ctx.restore();
+
+  // HUD overlay
   ctx.fillStyle = '#bbb';
-  ctx.font = '12px monospace';
-  ctx.fillText('Fraud detection · Red = high-betweenness intermediaries · ' + elapsed + 'ms | Scroll to zoom, drag to pan', 10, cH - 10);
+  ctx.font = '11px monospace';
+  ctx.fillText('FRAUD SCAN · ' + graph.nodeCount() + ' accounts · ' + sorted.filter(s => s[1] > 0.3).length + ' flagged · ' + elapsed + 'ms', 10, cH - 10);
+  const flagged = sorted.filter(s => s[1] > 0.3).length;
+  ctx.fillStyle = '#ff4444';
+  ctx.fillText('⚠ ' + flagged + ' HIGH RISK', cW - 130, 18);
 }
 
 enableZoomPan(canvas, draw);
-draw();
+
+// Animation loop
+function animate() {
+  frame++;
+  for (const p of particles) {
+    p.progress += p.speed;
+    if (p.progress >= 1) {
+      p.progress = 0;
+      const e = suspiciousEdges[Math.floor(Math.random() * suspiciousEdges.length)];
+      p.x = pos[e.source][0]; p.y = pos[e.source][1];
+      p.tx = pos[e.target][0]; p.ty = pos[e.target][1];
+    }
+  }
+  draw();
+  requestAnimationFrame(animate);
+}
+animate();
 `;
 
 const pageRankViz = `import { Graph } from './graphrs-core.js';
@@ -654,35 +751,66 @@ for (let iter = 0; iter < 80; iter++) {
 const maxRank = sorted.length > 0 ? sorted[0][1] : 1;
 const app = document.getElementById('app')!;
 const cW = app.clientWidth || 800, cH = app.clientHeight || 560;
-app.innerHTML = '<canvas id="c" width="' + (cW*2) + '" height="' + (cH*2) + '" style="background:#08081c;display:block;width:' + cW + 'px;height:' + cH + 'px"></canvas>';
+app.innerHTML = '<div id="wrap" style="position:relative;width:100%;height:100%"><canvas id="c" width="' + (cW*2) + '" height="' + (cH*2) + '" style="background:#08081c;display:block;width:' + cW + 'px;height:' + cH + 'px"></canvas></div>';
 const canvas = document.getElementById('c') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 ctx.scale(2, 2);
 
-function draw(scale = 1, ox = 0, oy = 0) {
+// Particles representing "link juice" flow
+interface Particle { sx: number; sy: number; tx: number; ty: number; progress: number; speed: number; }
+const particles: Particle[] = [];
+const topEdges = graph.edges().filter(e => (ranks.get(e.source)||0)/maxRank > 0.15 || (ranks.get(e.target)||0)/maxRank > 0.15);
+for (let i = 0; i < 50; i++) {
+  const e = topEdges[Math.floor(Math.random() * topEdges.length)];
+  particles.push({
+    sx: pos[e.source][0], sy: pos[e.source][1],
+    tx: pos[e.target][0], ty: pos[e.target][1],
+    progress: Math.random(), speed: 0.004 + Math.random() * 0.008
+  });
+}
+
+let frame = 0;
+let currentScale = 1, currentOx = 0, currentOy = 0;
+
+function draw(scale = currentScale, ox = currentOx, oy = currentOy) {
+  currentScale = scale; currentOx = ox; currentOy = oy;
   const sx = cW / W * scale, sy = cH / H * scale;
+  const pulse = Math.sin(frame * 0.04) * 0.5 + 0.5;
   ctx.clearRect(0, 0, cW, cH);
   ctx.save();
   ctx.translate(ox, oy);
+
   for (const e of graph.edges()) {
     ctx.beginPath();
     ctx.moveTo(pos[e.source][0]*sx, pos[e.source][1]*sy);
     ctx.lineTo(pos[e.target][0]*sx, pos[e.target][1]*sy);
-    ctx.strokeStyle = 'rgba(60,120,200,0.05)';
+    ctx.strokeStyle = 'rgba(60,120,200,0.04)';
     ctx.lineWidth = 0.3;
     ctx.stroke();
   }
+
+  // Animated particles
+  for (const p of particles) {
+    const px = (p.sx + (p.tx - p.sx) * p.progress) * sx;
+    const py = (p.sy + (p.ty - p.sy) * p.progress) * sy;
+    ctx.beginPath();
+    ctx.arc(px, py, 1.5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,220,100,' + (0.3 + pulse * 0.4) + ')';
+    ctx.fill();
+  }
+
   for (const id of nodes) {
     const x = pos[id][0]*sx, y = pos[id][1]*sy;
     const r_val = ranks.get(id) || 0;
     const norm = r_val / maxRank;
     const r = (1.5 + norm * 12) * Math.min(scale, 2);
-    if (norm > 0.3) {
-      const grad = ctx.createRadialGradient(x, y, 0, x, y, r + 8);
-      grad.addColorStop(0, 'rgba(255,200,80,0.4)');
+    if (norm > 0.25) {
+      const glowR = r + 6 + pulse * 5;
+      const grad = ctx.createRadialGradient(x, y, r * 0.3, x, y, glowR);
+      grad.addColorStop(0, 'rgba(255,200,80,' + (0.25 + pulse * 0.2) + ')');
       grad.addColorStop(1, 'rgba(255,200,80,0)');
       ctx.beginPath();
-      ctx.arc(x, y, r + 8, 0, Math.PI * 2);
+      ctx.arc(x, y, glowR, 0, Math.PI * 2);
       ctx.fillStyle = grad;
       ctx.fill();
     }
@@ -692,13 +820,29 @@ function draw(scale = 1, ox = 0, oy = 0) {
     ctx.fill();
   }
   ctx.restore();
+
   ctx.fillStyle = '#bbb';
-  ctx.font = '12px monospace';
-  ctx.fillText('PageRank · ' + graph.nodeCount() + ' pages · ' + elapsed + 'ms · Gold = high authority | Scroll to zoom, drag to pan', 10, cH - 10);
+  ctx.font = '11px monospace';
+  ctx.fillText('PageRank · ' + graph.nodeCount() + ' pages · ' + elapsed + 'ms · Gold = high authority | Drag to pan, scroll/buttons to zoom', 10, cH - 10);
 }
 
 enableZoomPan(canvas, draw);
-draw();
+
+function animate() {
+  frame++;
+  for (const p of particles) {
+    p.progress += p.speed;
+    if (p.progress >= 1) {
+      p.progress = 0;
+      const e = topEdges[Math.floor(Math.random() * topEdges.length)];
+      p.sx = pos[e.source][0]; p.sy = pos[e.source][1];
+      p.tx = pos[e.target][0]; p.ty = pos[e.target][1];
+    }
+  }
+  draw();
+  requestAnimationFrame(animate);
+}
+animate();
 `;
 
 const perfBenchmark = `import { Graph } from './graphrs-core.js';
