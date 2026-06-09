@@ -11,6 +11,17 @@ const files = computed(() => ({
     code: props.code.trim(),
     active: true,
   },
+  '/index.html': {
+    code: `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8" /><title>graphrs</title></head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="./index.ts"></script>
+</body>
+</html>`,
+    hidden: true,
+  },
 }));
 
 const customSetup = {
