@@ -94,6 +94,42 @@ export class Graph {
 }
 `;
 
+const canvasUtilCode = `
+export function createCanvas(container) {
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:relative;width:100%;height:100%';
+  container.appendChild(wrapper);
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'display:block;width:100%;height:100%;background:#080b12';
+  wrapper.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  let cW = 0, cH = 0, drawFn = null;
+
+  function resize() {
+    cW = wrapper.clientWidth || 800;
+    cH = wrapper.clientHeight || 600;
+    canvas.width = cW * 2;
+    canvas.height = cH * 2;
+    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    if (drawFn) drawFn();
+  }
+
+  const ro = new ResizeObserver(resize);
+  ro.observe(wrapper);
+  resize();
+
+  return {
+    canvas,
+    ctx,
+    wrapper,
+    get width() { return cW; },
+    get height() { return cH; },
+    onResize(fn) { drawFn = fn; },
+    dispose() { ro.disconnect(); }
+  };
+}
+`;
+
 const zoomPanCode = `
 export function enableZoomPan(canvas, drawFn) {
   let scale = 1, offsetX = 0, offsetY = 0;
@@ -179,6 +215,10 @@ const files = computed(() => ({
   },
   '/zoom-pan.js': {
     code: zoomPanCode.trim(),
+    hidden: true,
+  },
+  '/canvas-util.js': {
+    code: canvasUtilCode.trim(),
     hidden: true,
   },
   '/index.html': {

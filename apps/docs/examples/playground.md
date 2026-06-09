@@ -1,9 +1,7 @@
 <script setup>
 const animatedBFS = `import { Graph } from './graphrs-core.js';
 import { enableZoomPan } from './zoom-pan.js';
-
-const app = document.getElementById('app')!;
-const cW = app.clientWidth || 800, cH = app.clientHeight || 600;
+import { createCanvas } from './canvas-util.js';
 
 function barabasiAlbert(n: number, m: number): Graph {
   const edges: [number, number][] = [];
@@ -23,10 +21,10 @@ function barabasiAlbert(n: number, m: number): Graph {
   return Graph.fromEdges(edges);
 }
 
-function forceLayout(graph: Graph, W: number, H: number, iter = 150) {
-  const nodes = graph.nodes(), n = nodes.length, k = Math.sqrt(W * H / n) * 1.2;
+function forceLayout(graph: Graph, W: number, H: number, iter = 180) {
+  const nodes = graph.nodes(), n = nodes.length, k = Math.sqrt(W * H / n) * 1.1;
   const pos: Record<number, [number, number]> = {};
-  for (const id of nodes) pos[id] = [100 + Math.random() * (W - 200), 100 + Math.random() * (H - 200)];
+  for (const id of nodes) pos[id] = [80 + Math.random() * (W - 160), 80 + Math.random() * (H - 160)];
   let temp = W / 3;
   for (let it = 0; it < iter; it++) {
     const disp: Record<number, [number, number]> = {};
@@ -48,37 +46,37 @@ function forceLayout(graph: Graph, W: number, H: number, iter = 150) {
     }
     for (const v of nodes) {
       const d = Math.max(Math.sqrt(disp[v][0] ** 2 + disp[v][1] ** 2), 0.1);
-      pos[v][0] = Math.max(60, Math.min(W - 60, pos[v][0] + (disp[v][0] / d) * Math.min(d, temp)));
-      pos[v][1] = Math.max(60, Math.min(H - 60, pos[v][1] + (disp[v][1] / d) * Math.min(d, temp)));
+      pos[v][0] = Math.max(40, Math.min(W - 40, pos[v][0] + (disp[v][0] / d) * Math.min(d, temp)));
+      pos[v][1] = Math.max(40, Math.min(H - 40, pos[v][1] + (disp[v][1] / d) * Math.min(d, temp)));
     }
     temp *= 0.95;
   }
   return pos;
 }
 
-let N = 150;
+const app = document.getElementById('app')!;
+let N = 300;
 const ctrl = document.createElement('div');
-ctrl.style.cssText = 'position:absolute;top:10px;left:10px;z-index:10;display:flex;gap:8px;align-items:center;padding:6px 12px;background:rgba(10,10,18,0.9);border-radius:8px;border:1px solid rgba(100,160,255,0.12);backdrop-filter:blur(8px)';
-ctrl.innerHTML = '<span style="color:#8ab4f8;font:11px/1 system-ui;font-weight:500">Nodes</span><input id="ns" type="range" min="50" max="500" value="150" style="width:90px;accent-color:#5b8ff9"><span id="nv" style="color:#bbb;font:11px system-ui;width:28px;text-align:center">150</span><button id="go" style="padding:3px 12px;background:linear-gradient(135deg,rgba(91,143,249,0.2),rgba(91,143,249,0.05));border:1px solid rgba(91,143,249,0.4);border-radius:6px;color:#8ab4f8;font:11px system-ui;font-weight:500;cursor:pointer;transition:all 0.15s">Run</button>';
+ctrl.style.cssText = 'position:absolute;top:10px;left:10px;z-index:10;display:flex;gap:8px;align-items:center;padding:6px 12px;background:rgba(10,10,18,0.92);border-radius:8px;border:1px solid rgba(100,160,255,0.15);backdrop-filter:blur(8px)';
+ctrl.innerHTML = '<span style="color:#8ab4f8;font:11px/1 system-ui;font-weight:500">Nodes</span><input id="ns" type="range" min="100" max="2000" value="300" style="width:100px;accent-color:#5b8ff9"><span id="nv" style="color:#bbb;font:11px system-ui;width:36px;text-align:center">300</span><button id="go" style="padding:3px 14px;background:linear-gradient(135deg,rgba(91,143,249,0.25),rgba(91,143,249,0.05));border:1px solid rgba(91,143,249,0.4);border-radius:6px;color:#8ab4f8;font:11px system-ui;font-weight:600;cursor:pointer;transition:all 0.15s">Run</button>';
+
+const cv = createCanvas(app);
+cv.wrapper.appendChild(ctrl);
+
+let graph: Graph, pos: Record<number, [number, number]>, deg: Record<number, number>, maxDeg: number;
+let layers: number[][], nodeLayer: Record<number, number>, maxLayer: number;
+let revealed = 0, revNodes = new Set<number>(), revEdges = new Set<string>();
+let zp: ReturnType<typeof enableZoomPan>;
 
 function run() {
-  const graph = barabasiAlbert(N, 2);
-  const W = 1200, H = 900;
-  const pos = forceLayout(graph, W, H);
-  const deg: Record<number, number> = {};
-  for (const id of graph.nodes()) deg[id] = graph.degree(id);
-  const maxDeg = Math.max(...Object.values(deg));
-
-  app.innerHTML = '<div id="w" style="position:relative;width:100%;height:100%"><canvas id="c"></canvas></div>';
-  document.getElementById('w')!.appendChild(ctrl);
-  const canvas = document.getElementById('c') as HTMLCanvasElement;
-  canvas.width = cW * 2; canvas.height = cH * 2;
-  canvas.style.cssText = 'display:block;width:' + cW + 'px;height:' + cH + 'px;background:#080b12';
-  const ctx = canvas.getContext('2d')!;
-  ctx.scale(2, 2);
+  graph = barabasiAlbert(N, 3);
+  const W = 1400, H = 1000;
+  pos = forceLayout(graph, W, H);
+  deg = {}; for (const id of graph.nodes()) deg[id] = graph.degree(id);
+  maxDeg = Math.max(...Object.values(deg));
 
   const hub = Number(Object.entries(deg).sort((a, b) => b[1] - a[1])[0][0]);
-  const visited = new Set<number>(); const layers: number[][] = [];
+  const visited = new Set<number>(); layers = [];
   let frontier = [hub]; visited.add(hub);
   while (frontier.length > 0) {
     layers.push([...frontier]);
@@ -89,110 +87,97 @@ function run() {
     frontier = next;
   }
 
-  const nodeLayer: Record<number, number> = {};
-  layers.forEach((layer, i) => { for (const id of layer) nodeLayer[id] = i; });
-  const maxLayer = layers.length - 1;
+  nodeLayer = {}; layers.forEach((layer, i) => { for (const id of layer) nodeLayer[id] = i; });
+  maxLayer = layers.length - 1;
+  revealed = 0; revNodes = new Set(); revEdges = new Set();
 
-  let revealed = 0;
-  const revNodes = new Set<number>();
-  const revEdges = new Set<string>();
-
-  function draw(scale = 1, ox = 0, oy = 0) {
-    const sx = cW / W * scale, sy = cH / H * scale;
-    ctx.clearRect(0, 0, cW, cH);
-    ctx.fillStyle = '#080b12';
-    ctx.fillRect(0, 0, cW, cH);
-    ctx.save(); ctx.translate(ox, oy);
-
-    // Edges with gradient alpha based on node importance
-    for (const key of revEdges) {
-      const [a, b] = key.split('-').map(Number);
-      const importance = Math.max(deg[a] / maxDeg, deg[b] / maxDeg);
-      ctx.beginPath();
-      ctx.moveTo(pos[a][0] * sx, pos[a][1] * sy);
-      ctx.lineTo(pos[b][0] * sx, pos[b][1] * sy);
-      ctx.strokeStyle = 'rgba(91,143,249,' + (0.03 + importance * 0.12) + ')';
-      ctx.lineWidth = 0.5 + importance * 0.8;
-      ctx.stroke();
-    }
-
-    // Nodes with radial gradient for hubs
-    for (const id of revNodes) {
-      const x = pos[id][0] * sx, y = pos[id][1] * sy;
-      const norm = deg[id] / maxDeg;
-      const r = (3 + norm * 10) * Math.min(scale, 2);
-      const depth = (nodeLayer[id] || 0) / Math.max(maxLayer, 1);
-
-      // Hub glow
-      if (norm > 0.4) {
-        const grd = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 2.5);
-        grd.addColorStop(0, 'rgba(91,143,249,0.25)');
-        grd.addColorStop(1, 'rgba(91,143,249,0)');
-        ctx.fillStyle = grd;
-        ctx.fillRect(x - r * 2.5, y - r * 2.5, r * 5, r * 5);
-      }
-
-      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-      const h = 215, s = 80, l = 70 - depth * 35;
-      ctx.fillStyle = 'hsl(' + h + ',' + s + '%,' + l + '%)';
-      ctx.fill();
-
-      // Bright rim for hubs
-      if (norm > 0.5) {
-        ctx.strokeStyle = 'rgba(138,180,248,0.6)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    }
-
-    // Labels on top 5 hubs
-    ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-    const topHubs = Object.entries(deg).sort((a, b) => b[1] - a[1]).slice(0, 5);
-    for (const [id, d] of topHubs) {
-      const nid = Number(id);
-      if (!revNodes.has(nid)) continue;
-      const x = pos[nid][0] * sx, y = pos[nid][1] * sy;
-      const r = (3 + (d / maxDeg) * 10) * Math.min(scale, 2);
-      ctx.fillStyle = 'rgba(200,220,255,0.9)';
-      ctx.fillText('hub #' + id + ' (deg ' + d + ')', x, y - r - 6);
-    }
-
-    ctx.restore();
-
-    // Status bar
-    ctx.fillStyle = 'rgba(8,11,18,0.85)';
-    ctx.fillRect(0, cH - 28, cW, 28);
-    ctx.fillStyle = '#667';
-    ctx.strokeStyle = 'rgba(91,143,249,0.15)';
-    ctx.beginPath(); ctx.moveTo(0, cH - 28); ctx.lineTo(cW, cH - 28); ctx.stroke();
-    ctx.font = '10px system-ui'; ctx.textAlign = 'left'; ctx.fillStyle = '#8ab4f8';
-    ctx.fillText('Layer ' + Math.min(revealed, layers.length) + '/' + layers.length, 12, cH - 10);
-    ctx.fillStyle = '#667';
-    ctx.fillText(revNodes.size + ' nodes  ·  ' + revEdges.size + ' edges  ·  scroll to zoom, drag to pan', 100, cH - 10);
-  }
-
-  const zp = enableZoomPan(canvas, draw);
-
-  function step() {
-    if (revealed >= layers.length) return;
-    const layer = layers[revealed];
-    for (const id of layer) {
-      revNodes.add(id);
-      for (const nb of graph.neighbors(id)) {
-        if (revNodes.has(nb)) revEdges.add(Math.min(id, nb) + '-' + Math.max(id, nb));
-      }
-    }
-    revealed++;
-    const t = zp.getTransform(); draw(t.scale, t.offsetX, t.offsetY);
-    setTimeout(step, Math.max(40, 150 - N / 4));
-  }
+  if (!zp) zp = enableZoomPan(cv.canvas, draw);
   step();
-
   console.log(graph.nodeCount() + ' nodes, ' + graph.edgeCount() + ' edges, ' + layers.length + ' BFS layers from hub #' + hub);
 }
 
-app.innerHTML = '<div id="w" style="position:relative;width:100%;height:100%"></div>';
-document.getElementById('w')!.appendChild(ctrl);
+function draw(scale?: number, ox?: number, oy?: number) {
+  const cW = cv.width, cH = cv.height;
+  const t = zp ? zp.getTransform() : { scale: 1, offsetX: 0, offsetY: 0 };
+  const s = scale ?? t.scale, oX = ox ?? t.offsetX, oY = oy ?? t.offsetY;
+  const W = 1400, H = 1000;
+  const sx = cW / W * s, sy = cH / H * s;
+  const ctx = cv.ctx;
+  ctx.clearRect(0, 0, cW, cH);
+  ctx.fillStyle = '#080b12'; ctx.fillRect(0, 0, cW, cH);
+  ctx.save(); ctx.translate(oX, oY);
+
+  for (const key of revEdges) {
+    const [a, b] = key.split('-').map(Number);
+    const importance = Math.max(deg[a] / maxDeg, deg[b] / maxDeg);
+    ctx.beginPath();
+    ctx.moveTo(pos[a][0] * sx, pos[a][1] * sy);
+    ctx.lineTo(pos[b][0] * sx, pos[b][1] * sy);
+    ctx.strokeStyle = 'rgba(91,143,249,' + (0.04 + importance * 0.15) + ')';
+    ctx.lineWidth = 0.4 + importance * 1.0;
+    ctx.stroke();
+  }
+
+  for (const id of revNodes) {
+    const x = pos[id][0] * sx, y = pos[id][1] * sy;
+    const norm = deg[id] / maxDeg;
+    const r = (2.5 + norm * 12) * Math.min(s, 2.5);
+    const depth = (nodeLayer[id] || 0) / Math.max(maxLayer, 1);
+
+    if (norm > 0.3) {
+      const grd = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 2.8);
+      grd.addColorStop(0, 'rgba(91,143,249,0.3)');
+      grd.addColorStop(1, 'rgba(91,143,249,0)');
+      ctx.fillStyle = grd;
+      ctx.fillRect(x - r * 2.8, y - r * 2.8, r * 5.6, r * 5.6);
+    }
+
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+    const h = 215, sat = 80, l = 72 - depth * 40;
+    ctx.fillStyle = 'hsl(' + h + ',' + sat + '%,' + l + '%)';
+    ctx.fill();
+
+    if (norm > 0.4) {
+      ctx.strokeStyle = 'rgba(138,180,248,0.6)'; ctx.lineWidth = 1.2; ctx.stroke();
+    }
+  }
+
+  ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+  const topHubs = Object.entries(deg).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  for (const [id, d] of topHubs) {
+    const nid = Number(id);
+    if (!revNodes.has(nid)) continue;
+    const x = pos[nid][0] * sx, y = pos[nid][1] * sy;
+    const r = (2.5 + (d / maxDeg) * 12) * Math.min(s, 2.5);
+    ctx.fillStyle = 'rgba(200,220,255,0.9)';
+    ctx.fillText('hub #' + id + ' (deg ' + d + ')', x, y - r - 5);
+  }
+  ctx.restore();
+
+  // Status bar
+  ctx.fillStyle = 'rgba(8,11,18,0.88)'; ctx.fillRect(0, cH - 26, cW, 26);
+  ctx.strokeStyle = 'rgba(91,143,249,0.12)'; ctx.beginPath(); ctx.moveTo(0, cH - 26); ctx.lineTo(cW, cH - 26); ctx.stroke();
+  ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+  ctx.fillStyle = '#8ab4f8'; ctx.fillText('Layer ' + Math.min(revealed, layers.length) + '/' + layers.length, 12, cH - 9);
+  ctx.fillStyle = '#667'; ctx.fillText(revNodes.size + ' / ' + graph.nodeCount() + ' nodes  ·  ' + revEdges.size + ' edges  ·  zoom & pan', 110, cH - 9);
+}
+
+cv.onResize(draw);
+
+function step() {
+  if (revealed >= layers.length) return;
+  const layer = layers[revealed];
+  for (const id of layer) {
+    revNodes.add(id);
+    for (const nb of graph.neighbors(id)) {
+      if (revNodes.has(nb)) revEdges.add(Math.min(id, nb) + '-' + Math.max(id, nb));
+    }
+  }
+  revealed++;
+  draw();
+  setTimeout(step, Math.max(30, 120 - N / 8));
+}
+
 setTimeout(() => {
   document.getElementById('ns')!.addEventListener('input', (e: any) => { N = +e.target.value; document.getElementById('nv')!.textContent = N + ''; });
   document.getElementById('go')!.addEventListener('click', run);
@@ -202,17 +187,10 @@ setTimeout(() => {
 
 const communityViz = `import { Graph } from './graphrs-core.js';
 import { enableZoomPan } from './zoom-pan.js';
-
-const app = document.getElementById('app')!;
-const cW = app.clientWidth || 800, cH = app.clientHeight || 600;
-
-let N = 150;
-const ctrl = document.createElement('div');
-ctrl.style.cssText = 'position:absolute;top:10px;left:10px;z-index:10;display:flex;gap:8px;align-items:center;padding:6px 12px;background:rgba(10,10,18,0.9);border-radius:8px;border:1px solid rgba(90,216,166,0.12);backdrop-filter:blur(8px)';
-ctrl.innerHTML = '<span style="color:#5ad8a6;font:11px/1 system-ui;font-weight:500">Nodes</span><input id="ns" type="range" min="60" max="400" value="150" style="width:90px;accent-color:#5ad8a6"><span id="nv" style="color:#bbb;font:11px system-ui;width:28px;text-align:center">150</span><button id="go" style="padding:3px 12px;background:linear-gradient(135deg,rgba(90,216,166,0.2),rgba(90,216,166,0.05));border:1px solid rgba(90,216,166,0.4);border-radius:6px;color:#5ad8a6;font:11px system-ui;font-weight:500;cursor:pointer">Run</button>';
+import { createCanvas } from './canvas-util.js';
 
 function makeCommunityGraph(n: number) {
-  const numComm = Math.max(4, Math.round(n / 30));
+  const numComm = Math.max(4, Math.round(n / 28));
   const sizes: number[] = [];
   let rem = n;
   for (let i = 0; i < numComm - 1; i++) {
@@ -224,12 +202,10 @@ function makeCommunityGraph(n: number) {
 
   const edges: [number, number][] = [], seen = new Set<string>();
   const add = (a: number, b: number) => { const k = Math.min(a, b) + '-' + Math.max(a, b); if (a !== b && !seen.has(k)) { seen.add(k); edges.push([a, b]); } };
-  const trueLabel = new Map<number, number>();
   let off = 0;
   for (let c = 0; c < sizes.length; c++) {
     for (let i = 0; i < sizes[c]; i++) {
-      trueLabel.set(off + i, c);
-      for (let j = i + 1; j < sizes[c]; j++) if (Math.random() < 0.3) add(off + i, off + j);
+      for (let j = i + 1; j < sizes[c]; j++) if (Math.random() < 0.35) add(off + i, off + j);
     }
     off += sizes[c];
   }
@@ -237,21 +213,19 @@ function makeCommunityGraph(n: number) {
   for (let c = 0; c < sizes.length; c++) {
     for (let c2 = c + 1; c2 < sizes.length; c2++) {
       const bridges = 1 + Math.floor(Math.random() * 2);
-      for (let k = 0; k < bridges; k++) {
-        const offC2 = sizes.slice(0, c2).reduce((a, b) => a + b, 0);
-        add(off + Math.floor(Math.random() * sizes[c]), offC2 + Math.floor(Math.random() * sizes[c2]));
-      }
+      const offC2 = sizes.slice(0, c2).reduce((a, b) => a + b, 0);
+      for (let k = 0; k < bridges; k++) add(off + Math.floor(Math.random() * sizes[c]), offC2 + Math.floor(Math.random() * sizes[c2]));
     }
     off += sizes[c];
   }
-  return { graph: Graph.fromEdges(edges), trueLabel };
+  return Graph.fromEdges(edges);
 }
 
 function detectComm(graph: Graph): Map<number, number> {
   const nodes = graph.nodes(), labels = new Map<number, number>();
   for (const id of nodes) labels.set(id, id);
-  const m2 = graph.edgeCount() * 2;
-  for (let pass = 0; pass < 40; pass++) {
+  const m2 = Math.max(graph.edgeCount() * 2, 1);
+  for (let pass = 0; pass < 50; pass++) {
     let moved = false;
     for (const node of [...nodes].sort(() => Math.random() - 0.5)) {
       const nbs = graph.neighbors(node); if (!nbs.length) continue;
@@ -272,9 +246,9 @@ function detectComm(graph: Graph): Map<number, number> {
 function forceLayout(graph: Graph, W: number, H: number) {
   const nodes = graph.nodes(), n = nodes.length, k = Math.sqrt(W * H / n) * 1.2;
   const pos: Record<number, [number, number]> = {};
-  for (const id of nodes) pos[id] = [100 + Math.random() * (W - 200), 100 + Math.random() * (H - 200)];
+  for (const id of nodes) pos[id] = [80 + Math.random() * (W - 160), 80 + Math.random() * (H - 160)];
   let temp = W / 3;
-  for (let it = 0; it < 120; it++) {
+  for (let it = 0; it < 130; it++) {
     const d: Record<number, [number, number]> = {};
     for (const v of nodes) d[v] = [0, 0];
     for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
@@ -292,101 +266,101 @@ function forceLayout(graph: Graph, W: number, H: number) {
     }
     for (const v of nodes) {
       const len = Math.max(Math.sqrt(d[v][0] ** 2 + d[v][1] ** 2), 0.1);
-      pos[v][0] = Math.max(60, Math.min(W - 60, pos[v][0] + (d[v][0] / len) * Math.min(len, temp)));
-      pos[v][1] = Math.max(60, Math.min(H - 60, pos[v][1] + (d[v][1] / len) * Math.min(len, temp)));
+      pos[v][0] = Math.max(50, Math.min(W - 50, pos[v][0] + (d[v][0] / len) * Math.min(len, temp)));
+      pos[v][1] = Math.max(50, Math.min(H - 50, pos[v][1] + (d[v][1] / len) * Math.min(len, temp)));
     }
     temp *= 0.94;
   }
   return pos;
 }
 
-const palette = ['#5B8FF9', '#5AD8A6', '#F6BD16', '#E86B5A', '#6DC8EC', '#9270CA', '#269A99', '#FF9845'];
+const palette = ['#5B8FF9', '#5AD8A6', '#F6BD16', '#E86B5A', '#6DC8EC', '#9270CA', '#269A99', '#FF9845', '#FF6B81', '#61DDAA'];
+const app = document.getElementById('app')!;
+let N = 200;
+const ctrl = document.createElement('div');
+ctrl.style.cssText = 'position:absolute;top:10px;left:10px;z-index:10;display:flex;gap:8px;align-items:center;padding:6px 12px;background:rgba(10,10,18,0.92);border-radius:8px;border:1px solid rgba(90,216,166,0.15);backdrop-filter:blur(8px)';
+ctrl.innerHTML = '<span style="color:#5ad8a6;font:11px/1 system-ui;font-weight:500">Nodes</span><input id="ns" type="range" min="80" max="500" value="200" style="width:100px;accent-color:#5ad8a6"><span id="nv" style="color:#bbb;font:11px system-ui;width:36px;text-align:center">200</span><button id="go" style="padding:3px 14px;background:linear-gradient(135deg,rgba(90,216,166,0.25),rgba(90,216,166,0.05));border:1px solid rgba(90,216,166,0.4);border-radius:6px;color:#5ad8a6;font:11px system-ui;font-weight:600;cursor:pointer">Run</button>';
+
+const cv = createCanvas(app);
+cv.wrapper.appendChild(ctrl);
+let graph: Graph, labels: Map<number, number>, pos: Record<number, [number, number]>;
+let commMap: Map<number, number[]>, commColor: Map<number, string>;
+let zp: ReturnType<typeof enableZoomPan>;
 
 function run() {
-  const { graph } = makeCommunityGraph(N);
-  const labels = detectComm(graph);
-  const W = 1200, H = 900, pos = forceLayout(graph, W, H);
+  const t0 = performance.now();
+  graph = makeCommunityGraph(N);
+  labels = detectComm(graph);
+  const W = 1400, H = 1000;
+  pos = forceLayout(graph, W, H);
+  const elapsed = (performance.now() - t0).toFixed(0);
 
-  const commMap = new Map<number, number[]>();
+  commMap = new Map();
   for (const [nd, lbl] of labels) { if (!commMap.has(lbl)) commMap.set(lbl, []); commMap.get(lbl)!.push(nd); }
-  const commColor = new Map<number, string>();
+  commColor = new Map();
   let ci = 0;
   for (const [lbl] of [...commMap.entries()].sort((a, b) => b[1].length - a[1].length)) {
     commColor.set(lbl, palette[ci % palette.length]); ci++;
   }
 
-  app.innerHTML = '<div id="w" style="position:relative;width:100%;height:100%"><canvas id="c"></canvas></div>';
-  document.getElementById('w')!.appendChild(ctrl);
-  const canvas = document.getElementById('c') as HTMLCanvasElement;
-  canvas.width = cW * 2; canvas.height = cH * 2;
-  canvas.style.cssText = 'display:block;width:' + cW + 'px;height:' + cH + 'px;background:#080b12';
-  const ctx = canvas.getContext('2d')!;
-  ctx.scale(2, 2);
-
-  function draw(scale = 1, ox = 0, oy = 0) {
-    const sx = cW / W * scale, sy = cH / H * scale;
-    ctx.clearRect(0, 0, cW, cH);
-    ctx.fillStyle = '#080b12'; ctx.fillRect(0, 0, cW, cH);
-    ctx.save(); ctx.translate(ox, oy);
-
-    // Edges — intra-community edges brighter
-    for (const e of graph.edges()) {
-      const same = labels.get(e.source) === labels.get(e.target);
-      const color = same ? commColor.get(labels.get(e.source)!) || '#555566' : '#555566';
-      ctx.beginPath();
-      ctx.moveTo(pos[e.source][0] * sx, pos[e.source][1] * sy);
-      ctx.lineTo(pos[e.target][0] * sx, pos[e.target][1] * sy);
-      ctx.strokeStyle = same ? color + '22' : 'rgba(60,70,90,0.06)';
-      ctx.lineWidth = same ? 0.8 : 0.4;
-      ctx.stroke();
-    }
-
-    // Nodes
-    for (const id of graph.nodes()) {
-      const x = pos[id][0] * sx, y = pos[id][1] * sy;
-      const color = commColor.get(labels.get(id)!) || '#555555';
-      const d = graph.degree(id);
-      const r = (3.5 + d * 0.5) * Math.min(scale, 2);
-
-      // Glow for high-degree community hubs
-      if (d > 8) {
-        const grd = ctx.createRadialGradient(x, y, r * 0.5, x, y, r * 2.2);
-        grd.addColorStop(0, color + '30');
-        grd.addColorStop(1, color + '00');
-        ctx.fillStyle = grd;
-        ctx.fillRect(x - r * 2.2, y - r * 2.2, r * 4.4, r * 4.4);
-      }
-
-      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.globalAlpha = 0.88;
-      ctx.fill();
-      ctx.globalAlpha = 1;
-    }
-    ctx.restore();
-
-    // Legend panel
-    ctx.fillStyle = 'rgba(8,11,18,0.9)';
-    ctx.fillRect(8, cH - 24 - Math.min(commMap.size, 6) * 18, 120, Math.min(commMap.size, 6) * 18 + 12);
-    ctx.textAlign = 'left'; ctx.font = '10px system-ui';
-    const sorted = [...commMap.entries()].sort((a, b) => b[1].length - a[1].length).slice(0, 6);
-    sorted.forEach(([lbl, members], i) => {
-      const y = cH - 16 - i * 18;
-      const color = commColor.get(lbl) || '#555555';
-      ctx.fillStyle = color;
-      ctx.beginPath(); ctx.arc(18, y - 3, 5, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#aaa';
-      ctx.fillText(members.length + ' nodes', 28, y);
-    });
-  }
-
-  enableZoomPan(canvas, draw);
+  if (!zp) zp = enableZoomPan(cv.canvas, draw);
   draw();
-  console.log(graph.nodeCount() + ' nodes, ' + graph.edgeCount() + ' edges, ' + commMap.size + ' communities');
+  console.log(graph.nodeCount() + ' nodes, ' + graph.edgeCount() + ' edges, ' + commMap.size + ' communities (' + elapsed + 'ms)');
 }
 
-app.innerHTML = '<div id="w" style="position:relative;width:100%;height:100%"></div>';
-document.getElementById('w')!.appendChild(ctrl);
+function draw(scale?: number, ox?: number, oy?: number) {
+  const cW = cv.width, cH = cv.height, ctx = cv.ctx;
+  const t = zp ? zp.getTransform() : { scale: 1, offsetX: 0, offsetY: 0 };
+  const s = scale ?? t.scale, oX = ox ?? t.offsetX, oY = oy ?? t.offsetY;
+  const W = 1400, H = 1000, sx = cW / W * s, sy = cH / H * s;
+  ctx.clearRect(0, 0, cW, cH); ctx.fillStyle = '#080b12'; ctx.fillRect(0, 0, cW, cH);
+  ctx.save(); ctx.translate(oX, oY);
+
+  for (const e of graph.edges()) {
+    const same = labels.get(e.source) === labels.get(e.target);
+    const color = same ? commColor.get(labels.get(e.source)!) || '#555566' : '#555566';
+    ctx.beginPath();
+    ctx.moveTo(pos[e.source][0] * sx, pos[e.source][1] * sy);
+    ctx.lineTo(pos[e.target][0] * sx, pos[e.target][1] * sy);
+    ctx.strokeStyle = same ? color + '33' : 'rgba(60,70,90,0.05)';
+    ctx.lineWidth = same ? 0.9 : 0.3;
+    ctx.stroke();
+  }
+
+  for (const id of graph.nodes()) {
+    const x = pos[id][0] * sx, y = pos[id][1] * sy;
+    const color = commColor.get(labels.get(id)!) || '#555555';
+    const d = graph.degree(id);
+    const r = (3 + d * 0.6) * Math.min(s, 2.5);
+
+    if (d > 6) {
+      const grd = ctx.createRadialGradient(x, y, r * 0.4, x, y, r * 2.5);
+      grd.addColorStop(0, color + '40');
+      grd.addColorStop(1, color + '00');
+      ctx.fillStyle = grd;
+      ctx.fillRect(x - r * 2.5, y - r * 2.5, r * 5, r * 5);
+    }
+
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.globalAlpha = 0.9; ctx.fill(); ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+
+  // Legend
+  const sorted = [...commMap.entries()].sort((a, b) => b[1].length - a[1].length).slice(0, 8);
+  ctx.fillStyle = 'rgba(8,11,18,0.92)';
+  ctx.fillRect(8, cH - 18 - sorted.length * 17, 110, sorted.length * 17 + 8);
+  ctx.textAlign = 'left'; ctx.font = '10px system-ui';
+  sorted.forEach(([lbl, members], i) => {
+    const y = cH - 12 - (sorted.length - 1 - i) * 17;
+    ctx.fillStyle = commColor.get(lbl) || '#555555';
+    ctx.beginPath(); ctx.arc(18, y - 3, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#aaa'; ctx.fillText(members.length + ' nodes', 28, y);
+  });
+}
+
+cv.onResize(draw);
+
 setTimeout(() => {
   document.getElementById('ns')!.addEventListener('input', (e: any) => { N = +e.target.value; document.getElementById('nv')!.textContent = N + ''; });
   document.getElementById('go')!.addEventListener('click', run);
@@ -396,23 +370,22 @@ setTimeout(() => {
 
 const centralityViz = `import { Graph } from './graphrs-core.js';
 import { enableZoomPan } from './zoom-pan.js';
+import { createCanvas } from './canvas-util.js';
 
 const app = document.getElementById('app')!;
-const cW = app.clientWidth || 800, cH = app.clientHeight || 600;
-
-let N = 100;
+let N = 150;
 const ctrl = document.createElement('div');
-ctrl.style.cssText = 'position:absolute;top:10px;left:10px;z-index:10;display:flex;gap:8px;align-items:center;padding:6px 12px;background:rgba(10,10,18,0.9);border-radius:8px;border:1px solid rgba(232,107,90,0.12);backdrop-filter:blur(8px)';
-ctrl.innerHTML = '<span style="color:#e86b5a;font:11px/1 system-ui;font-weight:500">Nodes</span><input id="ns" type="range" min="30" max="200" value="100" style="width:90px;accent-color:#e86b5a"><span id="nv" style="color:#bbb;font:11px system-ui;width:28px;text-align:center">100</span><button id="go" style="padding:3px 12px;background:linear-gradient(135deg,rgba(232,107,90,0.2),rgba(232,107,90,0.05));border:1px solid rgba(232,107,90,0.4);border-radius:6px;color:#e86b5a;font:11px system-ui;font-weight:500;cursor:pointer">Run</button>';
+ctrl.style.cssText = 'position:absolute;top:10px;left:10px;z-index:10;display:flex;gap:8px;align-items:center;padding:6px 12px;background:rgba(10,10,18,0.92);border-radius:8px;border:1px solid rgba(232,107,90,0.15);backdrop-filter:blur(8px)';
+ctrl.innerHTML = '<span style="color:#e86b5a;font:11px/1 system-ui;font-weight:500">Nodes</span><input id="ns" type="range" min="50" max="300" value="150" style="width:100px;accent-color:#e86b5a"><span id="nv" style="color:#bbb;font:11px system-ui;width:36px;text-align:center">150</span><button id="go" style="padding:3px 14px;background:linear-gradient(135deg,rgba(232,107,90,0.25),rgba(232,107,90,0.05));border:1px solid rgba(232,107,90,0.4);border-radius:6px;color:#e86b5a;font:11px system-ui;font-weight:600;cursor:pointer">Run</button>';
 
 function buildNetwork(n: number): Graph {
-  const nc = Math.max(3, Math.round(n / 20));
+  const nc = Math.max(3, Math.round(n / 18));
   const cs = Math.floor(n / nc);
   const edges: [number, number][] = [], seen = new Set<string>();
   const add = (a: number, b: number) => { const k = Math.min(a, b) + '-' + Math.max(a, b); if (a !== b && !seen.has(k)) { seen.add(k); edges.push([a, b]); } };
   for (let c = 0; c < nc; c++) {
     const base = c * cs;
-    for (let i = 0; i < cs; i++) for (let j = i + 1; j < cs; j++) if (Math.random() < 0.25) add(base + i, base + j);
+    for (let i = 0; i < cs; i++) for (let j = i + 1; j < cs; j++) if (Math.random() < 0.3) add(base + i, base + j);
   }
   for (let c = 0; c < nc - 1; c++) for (let k = 0; k < 2; k++) add(c * cs + Math.floor(Math.random() * cs), (c + 1) * cs + Math.floor(Math.random() * cs));
   return Graph.fromEdges(edges);
@@ -447,9 +420,9 @@ function betweenness(graph: Graph): Map<number, number> {
 function forceLayout(graph: Graph, W: number, H: number) {
   const nodes = graph.nodes(), n = nodes.length, k = Math.sqrt(W * H / n) * 1.3;
   const pos: Record<number, [number, number]> = {};
-  for (const id of nodes) pos[id] = [100 + Math.random() * (W - 200), 100 + Math.random() * (H - 200)];
+  for (const id of nodes) pos[id] = [80 + Math.random() * (W - 160), 80 + Math.random() * (H - 160)];
   let temp = W / 3;
-  for (let it = 0; it < 120; it++) {
+  for (let it = 0; it < 130; it++) {
     const d: Record<number, [number, number]> = {};
     for (const v of nodes) d[v] = [0, 0];
     for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
@@ -465,109 +438,97 @@ function forceLayout(graph: Graph, W: number, H: number) {
     }
     for (const v of nodes) {
       const len = Math.max(Math.sqrt(d[v][0] ** 2 + d[v][1] ** 2), 0.1);
-      pos[v][0] = Math.max(60, Math.min(W - 60, pos[v][0] + (d[v][0] / len) * Math.min(len, temp)));
-      pos[v][1] = Math.max(60, Math.min(H - 60, pos[v][1] + (d[v][1] / len) * Math.min(len, temp)));
+      pos[v][0] = Math.max(50, Math.min(W - 50, pos[v][0] + (d[v][0] / len) * Math.min(len, temp)));
+      pos[v][1] = Math.max(50, Math.min(H - 50, pos[v][1] + (d[v][1] / len) * Math.min(len, temp)));
     }
     temp *= 0.94;
   }
   return pos;
 }
 
+const cv = createCanvas(app);
+cv.wrapper.appendChild(ctrl);
+let graph: Graph, bc: Map<number, number>, pos: Record<number, [number, number]>, sorted: [number, number][];
+let zp: ReturnType<typeof enableZoomPan>;
+
+function scoreColor(score: number): string {
+  if (score > 0.5) { const t = (score - 0.5) * 2; return 'hsl(' + (30 - t * 25) + ',85%,' + (55 + t * 10) + '%)'; }
+  if (score > 0.1) { const t = (score - 0.1) / 0.4; return 'hsl(' + (220 - t * 190) + ',75%,' + (50 + t * 5) + '%)'; }
+  return 'hsl(220,40%,30%)';
+}
+
 function run() {
-  const graph = buildNetwork(N);
-  const bc = betweenness(graph);
-  const W = 1200, H = 900, pos = forceLayout(graph, W, H);
-  const nodes = graph.nodes();
-  const sorted = [...bc.entries()].sort((a, b) => b[1] - a[1]);
+  const t0 = performance.now();
+  graph = buildNetwork(N);
+  bc = betweenness(graph);
+  const W = 1400, H = 1000;
+  pos = forceLayout(graph, W, H);
+  sorted = [...bc.entries()].sort((a, b) => b[1] - a[1]);
+  const elapsed = (performance.now() - t0).toFixed(0);
 
-  app.innerHTML = '<div id="w" style="position:relative;width:100%;height:100%"><canvas id="c"></canvas></div>';
-  document.getElementById('w')!.appendChild(ctrl);
-  const canvas = document.getElementById('c') as HTMLCanvasElement;
-  canvas.width = cW * 2; canvas.height = cH * 2;
-  canvas.style.cssText = 'display:block;width:' + cW + 'px;height:' + cH + 'px;background:#080b12';
-  const ctx = canvas.getContext('2d')!;
-  ctx.scale(2, 2);
-
-  // Continuous HSL interpolation: blue(220) → orange(30) → red(5)
-  function scoreColor(score: number): string {
-    if (score > 0.5) { const t = (score - 0.5) * 2; return 'hsl(' + (30 - t * 25) + ',85%,' + (55 + t * 10) + '%)'; }
-    if (score > 0.1) { const t = (score - 0.1) / 0.4; return 'hsl(' + (220 - t * 190) + ',75%,' + (50 + t * 5) + '%)'; }
-    return 'hsl(220,40%,30%)';
-  }
-
-  function draw(scale = 1, ox = 0, oy = 0) {
-    const sx = cW / W * scale, sy = cH / H * scale;
-    ctx.clearRect(0, 0, cW, cH);
-    ctx.fillStyle = '#080b12'; ctx.fillRect(0, 0, cW, cH);
-    ctx.save(); ctx.translate(ox, oy);
-
-    // Edges with varying opacity
-    for (const e of graph.edges()) {
-      const avgScore = ((bc.get(e.source) || 0) + (bc.get(e.target) || 0)) / 2;
-      ctx.beginPath();
-      ctx.moveTo(pos[e.source][0] * sx, pos[e.source][1] * sy);
-      ctx.lineTo(pos[e.target][0] * sx, pos[e.target][1] * sy);
-      ctx.strokeStyle = 'rgba(100,140,200,' + (0.04 + avgScore * 0.15) + ')';
-      ctx.lineWidth = 0.5 + avgScore * 1.5;
-      ctx.stroke();
-    }
-
-    // Nodes — size + color by betweenness
-    for (const id of nodes) {
-      const x = pos[id][0] * sx, y = pos[id][1] * sy;
-      const score = bc.get(id) || 0;
-      const r = (3.5 + score * 14) * Math.min(scale, 2);
-
-      // Glow for bridges
-      if (score > 0.3) {
-        const grd = ctx.createRadialGradient(x, y, r * 0.4, x, y, r * 2.5);
-        grd.addColorStop(0, 'rgba(232,107,90,0.2)');
-        grd.addColorStop(1, 'rgba(232,107,90,0)');
-        ctx.fillStyle = grd;
-        ctx.fillRect(x - r * 2.5, y - r * 2.5, r * 5, r * 5);
-      }
-
-      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fillStyle = scoreColor(score);
-      ctx.fill();
-
-      if (score > 0.5) {
-        ctx.strokeStyle = 'rgba(255,200,150,0.5)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    }
-
-    // Labels on top 5 bridges
-    ctx.font = '10px system-ui'; ctx.fillStyle = 'rgba(255,220,200,0.9)'; ctx.textAlign = 'center';
-    sorted.slice(0, 5).forEach(([id, score]) => {
-      const x = pos[id][0] * sx, y = pos[id][1] * sy;
-      const r = (3.5 + score * 14) * Math.min(scale, 2);
-      ctx.fillText('#' + id + ' (' + score.toFixed(2) + ')', x, y - r - 6);
-    });
-
-    ctx.restore();
-
-    // Legend
-    ctx.fillStyle = 'rgba(8,11,18,0.9)';
-    ctx.fillRect(8, cH - 82, 140, 70);
-    ctx.textAlign = 'left'; ctx.font = '10px system-ui';
-    const legend: [string, string][] = [['hsl(5,85%,60%)', 'Critical bridge (>0.5)'], ['hsl(30,75%,55%)', 'Important (0.2-0.5)'], ['hsl(130,75%,50%)', 'Moderate (0.1-0.2)'], ['hsl(220,40%,30%)', 'Peripheral']];
-    legend.forEach(([color, label], i) => {
-      const y = cH - 68 + i * 16;
-      ctx.fillStyle = color; ctx.beginPath(); ctx.arc(18, y, 4, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#999'; ctx.fillText(label, 28, y + 3);
-    });
-  }
-
-  enableZoomPan(canvas, draw);
+  if (!zp) zp = enableZoomPan(cv.canvas, draw);
   draw();
-  console.log(graph.nodeCount() + ' nodes, ' + graph.edgeCount() + ' edges');
+  console.log(graph.nodeCount() + ' nodes, ' + graph.edgeCount() + ' edges (' + elapsed + 'ms)');
   console.log('Top bridges: ' + sorted.slice(0, 5).map(([id, s]) => '#' + id + '=' + s.toFixed(3)).join(', '));
 }
 
-app.innerHTML = '<div id="w" style="position:relative;width:100%;height:100%"></div>';
-document.getElementById('w')!.appendChild(ctrl);
+function draw(scale?: number, ox?: number, oy?: number) {
+  const cW = cv.width, cH = cv.height, ctx = cv.ctx;
+  const t = zp ? zp.getTransform() : { scale: 1, offsetX: 0, offsetY: 0 };
+  const s = scale ?? t.scale, oX = ox ?? t.offsetX, oY = oy ?? t.offsetY;
+  const W = 1400, H = 1000, sx = cW / W * s, sy = cH / H * s;
+  ctx.clearRect(0, 0, cW, cH); ctx.fillStyle = '#080b12'; ctx.fillRect(0, 0, cW, cH);
+  ctx.save(); ctx.translate(oX, oY);
+
+  for (const e of graph.edges()) {
+    const avgScore = ((bc.get(e.source) || 0) + (bc.get(e.target) || 0)) / 2;
+    ctx.beginPath();
+    ctx.moveTo(pos[e.source][0] * sx, pos[e.source][1] * sy);
+    ctx.lineTo(pos[e.target][0] * sx, pos[e.target][1] * sy);
+    ctx.strokeStyle = 'rgba(100,140,200,' + (0.05 + avgScore * 0.2) + ')';
+    ctx.lineWidth = 0.5 + avgScore * 1.8;
+    ctx.stroke();
+  }
+
+  for (const id of graph.nodes()) {
+    const x = pos[id][0] * sx, y = pos[id][1] * sy;
+    const score = bc.get(id) || 0;
+    const r = (3 + score * 16) * Math.min(s, 2.5);
+
+    if (score > 0.25) {
+      const grd = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 2.8);
+      grd.addColorStop(0, 'rgba(232,107,90,' + (0.15 + score * 0.2) + ')');
+      grd.addColorStop(1, 'rgba(232,107,90,0)');
+      ctx.fillStyle = grd;
+      ctx.fillRect(x - r * 2.8, y - r * 2.8, r * 5.6, r * 5.6);
+    }
+
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = scoreColor(score); ctx.fill();
+    if (score > 0.5) { ctx.strokeStyle = 'rgba(255,200,150,0.5)'; ctx.lineWidth = 1.2; ctx.stroke(); }
+  }
+
+  ctx.font = '10px system-ui'; ctx.fillStyle = 'rgba(255,220,200,0.9)'; ctx.textAlign = 'center';
+  sorted.slice(0, 6).forEach(([id, score]) => {
+    const x = pos[id][0] * sx, y = pos[id][1] * sy;
+    const r = (3 + score * 16) * Math.min(s, 2.5);
+    ctx.fillText('#' + id + ' (' + score.toFixed(2) + ')', x, y - r - 5);
+  });
+  ctx.restore();
+
+  // Legend
+  ctx.fillStyle = 'rgba(8,11,18,0.92)'; ctx.fillRect(8, cH - 82, 145, 72);
+  ctx.textAlign = 'left'; ctx.font = '10px system-ui';
+  const legend: [string, string][] = [['hsl(5,85%,60%)', 'Critical bridge (>0.5)'], ['hsl(30,75%,55%)', 'Important (0.2-0.5)'], ['hsl(130,75%,50%)', 'Moderate (0.1-0.2)'], ['hsl(220,40%,30%)', 'Peripheral']];
+  legend.forEach(([color, label], i) => {
+    const y = cH - 68 + i * 16;
+    ctx.fillStyle = color; ctx.beginPath(); ctx.arc(18, y, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#999'; ctx.fillText(label, 28, y + 3);
+  });
+}
+
+cv.onResize(draw);
+
 setTimeout(() => {
   document.getElementById('ns')!.addEventListener('input', (e: any) => { N = +e.target.value; document.getElementById('nv')!.textContent = N + ''; });
   document.getElementById('go')!.addEventListener('click', run);
@@ -577,27 +538,26 @@ setTimeout(() => {
 
 const pageRankViz = `import { Graph } from './graphrs-core.js';
 import { enableZoomPan } from './zoom-pan.js';
+import { createCanvas } from './canvas-util.js';
 
 const app = document.getElementById('app')!;
-const cW = app.clientWidth || 800, cH = app.clientHeight || 600;
-
-let N = 150;
+let N = 250;
 const ctrl = document.createElement('div');
-ctrl.style.cssText = 'position:absolute;top:10px;left:10px;z-index:10;display:flex;gap:8px;align-items:center;padding:6px 12px;background:rgba(10,10,18,0.9);border-radius:8px;border:1px solid rgba(246,189,22,0.12);backdrop-filter:blur(8px)';
-ctrl.innerHTML = '<span style="color:#f6bd16;font:11px/1 system-ui;font-weight:500">Pages</span><input id="ns" type="range" min="50" max="400" value="150" style="width:90px;accent-color:#f6bd16"><span id="nv" style="color:#bbb;font:11px system-ui;width:28px;text-align:center">150</span><button id="go" style="padding:3px 12px;background:linear-gradient(135deg,rgba(246,189,22,0.2),rgba(246,189,22,0.05));border:1px solid rgba(246,189,22,0.4);border-radius:6px;color:#f6bd16;font:11px system-ui;font-weight:500;cursor:pointer">Run</button>';
+ctrl.style.cssText = 'position:absolute;top:10px;left:10px;z-index:10;display:flex;gap:8px;align-items:center;padding:6px 12px;background:rgba(10,10,18,0.92);border-radius:8px;border:1px solid rgba(246,189,22,0.15);backdrop-filter:blur(8px)';
+ctrl.innerHTML = '<span style="color:#f6bd16;font:11px/1 system-ui;font-weight:500">Pages</span><input id="ns" type="range" min="80" max="600" value="250" style="width:100px;accent-color:#f6bd16"><span id="nv" style="color:#bbb;font:11px system-ui;width:36px;text-align:center">250</span><button id="go" style="padding:3px 14px;background:linear-gradient(135deg,rgba(246,189,22,0.25),rgba(246,189,22,0.05));border:1px solid rgba(246,189,22,0.4);border-radius:6px;color:#f6bd16;font:11px system-ui;font-weight:600;cursor:pointer">Run</button>';
 
 function webGraph(n: number): Graph {
   const edges: [number, number][] = [], seen = new Set<string>();
   const add = (f: number, t: number) => { const k = f + '-' + t; if (f !== t && !seen.has(k)) { seen.add(k); edges.push([f, t]); } };
-  const nc = Math.max(4, Math.round(n / 35));
+  const nc = Math.max(5, Math.round(n / 30));
   const cs = Math.floor(n / nc);
   for (let c = 0; c < nc; c++) {
     const base = c * cs;
-    for (let i = 0; i < cs; i++) { const nl = 2 + Math.floor(Math.random() * 3); for (let t = 0; t < nl; t++) add(base + i, base + Math.floor(Math.random() * cs)); }
+    for (let i = 0; i < cs; i++) { const nl = 2 + Math.floor(Math.random() * 4); for (let t = 0; t < nl; t++) add(base + i, base + Math.floor(Math.random() * cs)); }
     const hub = base + Math.floor(Math.random() * 3);
     for (let i = 0; i < cs; i++) add(hub, base + i);
   }
-  for (let i = 0; i < n / 4; i++) add(Math.floor(Math.random() * n), Math.floor(Math.random() * n));
+  for (let i = 0; i < n / 3; i++) add(Math.floor(Math.random() * n), Math.floor(Math.random() * n));
   return Graph.fromEdges(edges, { directed: true });
 }
 
@@ -623,11 +583,11 @@ function pageRank(graph: Graph, d = 0.85, iter = 50): Map<number, number> {
 }
 
 function forceLayout(graph: Graph, W: number, H: number) {
-  const nodes = graph.nodes(), n = nodes.length, k = Math.sqrt(W * H / n) * 0.9;
+  const nodes = graph.nodes(), n = nodes.length, k = Math.sqrt(W * H / n) * 0.85;
   const pos: Record<number, [number, number]> = {};
-  for (const id of nodes) pos[id] = [100 + Math.random() * (W - 200), 100 + Math.random() * (H - 200)];
+  for (const id of nodes) pos[id] = [80 + Math.random() * (W - 160), 80 + Math.random() * (H - 160)];
   let temp = W / 4;
-  for (let it = 0; it < 100; it++) {
+  for (let it = 0; it < 110; it++) {
     const d: Record<number, [number, number]> = {};
     for (const v of nodes) d[v] = [0, 0];
     for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
@@ -637,115 +597,101 @@ function forceLayout(graph: Graph, W: number, H: number) {
     }
     for (const e of graph.edges()) {
       const dx = pos[e.source][0] - pos[e.target][0], dy = pos[e.source][1] - pos[e.target][1];
-      const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 0.5), f = (dist * dist) / k * 0.4;
+      const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 0.5), f = (dist * dist) / k * 0.35;
       d[e.source][0] -= (dx / dist) * f; d[e.source][1] -= (dy / dist) * f;
       d[e.target][0] += (dx / dist) * f; d[e.target][1] += (dy / dist) * f;
     }
     for (const v of nodes) {
       const len = Math.max(Math.sqrt(d[v][0] ** 2 + d[v][1] ** 2), 0.1);
-      pos[v][0] = Math.max(60, Math.min(W - 60, pos[v][0] + (d[v][0] / len) * Math.min(len, temp)));
-      pos[v][1] = Math.max(60, Math.min(H - 60, pos[v][1] + (d[v][1] / len) * Math.min(len, temp)));
+      pos[v][0] = Math.max(50, Math.min(W - 50, pos[v][0] + (d[v][0] / len) * Math.min(len, temp)));
+      pos[v][1] = Math.max(50, Math.min(H - 50, pos[v][1] + (d[v][1] / len) * Math.min(len, temp)));
     }
     temp *= 0.93;
   }
   return pos;
 }
 
+const cv = createCanvas(app);
+cv.wrapper.appendChild(ctrl);
+let graph: Graph, ranks: Map<number, number>, pos: Record<number, [number, number]>, sorted: [number, number][], maxR: number;
+let zp: ReturnType<typeof enableZoomPan>;
+
 function run() {
-  const graph = webGraph(N);
-  const ranks = pageRank(graph);
-  const W = 1200, H = 900, pos = forceLayout(graph, W, H);
-  const nodes = graph.nodes();
-  const sorted = [...ranks.entries()].sort((a, b) => b[1] - a[1]);
-  const maxR = sorted.length > 0 ? sorted[0][1] : 1;
+  graph = webGraph(N);
+  ranks = pageRank(graph);
+  const W = 1400, H = 1000;
+  pos = forceLayout(graph, W, H);
+  sorted = [...ranks.entries()].sort((a, b) => b[1] - a[1]);
+  maxR = sorted.length > 0 ? sorted[0][1] : 1;
 
-  app.innerHTML = '<div id="w" style="position:relative;width:100%;height:100%"><canvas id="c"></canvas></div>';
-  document.getElementById('w')!.appendChild(ctrl);
-  const canvas = document.getElementById('c') as HTMLCanvasElement;
-  canvas.width = cW * 2; canvas.height = cH * 2;
-  canvas.style.cssText = 'display:block;width:' + cW + 'px;height:' + cH + 'px;background:#080b12';
-  const ctx = canvas.getContext('2d')!;
-  ctx.scale(2, 2);
-
-  function draw(scale = 1, ox = 0, oy = 0) {
-    const sx = cW / W * scale, sy = cH / H * scale;
-    ctx.clearRect(0, 0, cW, cH);
-    ctx.fillStyle = '#080b12'; ctx.fillRect(0, 0, cW, cH);
-    ctx.save(); ctx.translate(ox, oy);
-
-    // Directed edges with subtle arrows for high-rank targets
-    ctx.lineWidth = 0.5;
-    for (const e of graph.edges()) {
-      const srcR = (ranks.get(e.source) || 0) / maxR;
-      const tgtR = (ranks.get(e.target) || 0) / maxR;
-      const importance = Math.max(srcR, tgtR);
-      ctx.beginPath();
-      ctx.moveTo(pos[e.source][0] * sx, pos[e.source][1] * sy);
-      ctx.lineTo(pos[e.target][0] * sx, pos[e.target][1] * sy);
-      ctx.strokeStyle = 'rgba(100,150,220,' + (0.02 + importance * 0.08) + ')';
-      ctx.lineWidth = 0.3 + importance * 0.8;
-      ctx.stroke();
-    }
-
-    // Nodes: size = rank, color ramp blue → teal → gold
-    for (const id of nodes) {
-      const x = pos[id][0] * sx, y = pos[id][1] * sy;
-      const norm = (ranks.get(id) || 0) / maxR;
-      const r = (2.5 + norm * 15) * Math.min(scale, 2);
-
-      // Authority glow
-      if (norm > 0.3) {
-        const grd = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 2.5);
-        grd.addColorStop(0, 'rgba(246,189,22,' + (norm * 0.3) + ')');
-        grd.addColorStop(1, 'rgba(246,189,22,0)');
-        ctx.fillStyle = grd;
-        ctx.fillRect(x - r * 2.5, y - r * 2.5, r * 5, r * 5);
-      }
-
-      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-      if (norm > 0.5) ctx.fillStyle = '#F6BD16';
-      else if (norm > 0.25) { const t = (norm - 0.25) * 4; ctx.fillStyle = 'hsl(' + (190 - t * 145) + ',70%,' + (50 + t * 10) + '%)'; }
-      else if (norm > 0.08) ctx.fillStyle = '#4a8fcc';
-      else ctx.fillStyle = '#2a3a55';
-      ctx.fill();
-
-      if (norm > 0.5) {
-        ctx.strokeStyle = 'rgba(246,189,22,0.5)';
-        ctx.lineWidth = 1.2;
-        ctx.stroke();
-      }
-    }
-
-    // Labels on top 5 authorities
-    ctx.font = '10px system-ui'; ctx.fillStyle = 'rgba(255,240,200,0.9)'; ctx.textAlign = 'center';
-    sorted.slice(0, 5).forEach(([id, rank]) => {
-      const x = pos[id][0] * sx, y = pos[id][1] * sy;
-      const r = (2.5 + (rank / maxR) * 15) * Math.min(scale, 2);
-      ctx.fillText('page ' + id, x, y - r - 6);
-    });
-
-    ctx.restore();
-
-    // Legend
-    ctx.fillStyle = 'rgba(8,11,18,0.9)';
-    ctx.fillRect(8, cH - 66, 130, 54);
-    ctx.textAlign = 'left'; ctx.font = '10px system-ui';
-    const legend: [string, string][] = [['#F6BD16', 'Authority (>0.5)'], ['#4a8fcc', 'Mid rank'], ['#2a3a55', 'Low rank']];
-    legend.forEach(([color, label], i) => {
-      const y = cH - 52 + i * 16;
-      ctx.fillStyle = color; ctx.beginPath(); ctx.arc(18, y, 4, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#999'; ctx.fillText(label, 28, y + 3);
-    });
-  }
-
-  enableZoomPan(canvas, draw);
+  if (!zp) zp = enableZoomPan(cv.canvas, draw);
   draw();
   console.log(graph.nodeCount() + ' pages, ' + graph.edgeCount() + ' links');
-  console.log('Top authority: ' + sorted.slice(0, 5).map(([id, r]) => 'page' + id + '=' + r.toFixed(5)).join(', '));
+  console.log('Top: ' + sorted.slice(0, 5).map(([id, r]) => '#' + id + '=' + r.toFixed(5)).join(', '));
 }
 
-app.innerHTML = '<div id="w" style="position:relative;width:100%;height:100%"></div>';
-document.getElementById('w')!.appendChild(ctrl);
+function draw(scale?: number, ox?: number, oy?: number) {
+  const cW = cv.width, cH = cv.height, ctx = cv.ctx;
+  const t = zp ? zp.getTransform() : { scale: 1, offsetX: 0, offsetY: 0 };
+  const s = scale ?? t.scale, oX = ox ?? t.offsetX, oY = oy ?? t.offsetY;
+  const W = 1400, H = 1000, sx = cW / W * s, sy = cH / H * s;
+  ctx.clearRect(0, 0, cW, cH); ctx.fillStyle = '#080b12'; ctx.fillRect(0, 0, cW, cH);
+  ctx.save(); ctx.translate(oX, oY);
+
+  for (const e of graph.edges()) {
+    const srcR = (ranks.get(e.source) || 0) / maxR;
+    const tgtR = (ranks.get(e.target) || 0) / maxR;
+    const importance = Math.max(srcR, tgtR);
+    ctx.beginPath();
+    ctx.moveTo(pos[e.source][0] * sx, pos[e.source][1] * sy);
+    ctx.lineTo(pos[e.target][0] * sx, pos[e.target][1] * sy);
+    ctx.strokeStyle = 'rgba(100,150,220,' + (0.02 + importance * 0.12) + ')';
+    ctx.lineWidth = 0.3 + importance * 1.0;
+    ctx.stroke();
+  }
+
+  for (const id of graph.nodes()) {
+    const x = pos[id][0] * sx, y = pos[id][1] * sy;
+    const norm = (ranks.get(id) || 0) / maxR;
+    const r = (2 + norm * 18) * Math.min(s, 2.5);
+
+    if (norm > 0.25) {
+      const grd = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 3);
+      grd.addColorStop(0, 'rgba(246,189,22,' + (norm * 0.35) + ')');
+      grd.addColorStop(1, 'rgba(246,189,22,0)');
+      ctx.fillStyle = grd;
+      ctx.fillRect(x - r * 3, y - r * 3, r * 6, r * 6);
+    }
+
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+    if (norm > 0.5) ctx.fillStyle = '#F6BD16';
+    else if (norm > 0.25) { const t2 = (norm - 0.25) * 4; ctx.fillStyle = 'hsl(' + (190 - t2 * 145) + ',70%,' + (50 + t2 * 10) + '%)'; }
+    else if (norm > 0.08) ctx.fillStyle = '#4a8fcc';
+    else ctx.fillStyle = '#2a3a55';
+    ctx.fill();
+    if (norm > 0.5) { ctx.strokeStyle = 'rgba(246,189,22,0.5)'; ctx.lineWidth = 1.4; ctx.stroke(); }
+  }
+
+  ctx.font = '10px system-ui'; ctx.fillStyle = 'rgba(255,240,200,0.9)'; ctx.textAlign = 'center';
+  sorted.slice(0, 6).forEach(([id, rank]) => {
+    const x = pos[id][0] * sx, y = pos[id][1] * sy;
+    const r = (2 + (rank / maxR) * 18) * Math.min(s, 2.5);
+    ctx.fillText('page ' + id, x, y - r - 5);
+  });
+  ctx.restore();
+
+  ctx.fillStyle = 'rgba(8,11,18,0.92)'; ctx.fillRect(8, cH - 64, 130, 54);
+  ctx.textAlign = 'left'; ctx.font = '10px system-ui';
+  const legend: [string, string][] = [['#F6BD16', 'Authority (>0.5)'], ['#4a8fcc', 'Mid rank'], ['#2a3a55', 'Low rank']];
+  legend.forEach(([color, label], i) => {
+    const y = cH - 50 + i * 16;
+    ctx.fillStyle = color; ctx.beginPath(); ctx.arc(18, y, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#999'; ctx.fillText(label, 28, y + 3);
+  });
+}
+
+cv.onResize(draw);
+
 setTimeout(() => {
   document.getElementById('ns')!.addEventListener('input', (e: any) => { N = +e.target.value; document.getElementById('nv')!.textContent = N + ''; });
   document.getElementById('go')!.addEventListener('click', run);
@@ -754,6 +700,7 @@ setTimeout(() => {
 `;
 
 const perfBenchmark = `import { Graph } from './graphrs-core.js';
+import { createCanvas } from './canvas-util.js';
 
 function barabasiAlbert(n: number, m: number): Graph {
   const edges: [number, number][] = [], degree: number[] = new Array(n).fill(0);
@@ -772,6 +719,22 @@ function bfs(graph: Graph, start: number): number {
   return visited.size;
 }
 
+function dijkstra(graph: Graph, start: number): Map<number, number> {
+  const dist = new Map<number, number>(); dist.set(start, 0);
+  const visited = new Set<number>(); const pq: [number, number][] = [[0, start]];
+  while (pq.length > 0) {
+    pq.sort((a, b) => a[0] - b[0]);
+    const [d, u] = pq.shift()!;
+    if (visited.has(u)) continue;
+    visited.add(u);
+    for (const nb of graph.neighbors(u)) {
+      const nd = d + 1;
+      if (!dist.has(nb) || nd < dist.get(nb)!) { dist.set(nb, nd); pq.push([nd, nb]); }
+    }
+  }
+  return dist;
+}
+
 function betweenness(graph: Graph): number {
   const nodes = graph.nodes(); let mx = 0;
   for (const s of nodes) {
@@ -785,124 +748,181 @@ function betweenness(graph: Graph): number {
   return mx;
 }
 
-console.log('\\n  @graphrs Performance Benchmark');
-console.log('  JS baseline vs WASM (igraph C library)\\n');
-
-const sizes = [100, 200, 500, 1000];
-const results: { n: number; edges: number; bfs: number; betw: number }[] = [];
-
-for (const n of sizes) {
-  const g = barabasiAlbert(n, 3);
-  const t1 = performance.now(); for (let i = 0; i < 10; i++) bfs(g, 0); const bfsTime = (performance.now() - t1) / 10;
-  let betwTime = 0;
-  if (n <= 500) { const t2 = performance.now(); betweenness(g); betwTime = performance.now() - t2; }
-  results.push({ n, edges: g.edgeCount(), bfs: bfsTime, betw: betwTime });
-  console.log(n + ' nodes (' + g.edgeCount() + ' edges):  BFS ' + bfsTime.toFixed(2) + 'ms' + (n <= 500 ? '  Betweenness ' + betwTime.toFixed(0) + 'ms' : '  Betweenness: skipped'));
+function pageRank(graph: Graph, iter = 30): number {
+  const nodes = graph.nodes(), n = nodes.length;
+  let rank = new Map<number, number>();
+  for (const id of nodes) rank.set(id, 1 / n);
+  for (let i = 0; i < iter; i++) {
+    const nr = new Map<number, number>();
+    for (const id of nodes) {
+      const nbs = graph.neighbors(id);
+      let sum = 0;
+      for (const nb of nbs) sum += (rank.get(nb) || 0) / graph.degree(nb);
+      nr.set(id, 0.15 / n + 0.85 * sum);
+    }
+    rank = nr;
+  }
+  return Math.max(...rank.values());
 }
-
-console.log('\\nWith @graphrs WASM: BFS 10-50x faster, Betweenness 100-500x faster');
 
 const app = document.getElementById('app')!;
-const cW = app.clientWidth || 800, cH = app.clientHeight || 600;
-app.innerHTML = '<canvas id="c" width="' + (cW * 2) + '" height="' + (cH * 2) + '" style="display:block;width:' + cW + 'px;height:' + cH + 'px;background:#080b12"></canvas>';
-const canvas = document.getElementById('c') as HTMLCanvasElement;
-const ctx = canvas.getContext('2d')!;
-ctx.scale(2, 2);
+const cv = createCanvas(app);
 
-const mg = { top: 60, right: 40, bottom: 60, left: 75 };
-const w = cW - mg.left - mg.right, h = cH - mg.top - mg.bottom;
-ctx.save(); ctx.translate(mg.left, mg.top);
+const sizes = [200, 500, 1000, 2000];
+type Result = { n: number; edges: number; bfs: number; dijkstra: number; pagerank: number; betw: number };
+let results: Result[] = [];
+let running = false;
 
-ctx.fillStyle = '#e8e8ec'; ctx.font = 'bold 14px system-ui';
-ctx.fillText('Algorithm Performance: Pure JS Baseline', 0, -35);
-ctx.fillStyle = '#778'; ctx.font = '11px system-ui';
-ctx.fillText('Lower is better. WASM delivers 10-500x speedup over these timings.', 0, -16);
+const ctrl = document.createElement('div');
+ctrl.style.cssText = 'position:absolute;top:10px;left:10px;z-index:10;display:flex;gap:8px;align-items:center;padding:6px 12px;background:rgba(10,10,18,0.92);border-radius:8px;border:1px solid rgba(100,200,140,0.15);backdrop-filter:blur(8px)';
+ctrl.innerHTML = '<button id="go" style="padding:4px 16px;background:linear-gradient(135deg,rgba(90,216,166,0.3),rgba(90,216,166,0.05));border:1px solid rgba(90,216,166,0.5);border-radius:6px;color:#5ad8a6;font:12px system-ui;font-weight:600;cursor:pointer">Run Benchmark</button><span id="status" style="color:#778;font:10px system-ui"></span>';
+cv.wrapper.appendChild(ctrl);
 
-const maxTime = Math.max(...results.map(r => Math.max(r.bfs, r.betw)));
-const logMax = Math.ceil(Math.log10(Math.max(maxTime, 10))), logMin = -1;
-
-// Grid lines
-for (let p = logMin; p <= logMax; p++) {
-  const y = h - ((p - logMin) / (logMax - logMin)) * h;
-  ctx.strokeStyle = 'rgba(100,120,150,0.1)';
-  ctx.lineWidth = 0.5;
-  ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-  ctx.fillStyle = '#667'; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
-  ctx.fillText(p < 0 ? '0.1ms' : p === 0 ? '1ms' : Math.pow(10, p) + 'ms', -10, y + 3);
+function fmt(ms: number): string {
+  if (ms >= 1000) return (ms / 1000).toFixed(1) + 's';
+  if (ms >= 1) return ms.toFixed(1) + 'ms';
+  return (ms * 1000).toFixed(0) + 'us';
 }
 
-const barW = w / sizes.length * 0.28, gap = w / sizes.length;
-ctx.textAlign = 'left';
-results.forEach((r, i) => {
-  const x = i * gap + gap * 0.25;
+function drawChart() {
+  const cW = cv.width, cH = cv.height, ctx = cv.ctx;
+  ctx.clearRect(0, 0, cW, cH); ctx.fillStyle = '#080b12'; ctx.fillRect(0, 0, cW, cH);
 
-  // BFS bar with gradient
-  const bfsH = ((Math.log10(Math.max(r.bfs, 0.1)) - logMin) / (logMax - logMin)) * h;
-  const bfsGrd = ctx.createLinearGradient(0, h - bfsH, 0, h);
-  bfsGrd.addColorStop(0, '#5B8FF9'); bfsGrd.addColorStop(1, '#3a5faa');
-  ctx.fillStyle = bfsGrd;
-  ctx.beginPath();
-  ctx.roundRect(x, h - bfsH, barW, bfsH, [3, 3, 0, 0]);
-  ctx.fill();
-  ctx.fillStyle = '#8ab4f8'; ctx.font = '9px system-ui';
-  ctx.fillText(r.bfs.toFixed(1) + 'ms', x, h - bfsH - 5);
+  const mg = { top: 70, right: 30, bottom: 65, left: 70 };
+  const w = cW - mg.left - mg.right, h = cH - mg.top - mg.bottom;
+  if (w < 100 || h < 100) return;
+  ctx.save(); ctx.translate(mg.left, mg.top);
 
-  // Betweenness bar
-  if (r.betw > 0) {
-    const betwH = ((Math.log10(r.betw) - logMin) / (logMax - logMin)) * h;
-    const betwGrd = ctx.createLinearGradient(0, h - betwH, 0, h);
-    betwGrd.addColorStop(0, '#E86B5A'); betwGrd.addColorStop(1, '#9a3a30');
-    ctx.fillStyle = betwGrd;
-    ctx.beginPath();
-    ctx.roundRect(x + barW + 6, h - betwH, barW, betwH, [3, 3, 0, 0]);
-    ctx.fill();
-    ctx.fillStyle = '#f09080'; ctx.fillText(r.betw.toFixed(0) + 'ms', x + barW + 6, h - betwH - 5);
+  ctx.fillStyle = '#e8e8ec'; ctx.font = 'bold 14px system-ui';
+  ctx.fillText('Algorithm Performance: Pure JS Baseline', 0, -42);
+  ctx.fillStyle = '#778'; ctx.font = '11px system-ui';
+  ctx.fillText('Lower is better. @graphrs WASM delivers 10-500x speedup.', 0, -24);
+
+  if (results.length === 0) {
+    ctx.fillStyle = '#556'; ctx.font = '13px system-ui'; ctx.textAlign = 'center';
+    ctx.fillText('Click "Run Benchmark" to measure algorithm performance', w / 2, h / 2);
+    ctx.restore(); return;
   }
 
-  // X-axis labels
-  ctx.fillStyle = '#ccc'; ctx.font = '11px system-ui'; ctx.fillText(r.n + ' nodes', x, h + 18);
-  ctx.fillStyle = '#667'; ctx.font = '9px system-ui'; ctx.fillText(r.edges + ' edges', x, h + 33);
-});
+  const allTimes = results.flatMap(r => [r.bfs, r.dijkstra, r.pagerank, r.betw].filter(v => v > 0));
+  const minT = Math.min(...allTimes) * 0.5;
+  const maxT = Math.max(...allTimes) * 2;
+  const logMin = Math.floor(Math.log10(Math.max(minT, 0.001)));
+  const logMax = Math.ceil(Math.log10(maxT));
 
-// Legend
-ctx.fillStyle = '#5B8FF9'; ctx.beginPath(); ctx.roundRect(w - 140, -30, 12, 12, 2); ctx.fill();
-ctx.fillStyle = '#bbb'; ctx.font = '10px system-ui'; ctx.fillText('BFS (avg 10 runs)', w - 124, -20);
-ctx.fillStyle = '#E86B5A'; ctx.beginPath(); ctx.roundRect(w - 140, -14, 12, 12, 2); ctx.fill();
-ctx.fillStyle = '#bbb'; ctx.fillText('Betweenness', w - 124, -4);
-ctx.restore();
+  for (let p = logMin; p <= logMax; p++) {
+    const y = h - ((p - logMin) / (logMax - logMin)) * h;
+    ctx.strokeStyle = 'rgba(100,120,150,0.08)'; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    ctx.fillStyle = '#667'; ctx.font = '10px system-ui'; ctx.textAlign = 'right';
+    const label = p <= -3 ? '1us' : p === -2 ? '10us' : p === -1 ? '0.1ms' : p === 0 ? '1ms' : p === 1 ? '10ms' : p === 2 ? '100ms' : (Math.pow(10, p) / 1000).toFixed(0) + 's';
+    ctx.fillText(label, -8, y + 3);
+  }
+
+  const algos = [
+    { key: 'bfs', label: 'BFS', color: '#5B8FF9' },
+    { key: 'dijkstra', label: 'Dijkstra', color: '#6DC8EC' },
+    { key: 'pagerank', label: 'PageRank', color: '#F6BD16' },
+    { key: 'betw', label: 'Betweenness', color: '#E86B5A' },
+  ];
+  const nAlgo = algos.length;
+  const groupW = w / results.length;
+  const barW = groupW * 0.18;
+  const groupGap = groupW * 0.12;
+
+  ctx.textAlign = 'center';
+  results.forEach((r, i) => {
+    const gx = i * groupW + groupGap;
+    algos.forEach((algo, ai) => {
+      const val = (r as any)[algo.key] as number;
+      if (val <= 0) return;
+      const barH = Math.max(2, ((Math.log10(val) - logMin) / (logMax - logMin)) * h);
+      const x = gx + ai * (barW + 3);
+      const grd = ctx.createLinearGradient(0, h - barH, 0, h);
+      grd.addColorStop(0, algo.color); grd.addColorStop(1, algo.color + '60');
+      ctx.fillStyle = grd;
+      ctx.beginPath(); ctx.roundRect(x, h - barH, barW, barH, [3, 3, 0, 0]); ctx.fill();
+      ctx.fillStyle = algo.color; ctx.font = '8px system-ui';
+      ctx.fillText(fmt(val), x + barW / 2, h - barH - 4);
+    });
+    ctx.fillStyle = '#ccc'; ctx.font = '11px system-ui';
+    ctx.fillText(r.n + ' nodes', gx + (nAlgo * (barW + 3)) / 2, h + 18);
+    ctx.fillStyle = '#667'; ctx.font = '9px system-ui';
+    ctx.fillText(r.edges + ' edges', gx + (nAlgo * (barW + 3)) / 2, h + 32);
+  });
+
+  // Legend
+  ctx.textAlign = 'left';
+  algos.forEach((algo, i) => {
+    const lx = w - 160, ly = -40 + i * 15;
+    ctx.fillStyle = algo.color; ctx.beginPath(); ctx.roundRect(lx, ly, 10, 10, 2); ctx.fill();
+    ctx.fillStyle = '#bbb'; ctx.font = '10px system-ui'; ctx.fillText(algo.label, lx + 14, ly + 9);
+  });
+  ctx.restore();
+}
+
+cv.onResize(drawChart);
+
+async function runBench() {
+  if (running) return;
+  running = true;
+  results = [];
+  document.getElementById('status')!.textContent = 'Running...';
+  drawChart();
+
+  for (const n of sizes) {
+    document.getElementById('status')!.textContent = 'Testing ' + n + ' nodes...';
+    await new Promise(r => setTimeout(r, 10));
+    const g = barabasiAlbert(n, 3);
+    const runs = n < 500 ? 50 : 10;
+    let t = performance.now(); for (let i = 0; i < runs; i++) bfs(g, 0); const bfsTime = (performance.now() - t) / runs;
+    t = performance.now(); for (let i = 0; i < runs; i++) dijkstra(g, 0); const dijkstraTime = (performance.now() - t) / runs;
+    t = performance.now(); for (let i = 0; i < (n < 500 ? 10 : 3); i++) pageRank(g, 20); const prTime = (performance.now() - t) / (n < 500 ? 10 : 3);
+    let betwTime = 0;
+    if (n <= 1000) { t = performance.now(); betweenness(g); betwTime = performance.now() - t; }
+    results.push({ n, edges: g.edgeCount(), bfs: bfsTime, dijkstra: dijkstraTime, pagerank: prTime, betw: betwTime });
+    drawChart();
+    console.log(n + ' nodes: BFS ' + fmt(bfsTime) + ', Dijkstra ' + fmt(dijkstraTime) + ', PageRank ' + fmt(prTime) + (betwTime > 0 ? ', Betweenness ' + fmt(betwTime) : ''));
+  }
+  document.getElementById('status')!.textContent = 'Done. WASM would be 10-500x faster.';
+  running = false;
+}
+
+drawChart();
+setTimeout(() => { document.getElementById('go')!.addEventListener('click', runBench); }, 30);
 `;
 </script>
 
 # Interactive Playground
 
-Live graph algorithm demos. Adjust the node count with the slider and click **Run** to regenerate. Scroll to zoom, drag to pan. Use **Show Code** to view and edit the source, or **Fullscreen** for a larger view.
+Live graph algorithm demos powered by `@graphrs/core`. Adjust parameters with the slider, click **Run** to regenerate. Scroll to zoom, drag to pan. **Show Code** to view the source, **Fullscreen** for immersive view.
 
 ## BFS — Breadth-First Traversal
 
-Animated layer-by-layer exploration of a Barabási–Albert scale-free network. Darker blue = deeper BFS layer from the highest-degree hub:
+Animated layer-by-layer exploration of a Barabási–Albert scale-free network (m=3). Darker blue = deeper BFS layer from the highest-degree hub. Edges glow brighter near hubs:
 
 <Playground :code="animatedBFS" />
 
 ## Community Detection
 
-Modularity-based label propagation identifies densely-connected clusters in a planted-partition network. Each color represents a detected community:
+Modularity-optimized label propagation identifies densely-connected clusters. Intra-community edges are highlighted, inter-community links dimmed. High-degree community hubs glow:
 
 <Playground :code="communityViz" />
 
 ## Betweenness Centrality
 
-Brandes' algorithm scores every node by how many shortest paths pass through it. Warm colors indicate structural bridges between clusters:
+Brandes' algorithm scores every node by how many shortest paths pass through it. Warm colors (red/orange) indicate structural bridges between clusters:
 
 <Playground :code="centralityViz" />
 
 ## PageRank
 
-Power-iteration PageRank on a directed web graph. Node size encodes authority score — large gold nodes are the most linked-to hubs:
+Power-iteration PageRank on a directed web graph. Node size and color encode authority — gold nodes are the most linked-to hubs. Edge opacity shows connection importance:
 
 <Playground :code="pageRankViz" />
 
 ## Performance Benchmark
 
-Pure JavaScript timing at various scales. The bar chart shows why WASM matters — betweenness on 500 nodes already takes seconds in JS:
+Click **Run Benchmark** to measure BFS, Dijkstra, PageRank, and Betweenness at increasing scales. The chart shows O(V+E) vs O(V²·E) complexity — betweenness on 1000 nodes takes seconds in pure JS, while `@graphrs` WASM delivers 10-500x speedup:
 
 <Playground :code="perfBenchmark" />
