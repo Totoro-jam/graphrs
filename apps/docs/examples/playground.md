@@ -150,10 +150,10 @@ function draw(scale = 1, ox = 0, oy = 0) {
   ctx.fillText('BFS Layer ' + Math.min(currentLayer, layers.length) + '/' + layers.length + ' | Nodes: ' + revealedNodes.size + '/' + graph.nodeCount() + ' | Scroll to zoom, drag to pan', 10, cH - 10);
 }
 
-enableZoomPan(canvas, draw);
+const zp = enableZoomPan(canvas, draw);
 
 function animateStep() {
-  if (currentLayer >= layers.length) { draw(); return; }
+  if (currentLayer >= layers.length) { const t = zp.getTransform(); draw(t.scale, t.offsetX, t.offsetY); return; }
   const layer = layers[currentLayer];
   for (const id of layer) {
     revealedNodes.add(id);
@@ -164,7 +164,8 @@ function animateStep() {
     }
   }
   currentLayer++;
-  draw();
+  const t = zp.getTransform();
+  draw(t.scale, t.offsetX, t.offsetY);
   setTimeout(animateStep, 120);
 }
 animateStep();
