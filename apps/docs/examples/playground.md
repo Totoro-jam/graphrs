@@ -1,14 +1,16 @@
 # Interactive Playground
 
-Try graphrs in your browser — edit the code below and see results instantly.
+Try graphrs in your project — copy the code below and run it.
+
+```bash
+npm install @graphrs/core
+```
 
 ## Graph Basics
 
 Create a graph, add nodes and edges, and inspect its properties:
 
-::: sandbox {template=vanilla-ts}
-
-```ts /src/index.ts
+```ts
 import { Graph } from '@graphrs/core';
 
 // Create a directed graph
@@ -36,23 +38,23 @@ console.log(`Has edge 0→1: ${graph.hasEdge(0, 1)}`);
 console.log(`Has edge 1→0: ${graph.hasEdge(1, 0)}`);
 ```
 
-```json /package.json
-{
-  "dependencies": {
-    "@graphrs/core": "^0.2.0"
-  }
-}
-```
+**Expected output:**
 
-:::
+```
+Nodes: 4
+Edges: 5
+Is directed: true
+Neighbors of Alice: 1,2
+Degree of Carol: 2
+Has edge 0→1: true
+Has edge 1→0: false
+```
 
 ## Build from Edge List
 
 Quickly construct graphs from an edge list:
 
-::: sandbox {template=vanilla-ts}
-
-```ts /src/index.ts
+```ts
 import { Graph } from '@graphrs/core';
 
 // Create undirected graph from edges
@@ -75,23 +77,29 @@ console.log(`\nSubgraph {0,1,2}:`);
 console.log(`  Nodes: ${sub.nodeCount()}, Edges: ${sub.edgeCount()}`);
 ```
 
-```json /package.json
-{
-  "dependencies": {
-    "@graphrs/core": "^0.2.0"
-  }
-}
-```
+**Expected output:**
 
-:::
+```
+Nodes: 5
+Edges: 6
+All nodes: 0,1,2,3,4
+All edges:
+  0 — 1
+  1 — 2
+  2 — 3
+  3 — 4
+  4 — 0
+  0 — 2
+
+Subgraph {0,1,2}:
+  Nodes: 3, Edges: 3
+```
 
 ## Adjacency Matrix
 
 Build graphs from adjacency matrices and convert to JSON:
 
-::: sandbox {template=vanilla-ts}
-
-```ts /src/index.ts
+```ts
 import { Graph } from '@graphrs/core';
 
 // Build from adjacency matrix (weighted)
@@ -102,7 +110,7 @@ const matrix = [
   [0, 0, 3, 0],
 ];
 
-const graph = Graph.fromAdjacencyMatrix(matrix, { weighted: true });
+const graph = Graph.fromAdjacencyMatrix(matrix);
 
 console.log('Graph from adjacency matrix:');
 console.log(`  Nodes: ${graph.nodeCount()}`);
@@ -118,23 +126,11 @@ const restored = Graph.fromJSON(json);
 console.log(`\nRestored graph: ${restored.nodeCount()} nodes, ${restored.edgeCount()} edges`);
 ```
 
-```json /package.json
-{
-  "dependencies": {
-    "@graphrs/core": "^0.2.0"
-  }
-}
-```
-
-:::
-
 ## Serialization Formats
 
 Export to different visualization library formats:
 
-::: sandbox {template=vanilla-ts}
-
-```ts /src/index.ts
+```ts
 import { Graph } from '@graphrs/core';
 
 const graph = Graph.fromEdges([
@@ -162,13 +158,3 @@ console.log('\n=== Cytoscape Format ===');
 const cy = graph.toCytoscapeFormat();
 console.log(JSON.stringify(cy, null, 2));
 ```
-
-```json /package.json
-{
-  "dependencies": {
-    "@graphrs/core": "^0.2.0"
-  }
-}
-```
-
-:::

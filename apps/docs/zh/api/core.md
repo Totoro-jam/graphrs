@@ -73,13 +73,11 @@ static fromJSON<N, E>(data: SerializedGraph): Graph<N, E>
 | `toReactFlowFormat(layout?)`     | `ReactFlowData`                 | 转换为 React Flow 格式   |
 | `toCytoscapeFormat(layout?)`     | `CytoscapeData`                 | 转换为 Cytoscape.js 格式 |
 
-## 在线体验
+## 示例
 
 ### 图创建与查询
 
-::: sandbox {template=vanilla-ts}
-
-```ts /src/index.ts
+```ts
 import { Graph } from '@graphrs/core';
 
 // 有向图 + 节点数据
@@ -108,21 +106,9 @@ const sub = g2.subgraph([0, 1, 2]);
 console.log(`子图 {0,1,2}: ${sub.nodeCount()} 节点, ${sub.edgeCount()} 边`);
 ```
 
-```json /package.json
-{
-  "dependencies": {
-    "@graphrs/core": "^0.2.0"
-  }
-}
-```
-
-:::
-
 ### 序列化往返
 
-::: sandbox {template=vanilla-ts}
-
-```ts /src/index.ts
+```ts
 import { Graph } from '@graphrs/core';
 
 const g = Graph.fromEdges([[0,1],[1,2],[2,0]]);
@@ -138,16 +124,6 @@ const restored = Graph.fromJSON(json);
 console.log(`\n恢复: ${restored.nodeCount()} 节点, ${restored.edgeCount()} 边`);
 console.log('节点 0 数据:', restored.nodeData(0));
 ```
-
-```json /package.json
-{
-  "dependencies": {
-    "@graphrs/core": "^0.2.0"
-  }
-}
-```
-
-:::
 
 ## 类型
 

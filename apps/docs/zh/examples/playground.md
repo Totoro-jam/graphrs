@@ -1,14 +1,16 @@
 # 交互式演练场
 
-在浏览器中直接尝试 graphrs — 编辑下方代码，即时查看结果。
+在你的项目中试用 graphrs — 复制下方代码直接运行。
+
+```bash
+npm install @graphrs/core
+```
 
 ## 图基础操作
 
 创建图、添加节点和边，查看图的属性：
 
-::: sandbox {template=vanilla-ts}
-
-```ts /src/index.ts
+```ts
 import { Graph } from '@graphrs/core';
 
 // 创建有向图
@@ -36,23 +38,23 @@ console.log(`存在边 0→1: ${graph.hasEdge(0, 1)}`);
 console.log(`存在边 1→0: ${graph.hasEdge(1, 0)}`);
 ```
 
-```json /package.json
-{
-  "dependencies": {
-    "@graphrs/core": "^0.2.0"
-  }
-}
-```
+**预期输出：**
 
-:::
+```
+节点数: 4
+边数: 5
+是否有向: true
+Alice 的邻居: 1,2
+Carol 的度: 2
+存在边 0→1: true
+存在边 1→0: false
+```
 
 ## 从边列表构建
 
 快速从边列表构建图：
 
-::: sandbox {template=vanilla-ts}
-
-```ts /src/index.ts
+```ts
 import { Graph } from '@graphrs/core';
 
 // 从边列表创建无向图
@@ -75,23 +77,29 @@ console.log(`\n子图 {0,1,2}:`);
 console.log(`  节点: ${sub.nodeCount()}, 边: ${sub.edgeCount()}`);
 ```
 
-```json /package.json
-{
-  "dependencies": {
-    "@graphrs/core": "^0.2.0"
-  }
-}
-```
+**预期输出：**
 
-:::
+```
+节点数: 5
+边数: 6
+所有节点: 0,1,2,3,4
+所有边:
+  0 — 1
+  1 — 2
+  2 — 3
+  3 — 4
+  4 — 0
+  0 — 2
+
+子图 {0,1,2}:
+  节点: 3, 边: 3
+```
 
 ## 邻接矩阵
 
 从邻接矩阵构建图并转换为 JSON：
 
-::: sandbox {template=vanilla-ts}
-
-```ts /src/index.ts
+```ts
 import { Graph } from '@graphrs/core';
 
 // 从加权邻接矩阵构建
@@ -102,7 +110,7 @@ const matrix = [
   [0, 0, 3, 0],
 ];
 
-const graph = Graph.fromAdjacencyMatrix(matrix, { weighted: true });
+const graph = Graph.fromAdjacencyMatrix(matrix);
 
 console.log('从邻接矩阵构建的图:');
 console.log(`  节点: ${graph.nodeCount()}`);
@@ -118,23 +126,11 @@ const restored = Graph.fromJSON(json);
 console.log(`\n恢复的图: ${restored.nodeCount()} 节点, ${restored.edgeCount()} 边`);
 ```
 
-```json /package.json
-{
-  "dependencies": {
-    "@graphrs/core": "^0.2.0"
-  }
-}
-```
-
-:::
-
 ## 序列化格式
 
 导出为不同可视化库的格式：
 
-::: sandbox {template=vanilla-ts}
-
-```ts /src/index.ts
+```ts
 import { Graph } from '@graphrs/core';
 
 const graph = Graph.fromEdges([
@@ -162,13 +158,3 @@ console.log('\n=== Cytoscape 格式 ===');
 const cy = graph.toCytoscapeFormat();
 console.log(JSON.stringify(cy, null, 2));
 ```
-
-```json /package.json
-{
-  "dependencies": {
-    "@graphrs/core": "^0.2.0"
-  }
-}
-```
-
-:::

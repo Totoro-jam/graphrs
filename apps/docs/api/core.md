@@ -73,13 +73,11 @@ Creates a graph from a serialized JSON object.
 | `toReactFlowFormat(layout?)` | `ReactFlowData` | Convert for React Flow |
 | `toCytoscapeFormat(layout?)` | `CytoscapeData` | Convert for Cytoscape.js |
 
-## Try It
+## Examples
 
 ### Graph Creation & Querying
 
-::: sandbox {template=vanilla-ts}
-
-```ts /src/index.ts
+```ts
 import { Graph } from '@graphrs/core';
 
 // Directed graph with node data
@@ -108,21 +106,9 @@ const sub = g2.subgraph([0, 1, 2]);
 console.log(`Subgraph {0,1,2}: ${sub.nodeCount()} nodes, ${sub.edgeCount()} edges`);
 ```
 
-```json /package.json
-{
-  "dependencies": {
-    "@graphrs/core": "^0.2.0"
-  }
-}
-```
-
-:::
-
 ### Serialization Round-trip
 
-::: sandbox {template=vanilla-ts}
-
-```ts /src/index.ts
+```ts
 import { Graph } from '@graphrs/core';
 
 const g = Graph.fromEdges([[0,1],[1,2],[2,0]]);
@@ -138,16 +124,6 @@ const restored = Graph.fromJSON(json);
 console.log(`\nRestored: ${restored.nodeCount()} nodes, ${restored.edgeCount()} edges`);
 console.log('Node 0 data:', restored.nodeData(0));
 ```
-
-```json /package.json
-{
-  "dependencies": {
-    "@graphrs/core": "^0.2.0"
-  }
-}
-```
-
-:::
 
 ## Types
 

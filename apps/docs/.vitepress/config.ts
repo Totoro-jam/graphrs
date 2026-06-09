@@ -1,28 +1,6 @@
 import { defineConfig } from 'vitepress';
-import container from 'markdown-it-container';
-import { renderSandbox } from 'vitepress-plugin-sandpack';
 
 export default defineConfig({
-  markdown: {
-    config(md) {
-      md.use(container, 'sandbox', {
-        render(
-          tokens: { nesting: number; info: string; attrs: [string, string][] | null }[],
-          idx: number,
-        ) {
-          const token = tokens[idx]!;
-          if (token.nesting === 1) {
-            const match = token.info.match(/\btemplate=(\S+)/);
-            if (match) {
-              token.attrs = token.attrs || [];
-              token.attrs.push(['template', match[1]!.replace(/[{}]/g, '')]);
-            }
-          }
-          return renderSandbox(tokens, idx, 'sandbox');
-        },
-      });
-    },
-  },
   title: 'graphrs',
   description:
     'Modular TypeScript graph library powered by Rust/WASM — 400+ algorithms at native speed',

@@ -8,8 +8,6 @@
     "preview": "vitepress preview"
   },
   "devDependencies": {
-    "markdown-it-container": "^4.0.0",
-    "vitepress": "^1.6.4",
-    "vitepress-plugin-sandpack": "^1.1.4"
+    "vitepress": "^1.6.4"
   }
 }
