@@ -82,13 +82,11 @@ console.log('Layout computed in ' + layoutTime + 'ms');
 
 // Setup full-viewport canvas with zoom/pan
 const app = document.getElementById('app')!;
-app.innerHTML = '<canvas id="c" style="background:#0a0a1a;display:block;width:100%;height:100%"></canvas>';
+const cW = app.clientWidth || 800, cH = app.clientHeight || 560;
+app.innerHTML = '<canvas id="c" width="' + (cW*2) + '" height="' + (cH*2) + '" style="background:#0a0a1a;display:block;width:' + cW + 'px;height:' + cH + 'px"></canvas>';
 const canvas = document.getElementById('c') as HTMLCanvasElement;
-canvas.width = canvas.offsetWidth * 2;
-canvas.height = canvas.offsetHeight * 2;
 const ctx = canvas.getContext('2d')!;
 ctx.scale(2, 2);
-const cW = canvas.offsetWidth, cH = canvas.offsetHeight;
 
 // Animated BFS from the highest-degree hub node
 const startNode = Number(Object.entries(degrees).sort((a,b) => b[1]-a[1])[0][0]);
@@ -308,13 +306,11 @@ console.log('Communities detected: ' + commMap.size + ' (in ' + elapsed + 'ms)')
 
 // Full-viewport canvas with zoom/pan
 const app = document.getElementById('app')!;
-app.innerHTML = '<canvas id="c" style="background:#06061a;display:block;width:100%;height:100%"></canvas>';
+const cW = app.clientWidth || 800, cH = app.clientHeight || 560;
+app.innerHTML = '<canvas id="c" width="' + (cW*2) + '" height="' + (cH*2) + '" style="background:#06061a;display:block;width:' + cW + 'px;height:' + cH + 'px"></canvas>';
 const canvas = document.getElementById('c') as HTMLCanvasElement;
-canvas.width = canvas.offsetWidth * 2;
-canvas.height = canvas.offsetHeight * 2;
 const ctx = canvas.getContext('2d')!;
 ctx.scale(2, 2);
-const cW = canvas.offsetWidth, cH = canvas.offsetHeight;
 
 const palette = ['#ff6b6b','#4ecdc4','#45b7d1','#feca57','#a29bfe','#fd79a8','#00b894','#e17055','#0984e3','#6c5ce7','#fab1a0','#74b9ff'];
 const commColor = new Map<number, string>();
@@ -490,13 +486,11 @@ for (let iter = 0; iter < 100; iter++) {
 
 // Render
 const app = document.getElementById('app')!;
-app.innerHTML = '<canvas id="c" style="background:#0a0e1a;display:block;width:100%;height:100%"></canvas>';
+const cW = app.clientWidth || 800, cH = app.clientHeight || 560;
+app.innerHTML = '<canvas id="c" width="' + (cW*2) + '" height="' + (cH*2) + '" style="background:#0a0e1a;display:block;width:' + cW + 'px;height:' + cH + 'px"></canvas>';
 const canvas = document.getElementById('c') as HTMLCanvasElement;
-canvas.width = canvas.offsetWidth * 2;
-canvas.height = canvas.offsetHeight * 2;
 const ctx = canvas.getContext('2d')!;
 ctx.scale(2, 2);
-const cW = canvas.offsetWidth, cH = canvas.offsetHeight;
 
 function draw(scale = 1, ox = 0, oy = 0) {
   const sx = cW / W * scale, sy = cH / H * scale;
@@ -659,13 +653,11 @@ for (let iter = 0; iter < 80; iter++) {
 
 const maxRank = sorted.length > 0 ? sorted[0][1] : 1;
 const app = document.getElementById('app')!;
-app.innerHTML = '<canvas id="c" style="background:#08081c;display:block;width:100%;height:100%"></canvas>';
+const cW = app.clientWidth || 800, cH = app.clientHeight || 560;
+app.innerHTML = '<canvas id="c" width="' + (cW*2) + '" height="' + (cH*2) + '" style="background:#08081c;display:block;width:' + cW + 'px;height:' + cH + 'px"></canvas>';
 const canvas = document.getElementById('c') as HTMLCanvasElement;
-canvas.width = canvas.offsetWidth * 2;
-canvas.height = canvas.offsetHeight * 2;
 const ctx = canvas.getContext('2d')!;
 ctx.scale(2, 2);
-const cW = canvas.offsetWidth, cH = canvas.offsetHeight;
 
 function draw(scale = 1, ox = 0, oy = 0) {
   const sx = cW / W * scale, sy = cH / H * scale;
@@ -834,13 +826,11 @@ console.log('──────────────────────�
 
 // Visualization: timing chart
 const app = document.getElementById('app')!;
-app.innerHTML = '<canvas id="c" style="background:#0d1117;display:block;width:100%;height:100%"></canvas>';
+const cW = app.clientWidth || 800, cH = app.clientHeight || 560;
+app.innerHTML = '<canvas id="c" width="' + (cW*2) + '" height="' + (cH*2) + '" style="background:#0d1117;display:block;width:' + cW + 'px;height:' + cH + 'px"></canvas>';
 const canvas = document.getElementById('c') as HTMLCanvasElement;
-canvas.width = canvas.offsetWidth * 2;
-canvas.height = canvas.offsetHeight * 2;
 const ctx = canvas.getContext('2d')!;
 ctx.scale(2, 2);
-const cW = canvas.offsetWidth, cH = canvas.offsetHeight;
 
 function draw() {
   ctx.clearRect(0, 0, cW, cH);
