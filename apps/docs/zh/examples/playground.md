@@ -97,6 +97,7 @@ function run() {
 }
 
 function draw(scale?: number, ox?: number, oy?: number) {
+  if (!graph) return;
   const cW = cv.width, cH = cv.height;
   const t = zp ? zp.getTransform() : { scale: 1, offsetX: 0, offsetY: 0 };
   const s = scale ?? t.scale, oX = ox ?? t.offsetX, oY = oy ?? t.offsetY;
@@ -314,6 +315,7 @@ function run() {
 }
 
 function draw(scale?: number, ox?: number, oy?: number) {
+  if (!graph) return;
   const cW = cv.width, cH = cv.height, ctx = cv.ctx;
   const t = zp ? zp.getTransform() : { scale: 1, offsetX: 0, offsetY: 0 };
   const s = scale ?? t.scale, oX = ox ?? t.offsetX, oY = oy ?? t.offsetY;
@@ -481,6 +483,7 @@ function run() {
 }
 
 function draw(scale?: number, ox?: number, oy?: number) {
+  if (!graph) return;
   const cW = cv.width, cH = cv.height, ctx = cv.ctx;
   const t = zp ? zp.getTransform() : { scale: 1, offsetX: 0, offsetY: 0 };
   const s = scale ?? t.scale, oX = ox ?? t.offsetX, oY = oy ?? t.offsetY;
@@ -644,6 +647,7 @@ function run() {
 }
 
 function draw(scale?: number, ox?: number, oy?: number) {
+  if (!graph) return;
   const cW = cv.width, cH = cv.height, ctx = cv.ctx;
   const t = zp ? zp.getTransform() : { scale: 1, offsetX: 0, offsetY: 0 };
   const s = scale ?? t.scale, oX = ox ?? t.offsetX, oY = oy ?? t.offsetY;
