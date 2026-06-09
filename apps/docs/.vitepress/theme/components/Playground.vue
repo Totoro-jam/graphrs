@@ -6,6 +6,7 @@ import { computed, ref } from 'vue';
 const props = defineProps<{ code: string }>();
 const { isDark } = useData();
 const showCode = ref(false);
+const isFullscreen = ref(false);
 
 const graphShimCode = `
 class NodeNotFoundError extends Error {
@@ -188,28 +189,43 @@ const files = computed(() => ({
 
 const customSetup = { dependencies: {} };
 
-const sandpackOptions = computed(() => {
-  const base = {
-    showConsole: true,
-    showConsoleButton: true,
-    editorHeight: 480,
-  };
-  if (!showCode.value) {
-    return { ...base, layout: 'preview' as const };
+const sandpackOptions = computed(() => ({
+  showConsole: true,
+  showConsoleButton: true,
+  editorHeight: isFullscreen.value ? 'calc(100vh - 44px)' : 520,
+}));
+
+function toggleFullscreen() {
+  isFullscreen.value = !isFullscreen.value;
+  if (isFullscreen.value) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
   }
-  return base;
-});
+}
 </script>
 
 <template>
   <ClientOnly>
-    <div class="playground-wrapper">
+    <div
+      class="playground-wrapper"
+      :class="{ 'hide-editor': !showCode, 'is-fullscreen': isFullscreen }"
+    >
       <div class="playground-toolbar">
-        <button class="toggle-code-btn" @click="showCode = !showCode">
+        <button class="toolbar-btn" @click="showCode = !showCode">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
           </svg>
           {{ showCode ? 'Hide Code' : 'Show Code' }}
+        </button>
+        <button class="toolbar-btn" @click="toggleFullscreen">
+          <svg v-if="!isFullscreen" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+          </svg>
+          <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 14h6v6m10-10h-6V4m0 6 7-7M3 21l7-7" />
+          </svg>
+          {{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}
         </button>
       </div>
       <Sandpack
@@ -230,14 +246,27 @@ const sandpackOptions = computed(() => {
   overflow: hidden;
   border: 1px solid var(--vp-c-divider);
 }
+
+.playground-wrapper.is-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  background: var(--vp-c-bg);
+}
+
 .playground-toolbar {
   display: flex;
   align-items: center;
+  gap: 8px;
   padding: 6px 12px;
   background: var(--vp-c-bg-soft);
   border-bottom: 1px solid var(--vp-c-divider);
 }
-.toggle-code-btn {
+
+.toolbar-btn {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -250,8 +279,41 @@ const sandpackOptions = computed(() => {
   cursor: pointer;
   transition: all 0.2s;
 }
-.toggle-code-btn:hover {
+
+.toolbar-btn:hover {
   border-color: var(--vp-c-brand-1);
   color: var(--vp-c-brand-1);
+}
+
+/* Hide editor: target .sp-editor which has both sp-editor and sp-stack classes */
+.playground-wrapper.hide-editor :deep(.sp-editor) {
+  display: none !important;
+}
+
+/* When editor hidden, the remaining panel (preview) should take full width */
+.playground-wrapper.hide-editor :deep(.sp-stack:not(.sp-editor)) {
+  flex: 1 1 100% !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* Target common sandpack wrapper/layout containers */
+.playground-wrapper.hide-editor :deep([class*="sp-layout"]),
+.playground-wrapper.hide-editor :deep([class*="sp-wrapper"]) > div {
+  display: flex !important;
+}
+
+/* Fullscreen: maximize height */
+.playground-wrapper.is-fullscreen :deep([class*="sp-layout"]),
+.playground-wrapper.is-fullscreen :deep(.sp-wrapper) {
+  height: calc(100vh - 44px) !important;
+}
+
+.playground-wrapper.is-fullscreen :deep(.sp-stack) {
+  height: 100% !important;
+}
+
+.playground-wrapper.is-fullscreen :deep(iframe) {
+  height: 100% !important;
 }
 </style>
