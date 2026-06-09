@@ -9,167 +9,147 @@ onMounted(() => {
   if (!canvas) return;
   const ctx = canvas.getContext('2d')!;
   const dpr = window.devicePixelRatio || 1;
-  const W = canvas.clientWidth;
-  const H = canvas.clientHeight;
+  let W = canvas.clientWidth;
+  let H = canvas.clientHeight;
   canvas.width = W * dpr;
   canvas.height = H * dpr;
   ctx.scale(dpr, dpr);
 
-  const N = 200;
-  const edges: [number, number][] = [];
-  const degree: number[] = new Array(N).fill(0);
-  const M = 2;
+  const N = 120;
+  const CONNECT_DIST = 140;
+  const MOUSE_RADIUS = 200;
 
-  for (let i = 0; i <= M; i++) {
-    for (let j = i + 1; j <= M; j++) {
-      edges.push([i, j]);
-      degree[i]++;
-      degree[j]++;
-    }
-  }
-  for (let i = M + 1; i < N; i++) {
-    const targets = new Set<number>();
-    const totalDeg = degree.reduce((a, b) => a + b, 0);
-    while (targets.size < M) {
-      let r = Math.random() * totalDeg;
-      for (let j = 0; j < i; j++) {
-        r -= degree[j];
-        if (r <= 0) { targets.add(j); break; }
-      }
-    }
-    for (const t of targets) {
-      edges.push([i, t]);
-      degree[i]++;
-      degree[t]++;
-    }
-  }
-
-  const maxDeg = Math.max(...degree);
-  const pos: [number, number][] = [];
-  const vel: [number, number][] = [];
+  const nodes: { x: number; y: number; vx: number; vy: number; r: number; hue: number }[] = [];
   for (let i = 0; i < N; i++) {
-    pos.push([Math.random() * W, Math.random() * H]);
-    vel.push([0, 0]);
+    nodes.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.6,
+      vy: (Math.random() - 0.5) * 0.6,
+      r: 1.5 + Math.random() * 2.5,
+      hue: 200 + Math.random() * 60,
+    });
   }
 
-  const k = Math.sqrt((W * H) / N) * 0.6;
-  let hovered = -1;
+  let mouseX = -1000;
+  let mouseY = -1000;
 
   canvas.addEventListener('mousemove', (e) => {
     const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    hovered = -1;
-    for (let i = 0; i < N; i++) {
-      const dx = pos[i][0] - mx;
-      const dy = pos[i][1] - my;
-      if (dx * dx + dy * dy < 200) {
-        hovered = i;
-        break;
-      }
-    }
+    mouseX = e.clientX - rect.left;
+    mouseY = e.clientY - rect.top;
   });
 
-  canvas.addEventListener('mouseleave', () => { hovered = -1; });
-
-  function tick() {
-    for (let i = 0; i < N; i++) { vel[i] = [0, 0]; }
-
-    for (let i = 0; i < N; i++) {
-      for (let j = i + 1; j < N; j++) {
-        const dx = pos[i][0] - pos[j][0];
-        const dy = pos[i][1] - pos[j][1];
-        const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
-        const f = (k * k) / (dist * dist) * 0.5;
-        vel[i][0] += (dx / dist) * f;
-        vel[i][1] += (dy / dist) * f;
-        vel[j][0] -= (dx / dist) * f;
-        vel[j][1] -= (dy / dist) * f;
-      }
-    }
-
-    for (const [a, b] of edges) {
-      const dx = pos[a][0] - pos[b][0];
-      const dy = pos[a][1] - pos[b][1];
-      const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
-      const f = (dist / k) * 0.4;
-      vel[a][0] -= (dx / dist) * f;
-      vel[a][1] -= (dy / dist) * f;
-      vel[b][0] += (dx / dist) * f;
-      vel[b][1] += (dy / dist) * f;
-    }
-
-    const cx = W / 2, cy = H / 2;
-    for (let i = 0; i < N; i++) {
-      const dx = pos[i][0] - cx;
-      const dy = pos[i][1] - cy;
-      vel[i][0] -= dx * 0.001;
-      vel[i][1] -= dy * 0.001;
-    }
-
-    for (let i = 0; i < N; i++) {
-      const speed = Math.sqrt(vel[i][0] ** 2 + vel[i][1] ** 2);
-      const cap = 2;
-      if (speed > cap) {
-        vel[i][0] = (vel[i][0] / speed) * cap;
-        vel[i][1] = (vel[i][1] / speed) * cap;
-      }
-      pos[i][0] += vel[i][0];
-      pos[i][1] += vel[i][1];
-      pos[i][0] = Math.max(20, Math.min(W - 20, pos[i][0]));
-      pos[i][1] = Math.max(20, Math.min(H - 20, pos[i][1]));
-    }
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, W, H);
-
-    for (const [a, b] of edges) {
-      const isHoverEdge = a === hovered || b === hovered;
-      ctx.beginPath();
-      ctx.moveTo(pos[a][0], pos[a][1]);
-      ctx.lineTo(pos[b][0], pos[b][1]);
-      ctx.strokeStyle = isHoverEdge
-        ? 'rgba(100, 200, 255, 0.6)'
-        : 'rgba(100, 160, 255, 0.08)';
-      ctx.lineWidth = isHoverEdge ? 1.2 : 0.4;
-      ctx.stroke();
-    }
-
-    for (let i = 0; i < N; i++) {
-      const r = 1.5 + (degree[i] / maxDeg) * 5;
-      const isHub = degree[i] > maxDeg * 0.4;
-      const isHover = i === hovered;
-
-      if (isHover) {
-        ctx.beginPath();
-        ctx.arc(pos[i][0], pos[i][1], r + 8, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(100, 200, 255, 0.15)';
-        ctx.fill();
-      }
-
-      if (isHub) {
-        ctx.beginPath();
-        ctx.arc(pos[i][0], pos[i][1], r + 3, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(100, 200, 255, 0.08)';
-        ctx.fill();
-      }
-
-      ctx.beginPath();
-      ctx.arc(pos[i][0], pos[i][1], r, 0, Math.PI * 2);
-      const hue = isHover ? 180 : 210 + (degree[i] / maxDeg) * 40;
-      const lightness = isHover ? 70 : 50 + (degree[i] / maxDeg) * 15;
-      ctx.fillStyle = `hsl(${hue}, 80%, ${lightness}%)`;
-      ctx.fill();
-    }
-  }
+  canvas.addEventListener('mouseleave', () => {
+    mouseX = -1000;
+    mouseY = -1000;
+  });
 
   function loop() {
-    tick();
-    draw();
+    ctx.clearRect(0, 0, W, H);
+
+    for (let i = 0; i < N; i++) {
+      const n = nodes[i];
+
+      // Drift
+      n.x += n.vx;
+      n.y += n.vy;
+
+      // Mouse interaction — gentle attraction with nearby repulsion
+      const dx = mouseX - n.x;
+      const dy = mouseY - n.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < MOUSE_RADIUS && dist > 0) {
+        const force = (MOUSE_RADIUS - dist) / MOUSE_RADIUS;
+        if (dist < 60) {
+          // Repel when very close
+          n.vx -= (dx / dist) * force * 0.3;
+          n.vy -= (dy / dist) * force * 0.3;
+        } else {
+          // Attract gently
+          n.vx += (dx / dist) * force * 0.05;
+          n.vy += (dy / dist) * force * 0.05;
+        }
+      }
+
+      // Speed limit
+      const speed = Math.sqrt(n.vx * n.vx + n.vy * n.vy);
+      if (speed > 1.2) {
+        n.vx = (n.vx / speed) * 1.2;
+        n.vy = (n.vy / speed) * 1.2;
+      }
+
+      // Slight friction to keep things gentle
+      n.vx *= 0.995;
+      n.vy *= 0.995;
+
+      // Random nudge to keep movement alive
+      n.vx += (Math.random() - 0.5) * 0.02;
+      n.vy += (Math.random() - 0.5) * 0.02;
+
+      // Wrap around edges
+      if (n.x < -20) n.x = W + 20;
+      if (n.x > W + 20) n.x = -20;
+      if (n.y < -20) n.y = H + 20;
+      if (n.y > H + 20) n.y = -20;
+    }
+
+    // Draw edges between nearby nodes
+    for (let i = 0; i < N; i++) {
+      for (let j = i + 1; j < N; j++) {
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < CONNECT_DIST) {
+          const alpha = (1 - dist / CONNECT_DIST) * 0.2;
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.strokeStyle = `rgba(100, 180, 255, ${alpha})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Draw nodes
+    for (let i = 0; i < N; i++) {
+      const n = nodes[i];
+      const dx = mouseX - n.x;
+      const dy = mouseY - n.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const nearMouse = dist < MOUSE_RADIUS;
+
+      // Glow for nodes near mouse
+      if (nearMouse) {
+        const glow = (1 - dist / MOUSE_RADIUS) * 0.4;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r + 6, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(100, 200, 255, ${glow})`;
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      const lightness = nearMouse ? 70 : 55;
+      ctx.fillStyle = `hsl(${n.hue}, 80%, ${lightness}%)`;
+      ctx.fill();
+    }
+
     animId = requestAnimationFrame(loop);
   }
+
   loop();
+
+  const handleResize = () => {
+    W = canvas.clientWidth;
+    H = canvas.clientHeight;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+  };
+  window.addEventListener('resize', handleResize);
 });
 
 onUnmounted(() => {
