@@ -50,8 +50,8 @@ describe('Playground demo scenarios', () => {
       for (let i = 0; i <= m; i++) {
         for (let j = i + 1; j <= m; j++) {
           edges.push([i, j]);
-          degree[i]++;
-          degree[j]++;
+          degree[i] = (degree[i] ?? 0) + 1;
+          degree[j] = (degree[j] ?? 0) + 1;
         }
       }
       for (let i = m + 1; i < n; i++) {
@@ -60,7 +60,7 @@ describe('Playground demo scenarios', () => {
         while (targets.size < m) {
           let r = Math.random() * totalDeg;
           for (let j = 0; j < i; j++) {
-            r -= degree[j];
+            r -= degree[j] ?? 0;
             if (r <= 0) {
               targets.add(j);
               break;
@@ -69,8 +69,8 @@ describe('Playground demo scenarios', () => {
         }
         for (const t of targets) {
           edges.push([i, t]);
-          degree[i]++;
-          degree[t]++;
+          degree[i] = (degree[i] ?? 0) + 1;
+          degree[t] = (degree[t] ?? 0) + 1;
         }
       }
       const graph = Graph.fromEdges(edges);
