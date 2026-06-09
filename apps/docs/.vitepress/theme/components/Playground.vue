@@ -7,7 +7,10 @@ const props = defineProps<{ code: string }>();
 const { isDark } = useData();
 
 const files = computed(() => ({
-  '/src/index.ts': props.code.trim(),
+  '/src/index.ts': {
+    code: props.code.trim(),
+    active: true,
+  },
 }));
 
 const customSetup = {
@@ -16,19 +19,21 @@ const customSetup = {
 </script>
 
 <template>
-  <div class="playground-wrapper">
-    <Sandpack
-      template="vanilla-ts"
-      :theme="isDark ? 'dark' : 'light'"
-      :files="files"
-      :custom-setup="customSetup"
-      :options="{
-        showConsole: true,
-        showConsoleButton: true,
-        editorHeight: 320,
-      }"
-    />
-  </div>
+  <ClientOnly>
+    <div class="playground-wrapper">
+      <Sandpack
+        template="vanilla-ts"
+        :theme="isDark ? 'dark' : 'light'"
+        :files="files"
+        :custom-setup="customSetup"
+        :options="{
+          showConsole: true,
+          showConsoleButton: true,
+          editorHeight: 320,
+        }"
+      />
+    </div>
+  </ClientOnly>
 </template>
 
 <style scoped>
