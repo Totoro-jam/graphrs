@@ -106,6 +106,7 @@ function draw(scale?: number, ox?: number, oy?: number) {
   ctx.clearRect(0, 0, cW, cH);
   ctx.fillStyle = '#080b12'; ctx.fillRect(0, 0, cW, cH);
   ctx.save(); ctx.translate(oX, oY);
+  ctx.lineCap = 'round';
 
   for (const key of revEdges) {
     const [a, b] = key.split('-').map(Number);
@@ -113,8 +114,8 @@ function draw(scale?: number, ox?: number, oy?: number) {
     ctx.beginPath();
     ctx.moveTo(pos[a][0] * sx, pos[a][1] * sy);
     ctx.lineTo(pos[b][0] * sx, pos[b][1] * sy);
-    ctx.strokeStyle = 'rgba(91,143,249,' + (0.04 + importance * 0.15) + ')';
-    ctx.lineWidth = 0.4 + importance * 1.0;
+    ctx.strokeStyle = 'rgba(91,143,249,' + (0.05 + importance * 0.18) + ')';
+    ctx.lineWidth = 0.5 + importance * 1.2;
     ctx.stroke();
   }
 
@@ -315,6 +316,7 @@ function draw(scale?: number, ox?: number, oy?: number) {
   const W = 1400, H = 1000, sx = cW / W * s, sy = cH / H * s;
   ctx.clearRect(0, 0, cW, cH); ctx.fillStyle = '#080b12'; ctx.fillRect(0, 0, cW, cH);
   ctx.save(); ctx.translate(oX, oY);
+  ctx.lineCap = 'round';
 
   for (const e of graph.edges()) {
     const same = labels.get(e.source) === labels.get(e.target);
@@ -322,8 +324,8 @@ function draw(scale?: number, ox?: number, oy?: number) {
     ctx.beginPath();
     ctx.moveTo(pos[e.source][0] * sx, pos[e.source][1] * sy);
     ctx.lineTo(pos[e.target][0] * sx, pos[e.target][1] * sy);
-    ctx.strokeStyle = same ? color + '33' : 'rgba(60,70,90,0.05)';
-    ctx.lineWidth = same ? 0.9 : 0.3;
+    ctx.strokeStyle = same ? color + '38' : 'rgba(60,70,90,0.04)';
+    ctx.lineWidth = same ? 1.0 : 0.3;
     ctx.stroke();
   }
 
@@ -335,14 +337,14 @@ function draw(scale?: number, ox?: number, oy?: number) {
 
     if (d > 6) {
       const grd = ctx.createRadialGradient(x, y, r * 0.4, x, y, r * 2.5);
-      grd.addColorStop(0, color + '40');
+      grd.addColorStop(0, color + '45');
       grd.addColorStop(1, color + '00');
       ctx.fillStyle = grd;
       ctx.fillRect(x - r * 2.5, y - r * 2.5, r * 5, r * 5);
     }
 
     ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fillStyle = color; ctx.globalAlpha = 0.9; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.fillStyle = color; ctx.globalAlpha = 0.92; ctx.fill(); ctx.globalAlpha = 1;
   }
   ctx.restore();
 
@@ -479,14 +481,15 @@ function draw(scale?: number, ox?: number, oy?: number) {
   const W = 1400, H = 1000, sx = cW / W * s, sy = cH / H * s;
   ctx.clearRect(0, 0, cW, cH); ctx.fillStyle = '#080b12'; ctx.fillRect(0, 0, cW, cH);
   ctx.save(); ctx.translate(oX, oY);
+  ctx.lineCap = 'round';
 
   for (const e of graph.edges()) {
     const avgScore = ((bc.get(e.source) || 0) + (bc.get(e.target) || 0)) / 2;
     ctx.beginPath();
     ctx.moveTo(pos[e.source][0] * sx, pos[e.source][1] * sy);
     ctx.lineTo(pos[e.target][0] * sx, pos[e.target][1] * sy);
-    ctx.strokeStyle = 'rgba(100,140,200,' + (0.05 + avgScore * 0.2) + ')';
-    ctx.lineWidth = 0.5 + avgScore * 1.8;
+    ctx.strokeStyle = 'rgba(100,140,200,' + (0.05 + avgScore * 0.22) + ')';
+    ctx.lineWidth = 0.5 + avgScore * 2.0;
     ctx.stroke();
   }
 
@@ -496,16 +499,16 @@ function draw(scale?: number, ox?: number, oy?: number) {
     const r = (3 + score * 16) * Math.min(s, 2.5);
 
     if (score > 0.25) {
-      const grd = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 2.8);
-      grd.addColorStop(0, 'rgba(232,107,90,' + (0.15 + score * 0.2) + ')');
+      const grd = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 3);
+      grd.addColorStop(0, 'rgba(232,107,90,' + (0.18 + score * 0.22) + ')');
       grd.addColorStop(1, 'rgba(232,107,90,0)');
       ctx.fillStyle = grd;
-      ctx.fillRect(x - r * 2.8, y - r * 2.8, r * 5.6, r * 5.6);
+      ctx.fillRect(x - r * 3, y - r * 3, r * 6, r * 6);
     }
 
     ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fillStyle = scoreColor(score); ctx.fill();
-    if (score > 0.5) { ctx.strokeStyle = 'rgba(255,200,150,0.5)'; ctx.lineWidth = 1.2; ctx.stroke(); }
+    if (score > 0.5) { ctx.strokeStyle = 'rgba(255,200,150,0.55)'; ctx.lineWidth = 1.4; ctx.stroke(); }
   }
 
   ctx.font = '10px system-ui'; ctx.fillStyle = 'rgba(255,220,200,0.9)'; ctx.textAlign = 'center';
@@ -637,6 +640,7 @@ function draw(scale?: number, ox?: number, oy?: number) {
   const W = 1400, H = 1000, sx = cW / W * s, sy = cH / H * s;
   ctx.clearRect(0, 0, cW, cH); ctx.fillStyle = '#080b12'; ctx.fillRect(0, 0, cW, cH);
   ctx.save(); ctx.translate(oX, oY);
+  ctx.lineCap = 'round';
 
   for (const e of graph.edges()) {
     const srcR = (ranks.get(e.source) || 0) / maxR;
@@ -645,8 +649,8 @@ function draw(scale?: number, ox?: number, oy?: number) {
     ctx.beginPath();
     ctx.moveTo(pos[e.source][0] * sx, pos[e.source][1] * sy);
     ctx.lineTo(pos[e.target][0] * sx, pos[e.target][1] * sy);
-    ctx.strokeStyle = 'rgba(100,150,220,' + (0.02 + importance * 0.12) + ')';
-    ctx.lineWidth = 0.3 + importance * 1.0;
+    ctx.strokeStyle = 'rgba(100,150,220,' + (0.03 + importance * 0.14) + ')';
+    ctx.lineWidth = 0.4 + importance * 1.2;
     ctx.stroke();
   }
 
@@ -657,7 +661,7 @@ function draw(scale?: number, ox?: number, oy?: number) {
 
     if (norm > 0.25) {
       const grd = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 3);
-      grd.addColorStop(0, 'rgba(246,189,22,' + (norm * 0.35) + ')');
+      grd.addColorStop(0, 'rgba(246,189,22,' + (norm * 0.38) + ')');
       grd.addColorStop(1, 'rgba(246,189,22,0)');
       ctx.fillStyle = grd;
       ctx.fillRect(x - r * 3, y - r * 3, r * 6, r * 6);
@@ -669,7 +673,7 @@ function draw(scale?: number, ox?: number, oy?: number) {
     else if (norm > 0.08) ctx.fillStyle = '#4a8fcc';
     else ctx.fillStyle = '#2a3a55';
     ctx.fill();
-    if (norm > 0.5) { ctx.strokeStyle = 'rgba(246,189,22,0.5)'; ctx.lineWidth = 1.4; ctx.stroke(); }
+    if (norm > 0.5) { ctx.strokeStyle = 'rgba(246,189,22,0.55)'; ctx.lineWidth = 1.5; ctx.stroke(); }
   }
 
   ctx.font = '10px system-ui'; ctx.fillStyle = 'rgba(255,240,200,0.9)'; ctx.textAlign = 'center';

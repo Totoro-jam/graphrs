@@ -108,14 +108,17 @@ export function createCanvas(container) {
   function resize() {
     cW = wrapper.clientWidth || 800;
     cH = wrapper.clientHeight || 600;
-    canvas.width = cW * 2;
-    canvas.height = cH * 2;
-    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(cW * dpr);
+    canvas.height = Math.round(cH * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (drawFn) drawFn();
   }
 
   const ro = new ResizeObserver(resize);
   ro.observe(wrapper);
+  const mq = window.matchMedia('(resolution: ' + (window.devicePixelRatio || 1) + 'dppx)');
+  mq.addEventListener('change', resize);
   resize();
 
   return {
@@ -125,7 +128,7 @@ export function createCanvas(container) {
     get width() { return cW; },
     get height() { return cH; },
     onResize(fn) { drawFn = fn; },
-    dispose() { ro.disconnect(); }
+    dispose() { ro.disconnect(); mq.removeEventListener('change', resize); }
   };
 }
 `;
