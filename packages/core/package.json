@@ -19,6 +19,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./graph": {
+      "types": "./dist/graph-only.d.ts",
+      "import": "./dist/graph-only.js"
+    },
     "./worker": {
       "types": "./dist/worker.d.ts",
       "import": "./dist/worker.js"

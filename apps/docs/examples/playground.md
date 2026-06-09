@@ -1,5 +1,5 @@
 <script setup>
-const animatedBFS = `import { Graph } from '@graphrs/core';
+const animatedBFS = `import { Graph } from './graphrs-core.js';
 
 // Build a 200-node scale-free network
 function barabasiAlbert(n: number, m: number): Graph {
@@ -159,7 +159,7 @@ function animateStep() {
 animateStep();
 `;
 
-const communityViz = `import { Graph } from '@graphrs/core';
+const communityViz = `import { Graph } from './graphrs-core.js';
 
 // Graph with 5 planted communities (150 nodes)
 function makeCommunityGraph(): Graph {
@@ -322,7 +322,7 @@ ctx.font = '13px monospace';
 ctx.fillText(commMap.size + ' communities · ' + graph.nodeCount() + ' nodes · Label Propagation', 12, 20);
 `;
 
-const centralityViz = `import { Graph } from '@graphrs/core';
+const centralityViz = `import { Graph } from './graphrs-core.js';
 
 // Social network with bridge structure (100 nodes, 5 clusters)
 function buildNetwork(): Graph {
@@ -455,7 +455,7 @@ ctx.font = '13px monospace';
 ctx.fillText('Betweenness Centrality · Bridge nodes in red · 5 clusters', 12, 20);
 `;
 
-const pageRankViz = `import { Graph } from '@graphrs/core';
+const pageRankViz = `import { Graph } from './graphrs-core.js';
 
 // Web-like directed graph (250 nodes)
 function webGraph(n: number): Graph {
@@ -604,7 +604,7 @@ ctx.fillText('PageRank · ' + graph.nodeCount() + ' nodes · High-rank pages in 
 
 # Interactive Playground
 
-Edit the code and see results instantly. Each demo runs **real graph algorithms** in a live sandbox with `@graphrs/core`.
+Edit the code and see results instantly. Each demo runs **real graph algorithms** using the `@graphrs/core` Graph API in a live sandbox.
 
 ## Animated BFS Traversal
 
