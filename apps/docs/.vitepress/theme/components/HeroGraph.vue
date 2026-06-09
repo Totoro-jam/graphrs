@@ -15,7 +15,7 @@ onMounted(() => {
   canvas.height = H * dpr;
   ctx.scale(dpr, dpr);
 
-  const N = 80;
+  const N = 200;
   const edges: [number, number][] = [];
   const degree: number[] = new Array(N).fill(0);
   const M = 2;
@@ -52,7 +52,7 @@ onMounted(() => {
     vel.push([0, 0]);
   }
 
-  const k = Math.sqrt((W * H) / N) * 0.8;
+  const k = Math.sqrt((W * H) / N) * 0.6;
   let hovered = -1;
 
   canvas.addEventListener('mousemove', (e) => {
@@ -131,14 +131,14 @@ onMounted(() => {
       ctx.lineTo(pos[b][0], pos[b][1]);
       ctx.strokeStyle = isHoverEdge
         ? 'rgba(100, 200, 255, 0.6)'
-        : 'rgba(100, 160, 255, 0.12)';
-      ctx.lineWidth = isHoverEdge ? 1.5 : 0.7;
+        : 'rgba(100, 160, 255, 0.08)';
+      ctx.lineWidth = isHoverEdge ? 1.2 : 0.4;
       ctx.stroke();
     }
 
     for (let i = 0; i < N; i++) {
-      const r = 2.5 + (degree[i] / maxDeg) * 6;
-      const isHub = degree[i] > maxDeg * 0.5;
+      const r = 1.5 + (degree[i] / maxDeg) * 5;
+      const isHub = degree[i] > maxDeg * 0.4;
       const isHover = i === hovered;
 
       if (isHover) {
@@ -151,7 +151,7 @@ onMounted(() => {
       if (isHub) {
         ctx.beginPath();
         ctx.arc(pos[i][0], pos[i][1], r + 3, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(100, 200, 255, 0.1)';
+        ctx.fillStyle = 'rgba(100, 200, 255, 0.08)';
         ctx.fill();
       }
 
