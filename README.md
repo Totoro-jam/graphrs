@@ -39,6 +39,8 @@ JavaScript has graphology (pure JS, limited) and... nothing fast.
 | [`@graphrs/operators`](packages/operators) | Graph transforms (union, simplify, reverse, ...) |
 | [`@graphrs/flow`](packages/flow) | Network flow & connectivity |
 | [`@graphrs/isomorphism`](packages/isomorphism) | Structural matching (VF2, canonical, automorphism) |
+| [`@graphrs/g6`](packages/g6) | AntV G6 5.x integration (layout, analysis, adapters) |
+| [`@graphrs/react-flow`](packages/react-flow) | React Flow integration (hook, adapters) |
 
 ## Quick Start
 
@@ -67,6 +69,26 @@ const pr = await pagerank(g, { damping: 0.85 });
 // { scores: [0.12, 0.15, 0.23, 0.18, 0.16, 0.16] }
 ```
 
+## Framework Integration
+
+```bash
+# AntV G6 — plug-and-play layout + analysis
+npm install @graphrs/g6 @antv/g6
+
+# React Flow — useGraphrsLayout hook
+npm install @graphrs/react-flow @xyflow/react
+```
+
+```typescript
+// G6: one-line layout registration
+import { createGraphrsLayout } from '@graphrs/g6';
+new G6Graph({ layout: createGraphrsLayout({ algorithm: 'fruchterman-reingold' }) });
+
+// React Flow: auto-layout hook
+import { useGraphrsLayout } from '@graphrs/react-flow';
+const { nodes, edges } = useGraphrsLayout(initialNodes, initialEdges);
+```
+
 ## Use Cases
 
 - **Social network analysis** — community detection, influence propagation
@@ -93,6 +115,10 @@ const pr = await pagerank(g, { damping: 0.85 });
 │  Compiled from rust-igraph, lazy-loaded          │
 └─────────────────────────────────────────────────┘
 ```
+
+## Documentation
+
+Full documentation with interactive playground: **[totoro-jam.github.io/graphrs](https://totoro-jam.github.io/graphrs/)**
 
 ## Development
 
