@@ -9,10 +9,7 @@ const PLAYGROUND_VUE_PATH = resolve(
 
 const PLAYGROUND_MD_PATH = resolve(__dirname, '../../../../apps/docs/examples/playground.md');
 
-const PLAYGROUND_ZH_MD_PATH = resolve(
-  __dirname,
-  '../../../../apps/docs/zh/examples/playground.md',
-);
+const PLAYGROUND_ZH_MD_PATH = resolve(__dirname, '../../../../apps/docs/zh/examples/playground.md');
 
 describe('Playground Sandpack configuration', () => {
   const vueContent = readFileSync(PLAYGROUND_VUE_PATH, 'utf-8');
@@ -102,7 +99,6 @@ describe('Playground color safety', () => {
   });
 
   it('all hex colors used with alpha concat should be 6-char format', () => {
-    const hexAlphaPattern = /\b(\w+)\s*\+\s*'([0-9a-fA-F]{2})'/g;
     const colorAssignments = mdContent.matchAll(/const color\s*=\s*[^;]*\|\|\s*'(#[0-9a-fA-F]+)'/g);
     for (const match of colorAssignments) {
       const hex = match[1]!;

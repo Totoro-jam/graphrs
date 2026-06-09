@@ -106,7 +106,7 @@ describe('applyLayout', () => {
 
   it('should return original node unchanged if position is undefined', () => {
     const layout = {
-      positions: [undefined] as (undefined | [number, number])[],
+      positions: [undefined] as unknown as [number, number][],
     };
     const nodes = [{ id: 'n1', position: { x: 99, y: 99 }, data: {} }];
     const result = applyLayout(nodes, layout);

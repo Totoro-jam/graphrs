@@ -152,7 +152,9 @@ describe('layoutResultToPositions', () => {
   });
 
   it('should skip positions that are undefined', () => {
-    const layout = { positions: [[1, 2], undefined] as ([number, number] | undefined)[] };
+    const layout = { positions: [[1, 2], undefined] } as unknown as {
+      positions: [number, number][];
+    };
     const nodeIds = ['a', 'b'];
     const positions = layoutResultToPositions(layout, nodeIds, [0, 0], 100, 100);
     expect(positions['a']).toBeDefined();
