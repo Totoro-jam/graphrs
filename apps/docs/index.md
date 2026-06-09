@@ -13,7 +13,7 @@ hero:
       text: Get Started
       link: /guide/getting-started
     - theme: alt
-      text: View Examples
+      text: Try in Browser
       link: /examples/playground
     - theme: alt
       text: GitHub

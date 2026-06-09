@@ -13,7 +13,7 @@ hero:
       text: 快速开始
       link: /zh/guide/getting-started
     - theme: alt
-      text: 查看示例
+      text: 在线体验
       link: /zh/examples/playground
     - theme: alt
       text: GitHub

@@ -49,8 +49,8 @@ export default defineConfig({
           ],
           '/examples/': [
             {
-              text: 'Try It',
-              items: [{ text: 'Code Examples', link: '/examples/playground' }],
+              text: 'Interactive',
+              items: [{ text: 'Playground', link: '/examples/playground' }],
             },
             {
               text: 'Integration Examples',
@@ -108,8 +108,8 @@ export default defineConfig({
           ],
           '/zh/examples/': [
             {
-              text: '试一试',
-              items: [{ text: '代码示例', link: '/zh/examples/playground' }],
+              text: '交互式',
+              items: [{ text: '演练场', link: '/zh/examples/playground' }],
             },
             {
               text: '集成示例',

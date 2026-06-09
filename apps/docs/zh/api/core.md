@@ -1,3 +1,44 @@
+<script setup>
+const creation = `import { Graph } from '@graphrs/core';
+
+const g = new Graph(true);
+g.addNode(0, { name: 'Alice' });
+g.addNode(1, { name: 'Bob' });
+g.addNode(2, { name: 'Carol' });
+g.addEdge(0, 1);
+g.addEdge(1, 2);
+g.addEdge(2, 0);
+
+console.log('有向图:');
+console.log('  节点:', g.nodeCount(), '边:', g.edgeCount());
+console.log('  节点 0 的邻居:', g.neighbors(0));
+console.log('  存在边 0→1:', g.hasEdge(0, 1));
+console.log('  存在边 1→0:', g.hasEdge(1, 0));
+console.log('  节点 0 数据:', JSON.stringify(g.nodeData(0)));
+
+const g2 = Graph.fromEdges([[0,1],[1,2],[2,3],[3,0]]);
+console.log('\\n从边列表:', g2.nodeCount(), '节点,', g2.edgeCount(), '边');
+
+const sub = g2.subgraph([0, 1, 2]);
+console.log('子图 {0,1,2}:', sub.nodeCount(), '节点,', sub.edgeCount(), '边');
+`;
+
+const roundtrip = `import { Graph } from '@graphrs/core';
+
+const g = Graph.fromEdges([[0,1],[1,2],[2,0]]);
+g.addNode(0, { label: 'A' });
+g.addNode(1, { label: 'B' });
+g.addNode(2, { label: 'C' });
+
+const json = g.toJSON();
+console.log('序列化结果:', JSON.stringify(json, null, 2));
+
+const restored = Graph.fromJSON(json);
+console.log('\\n恢复:', restored.nodeCount(), '节点,', restored.edgeCount(), '边');
+console.log('节点 0 数据:', JSON.stringify(restored.nodeData(0)));
+`;
+</script>
+
 # @graphrs/core
 
 核心包提供 `Graph` 类、类型定义、错误类和 WASM 加载器。所有其他包都依赖于它。
@@ -73,57 +114,15 @@ static fromJSON<N, E>(data: SerializedGraph): Graph<N, E>
 | `toReactFlowFormat(layout?)`     | `ReactFlowData`                 | 转换为 React Flow 格式   |
 | `toCytoscapeFormat(layout?)`     | `CytoscapeData`                 | 转换为 Cytoscape.js 格式 |
 
-## 示例
+## 在线体验
 
 ### 图创建与查询
 
-```ts
-import { Graph } from '@graphrs/core';
-
-// 有向图 + 节点数据
-const g = new Graph(true);
-g.addNode(0, { name: 'Alice' });
-g.addNode(1, { name: 'Bob' });
-g.addNode(2, { name: 'Carol' });
-g.addEdge(0, 1);
-g.addEdge(1, 2);
-g.addEdge(2, 0);
-
-console.log('有向图:');
-console.log(`  节点: ${g.nodeCount()}, 边: ${g.edgeCount()}`);
-console.log(`  节点 0 的邻居: ${g.neighbors(0)}`);
-console.log(`  存在边 0→1: ${g.hasEdge(0, 1)}`);
-console.log(`  存在边 1→0: ${g.hasEdge(1, 0)}`);
-console.log(`  节点 1 的度: ${g.degree(1)}`);
-console.log(`  节点 0 数据:`, g.nodeData(0));
-
-// 静态工厂
-const g2 = Graph.fromEdges([[0,1],[1,2],[2,3],[3,0]]);
-console.log(`\n从边列表: ${g2.nodeCount()} 节点, ${g2.edgeCount()} 边`);
-
-// 子图
-const sub = g2.subgraph([0, 1, 2]);
-console.log(`子图 {0,1,2}: ${sub.nodeCount()} 节点, ${sub.edgeCount()} 边`);
-```
+<Playground :code="creation" />
 
 ### 序列化往返
 
-```ts
-import { Graph } from '@graphrs/core';
-
-const g = Graph.fromEdges([[0,1],[1,2],[2,0]]);
-g.addNode(0, { label: 'A' });
-g.addNode(1, { label: 'B' });
-g.addNode(2, { label: 'C' });
-
-// 序列化 → 反序列化
-const json = g.toJSON();
-console.log('序列化结果:', JSON.stringify(json, null, 2));
-
-const restored = Graph.fromJSON(json);
-console.log(`\n恢复: ${restored.nodeCount()} 节点, ${restored.edgeCount()} 边`);
-console.log('节点 0 数据:', restored.nodeData(0));
-```
+<Playground :code="roundtrip" />
 
 ## 类型
 
