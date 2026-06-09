@@ -6,7 +6,8 @@ hero:
   text: Graph Algorithms at Native Speed
   tagline: Modular, tree-shakable TypeScript graph library powered by Rust/WASM. 400+ algorithms, browser & Node.js.
   image:
-    src: /logo.svg
+    light: /logo.svg
+    dark: /logo.svg
     alt: graphrs logo
   actions:
     - theme: brand

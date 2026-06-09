@@ -192,10 +192,7 @@ describe('Playground demo scenarios', () => {
         while (stack.length > 0) {
           const w = stack.pop()!;
           for (const v of pred.get(w)!) {
-            delta.set(
-              v,
-              delta.get(v)! + (sigma.get(v)! / sigma.get(w)!) * (1 + delta.get(w)!),
-            );
+            delta.set(v, delta.get(v)! + (sigma.get(v)! / sigma.get(w)!) * (1 + delta.get(w)!));
           }
           if (w !== s) cb.set(w, cb.get(w)! + delta.get(w)!);
         }

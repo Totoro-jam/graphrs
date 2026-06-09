@@ -12,14 +12,7 @@ const files = computed(() => ({
     active: true,
   },
   '/index.html': {
-    code: `<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8" /><title>graphrs</title></head>
-<body>
-  <div id="app"></div>
-  <script type="module" src="./index.ts"></script>
-</body>
-</html>`,
+    code: '<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8" /><title>graphrs</title></head>\n<body>\n  <div id="app"></div>\n  <script type="module" src="./index.ts"><\/script>\n</body>\n</html>',
     hidden: true,
   },
 }));
