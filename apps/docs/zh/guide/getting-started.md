@@ -54,25 +54,25 @@ import { Graph } from '@graphrs/core';
 import { louvain } from '@graphrs/community';
 import { pagerank } from '@graphrs/centrality';
 
-// Create a graph
+// 创建图
 const graph = Graph.fromEdges([
   [0, 1],
   [1, 2],
-  [2, 0], // cluster 1
+  [2, 0], // 集群 1
   [3, 4],
   [4, 5],
-  [5, 3], // cluster 2
-  [2, 3], // bridge
+  [5, 3], // 集群 2
+  [2, 3], // 桥接边
 ]);
 
-// Detect communities
+// 检测社区
 const communities = await louvain(graph);
 console.log(communities.membership); // [0, 0, 0, 1, 1, 1]
 console.log(communities.modularity); // ~0.357
 
-// Compute PageRank
+// 计算 PageRank
 const pr = await pagerank(graph);
-console.log(pr.scores); // importance scores per node
+console.log(pr.scores); // 每个节点的重要性分数
 ```
 
 ### 在线体验

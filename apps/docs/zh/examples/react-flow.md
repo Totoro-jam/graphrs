@@ -32,15 +32,15 @@ function GraphView() {
         [0, 2],
       ]);
 
-      // Add labels
+      // 添加标签
       for (const id of graph.nodes()) {
         graph.addNode(id, { label: `Node ${id}` });
       }
 
-      // Compute layout
+      // 计算布局
       const layout = await layoutFR(graph);
 
-      // Convert to React Flow format
+      // 转换为 React Flow 格式
       const data = graph.toReactFlowFormat(layout);
       setNodes(data.nodes);
       setEdges(data.edges);
@@ -98,7 +98,7 @@ async function buildGraph() {
   const layout = await layoutFR(graph);
   const data = graph.toReactFlowFormat(layout);
 
-  // Enrich nodes with centrality data
+  // 用中心性数据丰富节点
   data.nodes.forEach((node, i) => {
     node.data = {
       label: `Node ${node.id} (PR: ${pr.scores[i]!.toFixed(3)})`,

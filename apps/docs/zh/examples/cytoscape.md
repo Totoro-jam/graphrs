@@ -15,7 +15,7 @@ import cytoscape from 'cytoscape';
 import { Graph } from '@graphrs/core';
 import { louvain } from '@graphrs/community';
 
-// Build graph
+// 构建图
 const graph = Graph.fromEdges([
   [0, 1],
   [1, 2],
@@ -26,19 +26,19 @@ const graph = Graph.fromEdges([
   [2, 3],
 ]);
 
-// Detect communities
+// 检测社区
 const communities = await louvain(graph);
 
-// Convert to Cytoscape format
+// 转换为 Cytoscape 格式
 const data = graph.toCytoscapeFormat();
 
-// Add community class for styling
+// 为样式添加社区类
 const colors = ['#5B8DEF', '#F5A623', '#7ED321'];
 data.elements.nodes.forEach((node, i) => {
   node.data.community = communities.membership[i];
 });
 
-// Render
+// 渲染
 const cy = cytoscape({
   container: document.getElementById('cy'),
   elements: data.elements,
@@ -92,7 +92,7 @@ const data = graph.toCytoscapeFormat(layout);
 
 const cy = cytoscape({
   elements: data.elements,
-  layout: { name: 'preset' }, // use pre-computed positions
+  layout: { name: 'preset' }, // 使用预计算的坐标位置
 });
 ```
 
@@ -110,13 +110,13 @@ const graph = Graph.fromEdges([
   [4, 0],
 ]);
 
-// Check connectivity
+// 检查连通性
 const connected = await isConnected(graph);
 
-// Compute betweenness centrality
+// 计算介数中心性
 const bc = await betweenness(graph);
 
-// Build Cytoscape data with analysis
+// 用分析结果构建 Cytoscape 数据
 const data = graph.toCytoscapeFormat();
 data.elements.nodes.forEach((node, i) => {
   node.data.score = bc.scores[i];

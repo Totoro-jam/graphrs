@@ -16,27 +16,27 @@ import { louvain } from '@graphrs/community';
 import { layoutFR } from '@graphrs/layout';
 import { Graph as G6Graph } from '@antv/g6';
 
-// Build a graph with graphrs
+// 用 graphrs 构建图
 const graph = Graph.fromEdges([
   [0, 1],
   [1, 2],
-  [2, 0], // cluster A
+  [2, 0], // 集群 A
   [3, 4],
   [4, 5],
-  [5, 3], // cluster B
-  [2, 3], // bridge
+  [5, 3], // 集群 B
+  [2, 3], // 桥接边
 ]);
 
-// Run community detection
+// 运行社区检测
 const communities = await louvain(graph);
 
-// Compute layout
+// 计算布局
 const layout = await layoutFR(graph);
 
-// Convert to G6 format (positions included)
+// 转换为 G6 格式（包含坐标位置）
 const data = graph.toG6Format(layout);
 
-// Color nodes by community
+// 按社区着色节点
 const colors = ['#5B8DEF', '#F5A623', '#7ED321', '#D0021B'];
 data.nodes.forEach((node, i) => {
   node.style = {
@@ -44,7 +44,7 @@ data.nodes.forEach((node, i) => {
   };
 });
 
-// Render with G6
+// 用 G6 渲染
 const g6 = new G6Graph({
   container: 'graph-container',
   width: 800,
@@ -88,7 +88,7 @@ import { Graph } from '@graphrs/core';
 import { pagerank } from '@graphrs/centrality';
 import { louvain } from '@graphrs/community';
 
-// Create a social network
+// 创建社交网络
 const graph = new Graph();
 graph.addNode(0, { name: 'Alice' });
 graph.addNode(1, { name: 'Bob' });
@@ -97,15 +97,15 @@ graph.addEdge(0, 1, { weight: 3 });
 graph.addEdge(1, 2, { weight: 1 });
 graph.addEdge(0, 2, { weight: 2 });
 
-// Compute importance and communities
+// 计算重要性和社区
 const pr = await pagerank(graph);
 const comm = await louvain(graph);
 
-// Build G6 data with analysis results
+// 用分析结果构建 G6 数据
 const data = graph.toG6Format();
 data.nodes.forEach((node, i) => {
   node.style = {
-    size: 20 + pr.scores[i]! * 100, // size by importance
+    size: 20 + pr.scores[i]! * 100, // 按重要性设置大小
   };
 });
 ```

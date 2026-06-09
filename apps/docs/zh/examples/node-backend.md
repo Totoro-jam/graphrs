@@ -20,7 +20,7 @@ import { dijkstra } from '@graphrs/path';
 const app = express();
 app.use(express.json());
 
-// Analyze a graph
+// 分析图
 app.post('/api/analyze', async (req, res) => {
   const { edges, directed } = req.body;
 
@@ -40,7 +40,7 @@ app.post('/api/analyze', async (req, res) => {
   });
 });
 
-// Find shortest path
+// 查找最短路径
 app.post('/api/shortest-path', async (req, res) => {
   const { edges, source, target } = req.body;
 
@@ -70,7 +70,7 @@ async function processGraphFile(path: string) {
 
   const pr = await pagerank(graph);
 
-  // Find top-10 nodes by PageRank
+  // 查找 PageRank 前 10 的节点
   const ranked = pr.scores
     .map((score, id) => ({ id, score }))
     .sort((a, b) => b.score - a.score)
@@ -93,7 +93,7 @@ async function processGraphFile(path: string) {
 import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 
 if (isMainThread) {
-  // Main thread: delegate heavy computation
+  // 主线程：委派重量级计算
   const worker = new Worker(new URL(import.meta.url));
   worker.postMessage({
     edges: [
@@ -106,7 +106,7 @@ if (isMainThread) {
     console.log('Analysis result:', result);
   });
 } else {
-  // Worker thread: run graph analysis
+  // Worker 线程：运行图分析
   const { Graph } = await import('@graphrs/core');
   const { pagerank } = await import('@graphrs/centrality');
 

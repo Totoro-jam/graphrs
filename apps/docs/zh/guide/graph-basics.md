@@ -117,7 +117,7 @@ const g = Graph.fromEdges([
   [2, 3],
   [3, 0],
 ]);
-// Creates 4 nodes and 4 edges automatically
+// 自动创建 4 个节点和 4 条边
 ```
 
 ### 从邻接矩阵创建
@@ -131,14 +131,14 @@ const matrix = [
 ];
 const g = Graph.fromAdjacencyMatrix(matrix);
 
-// Weighted adjacency matrix
+// 带权邻接矩阵
 const weighted = [
   [0, 5, 0],
   [5, 0, 3],
   [0, 3, 0],
 ];
 const wg = Graph.fromAdjacencyMatrix(weighted);
-// Edges will have { weight: 5 } and { weight: 3 }
+// 边将带有 { weight: 5 } 和 { weight: 3 }
 ```
 
 ### 从 JSON 创建
@@ -159,16 +159,16 @@ const g = Graph.fromJSON({
 ```typescript
 const g = new Graph();
 
-// Add nodes (with optional data)
+// 添加节点（可选数据）
 g.addNode(0, { label: 'Alice' });
 g.addNode(1, { label: 'Bob' });
-g.addNode(2); // data defaults to {}
+g.addNode(2); // 数据默认为 {}
 
-// Add edges (with optional data)
+// 添加边（可选数据）
 g.addEdge(0, 1, { weight: 2.5 });
-g.addEdge(1, 2); // auto-creates missing nodes
+g.addEdge(1, 2); // 自动创建缺失的节点
 
-// Chaining
+// 链式调用
 g.addNode(3).addNode(4).addEdge(3, 4);
 ```
 
@@ -179,13 +179,13 @@ g.addNode(3).addNode(4).addEdge(3, 4);
 ## 查询图
 
 ```typescript
-g.nodeCount(); // number of nodes
-g.edgeCount(); // number of edges
+g.nodeCount(); // 节点数量
+g.edgeCount(); // 边数量
 g.hasNode(0); // true
 g.hasEdge(0, 1); // true
-g.neighbors(0); // [1] — adjacent node ids
-g.degree(0); // 1 — number of adjacent edges
-g.nodes(); // [0, 1, 2, ...] — all node ids
+g.neighbors(0); // [1] — 相邻节点 ID
+g.degree(0); // 1 — 相邻边的数量
+g.nodes(); // [0, 1, 2, ...] — 所有节点 ID
 g.edges(); // [{ source, target, data }, ...]
 g.nodeData(0); // { label: 'Alice' }
 g.directed; // false
@@ -194,8 +194,8 @@ g.directed; // false
 ## 删除节点和边
 
 ```typescript
-g.removeEdge(0, 1); // removes a specific edge
-g.removeNode(2); // removes node and all its edges
+g.removeEdge(0, 1); // 删除指定的边
+g.removeNode(2); // 删除节点及其所有边
 ```
 
 如果目标不存在，以上方法会抛出类型化的错误（`NodeNotFoundError`、`EdgeNotFoundError`）。
@@ -204,7 +204,7 @@ g.removeNode(2); // removes node and all its edges
 
 ```typescript
 const sub = g.subgraph([0, 1, 2]);
-// New graph with only nodes 0, 1, 2 and edges between them
+// 只包含节点 0, 1, 2 及其之间边的新图
 ```
 
 ### 在线体验 — 子图与删除

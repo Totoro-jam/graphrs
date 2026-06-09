@@ -37,7 +37,7 @@ WASM 模块在首次算法调用时自动加载：
 ```typescript
 import { pagerank } from '@graphrs/centrality';
 
-// First call triggers WASM load
+// 首次调用触发 WASM 加载
 const result = await pagerank(graph);
 ```
 
@@ -55,8 +55,8 @@ const result = await pagerank(graph);
 ```typescript
 import { isWasmInitialized, getWasmSync } from '@graphrs/core';
 
-isWasmInitialized(); // false before first algorithm call
-getWasmSync(); // null before init, WasmExports after
+isWasmInitialized(); // 首次算法调用前为 false
+getWasmSync(); // 初始化前为 null，之后为 WasmExports
 ```
 
 ### 打包配置

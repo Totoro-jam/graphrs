@@ -15,7 +15,7 @@ import * as d3 from 'd3';
 import { Graph } from '@graphrs/core';
 import { pagerank } from '@graphrs/centrality';
 
-// Build graph
+// 构建图
 const graph = Graph.fromEdges([
   [0, 1],
   [1, 2],
@@ -25,10 +25,10 @@ const graph = Graph.fromEdges([
   [1, 3],
 ]);
 
-// Compute PageRank for node sizing
+// 计算 PageRank 用于节点大小
 const pr = await pagerank(graph);
 
-// Convert to D3 format
+// 转换为 D3 格式
 const nodes = graph.nodes().map((id, i) => ({
   id,
   radius: 5 + pr.scores[i]! * 50,
@@ -39,12 +39,12 @@ const links = graph.edges().map((e) => ({
   target: e.target,
 }));
 
-// Set up SVG
+// 设置 SVG
 const width = 800;
 const height = 600;
 const svg = d3.select('#graph').append('svg').attr('width', width).attr('height', height);
 
-// Create force simulation
+// 创建力导向模拟
 const simulation = d3
   .forceSimulation(nodes)
   .force(
@@ -54,7 +54,7 @@ const simulation = d3
   .force('charge', d3.forceManyBody().strength(-200))
   .force('center', d3.forceCenter(width / 2, height / 2));
 
-// Draw edges
+// 绘制边
 const link = svg
   .selectAll('line')
   .data(links)
@@ -62,7 +62,7 @@ const link = svg
   .attr('stroke', '#999')
   .attr('stroke-width', 1.5);
 
-// Draw nodes
+// 绘制节点
 const node = svg
   .selectAll('circle')
   .data(nodes)
@@ -70,7 +70,7 @@ const node = svg
   .attr('r', (d) => d.radius)
   .attr('fill', '#5B8DEF');
 
-// Update positions on tick
+// 每帧更新位置
 simulation.on('tick', () => {
   link
     .attr('x1', (d: any) => d.source.x)
@@ -97,7 +97,7 @@ const nodes = graph.nodes().map((id, i) => ({
   y: layout.positions[i]![1],
 }));
 
-// Use D3 just for rendering, no simulation needed
+// 只用 D3 渲染，无需模拟
 const svg = d3.select('#graph').append('svg');
 
 svg
