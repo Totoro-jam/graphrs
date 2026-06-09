@@ -354,8 +354,10 @@ function draw(scale?: number, ox?: number, oy?: number) {
 
   // Legend
   const sorted = [...commMap.entries()].sort((a, b) => b[1].length - a[1].length).slice(0, 8);
+  const lH = sorted.length * 17 + 12;
   ctx.fillStyle = 'rgba(8,11,18,0.92)';
-  ctx.fillRect(8, cH - 18 - sorted.length * 17, 110, sorted.length * 17 + 8);
+  ctx.beginPath(); ctx.roundRect(8, cH - 10 - lH, 115, lH, 6); ctx.fill();
+  ctx.strokeStyle = 'rgba(90,216,166,0.12)'; ctx.lineWidth = 0.5; ctx.stroke();
   ctx.textAlign = 'left'; ctx.font = '10px system-ui';
   sorted.forEach(([lbl, members], i) => {
     const y = cH - 12 - (sorted.length - 1 - i) * 17;
@@ -526,7 +528,9 @@ function draw(scale?: number, ox?: number, oy?: number) {
   ctx.restore();
 
   // Legend
-  ctx.fillStyle = 'rgba(8,11,18,0.92)'; ctx.fillRect(8, cH - 82, 145, 72);
+  ctx.fillStyle = 'rgba(8,11,18,0.92)';
+  ctx.beginPath(); ctx.roundRect(8, cH - 84, 150, 76, 6); ctx.fill();
+  ctx.strokeStyle = 'rgba(232,107,90,0.12)'; ctx.lineWidth = 0.5; ctx.stroke();
   ctx.textAlign = 'left'; ctx.font = '10px system-ui';
   const legend: [string, string][] = [['hsl(5,85%,60%)', 'Critical bridge (>0.5)'], ['hsl(30,75%,55%)', 'Important (0.2-0.5)'], ['hsl(130,75%,50%)', 'Moderate (0.1-0.2)'], ['hsl(220,40%,30%)', 'Peripheral']];
   legend.forEach(([color, label], i) => {
@@ -692,7 +696,9 @@ function draw(scale?: number, ox?: number, oy?: number) {
   ctx.shadowBlur = 0;
   ctx.restore();
 
-  ctx.fillStyle = 'rgba(8,11,18,0.92)'; ctx.fillRect(8, cH - 64, 130, 54);
+  ctx.fillStyle = 'rgba(8,11,18,0.92)';
+  ctx.beginPath(); ctx.roundRect(8, cH - 66, 135, 58, 6); ctx.fill();
+  ctx.strokeStyle = 'rgba(246,189,22,0.12)'; ctx.lineWidth = 0.5; ctx.stroke();
   ctx.textAlign = 'left'; ctx.font = '10px system-ui';
   const legend: [string, string][] = [['#F6BD16', 'Authority (>0.5)'], ['#4a8fcc', 'Mid rank'], ['#2a3a55', 'Low rank']];
   legend.forEach(([color, label], i) => {
