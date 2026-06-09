@@ -6,7 +6,18 @@ export default defineConfig({
   markdown: {
     config(md) {
       md.use(container, 'sandbox', {
-        render(tokens: unknown[], idx: number) {
+        render(
+          tokens: { nesting: number; info: string; attrs: [string, string][] | null }[],
+          idx: number,
+        ) {
+          const token = tokens[idx]!;
+          if (token.nesting === 1) {
+            const match = token.info.match(/\btemplate=(\S+)/);
+            if (match) {
+              token.attrs = token.attrs || [];
+              token.attrs.push(['template', match[1]!.replace(/[{}]/g, '')]);
+            }
+          }
           return renderSandbox(tokens, idx, 'sandbox');
         },
       });
@@ -61,9 +72,7 @@ export default defineConfig({
           '/examples/': [
             {
               text: 'Interactive',
-              items: [
-                { text: 'Playground', link: '/examples/playground' },
-              ],
+              items: [{ text: 'Playground', link: '/examples/playground' }],
             },
             {
               text: 'Integration Examples',
@@ -122,9 +131,7 @@ export default defineConfig({
           '/zh/examples/': [
             {
               text: '交互式',
-              items: [
-                { text: '演练场', link: '/zh/examples/playground' },
-              ],
+              items: [{ text: '演练场', link: '/zh/examples/playground' }],
             },
             {
               text: '集成示例',
