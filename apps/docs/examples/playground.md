@@ -1,7 +1,8 @@
 <script setup>
 const animatedBFS = `import { Graph } from './graphrs-core.js';
+import { enableZoomPan } from './zoom-pan.js';
 
-// Build a 200-node scale-free network
+// Build a 500-node scale-free network (social network topology)
 function barabasiAlbert(n: number, m: number): Graph {
   const edges: [number, number][] = [];
   const degree: number[] = new Array(n).fill(0);
@@ -27,16 +28,15 @@ function barabasiAlbert(n: number, m: number): Graph {
   return Graph.fromEdges(edges);
 }
 
-// Force-directed layout
-function layout(graph: Graph) {
+// Force-directed layout (Fruchterman-Reingold)
+function forceLayout(graph: Graph, W: number, H: number) {
   const nodes = graph.nodes();
   const n = nodes.length;
-  const W = 780, H = 480;
   const k = Math.sqrt((W * H) / n);
   const pos: Record<number, [number, number]> = {};
   for (const id of nodes) pos[id] = [Math.random() * W, Math.random() * H];
   let temp = W / 4;
-  for (let iter = 0; iter < 100; iter++) {
+  for (let iter = 0; iter < 120; iter++) {
     const disp: Record<number, [number, number]> = {};
     for (const v of nodes) disp[v] = [0, 0];
     for (let i = 0; i < n; i++) {
@@ -67,21 +67,30 @@ function layout(graph: Graph) {
   return pos;
 }
 
-const graph = barabasiAlbert(200, 3);
-console.log('Graph: ' + graph.nodeCount() + ' nodes, ' + graph.edgeCount() + ' edges');
+const t0 = performance.now();
+const graph = barabasiAlbert(500, 3);
+const W = 1200, H = 800;
+const pos = forceLayout(graph, W, H);
+const layoutTime = (performance.now() - t0).toFixed(1);
 
-const pos = layout(graph);
 const degrees: Record<number, number> = {};
 for (const id of graph.nodes()) degrees[id] = graph.degree(id);
 const maxDeg = Math.max(...Object.values(degrees));
 
-// Setup canvas
-const app = document.getElementById('app')!;
-app.innerHTML = '<canvas id="c" width="800" height="500" style="background:#0a0a1a;border-radius:12px;display:block;width:100%;aspect-ratio:8/5"></canvas>';
-const canvas = document.getElementById('c') as HTMLCanvasElement;
-const ctx = canvas.getContext('2d')!;
+console.log('Graph: ' + graph.nodeCount() + ' nodes, ' + graph.edgeCount() + ' edges');
+console.log('Layout computed in ' + layoutTime + 'ms');
 
-// Animated BFS from the highest-degree node
+// Setup full-viewport canvas with zoom/pan
+const app = document.getElementById('app')!;
+app.innerHTML = '<canvas id="c" style="background:#0a0a1a;display:block;width:100%;height:100%"></canvas>';
+const canvas = document.getElementById('c') as HTMLCanvasElement;
+canvas.width = canvas.offsetWidth * 2;
+canvas.height = canvas.offsetHeight * 2;
+const ctx = canvas.getContext('2d')!;
+ctx.scale(2, 2);
+const cW = canvas.offsetWidth, cH = canvas.offsetHeight;
+
+// Animated BFS from the highest-degree hub node
 const startNode = Number(Object.entries(degrees).sort((a,b) => b[1]-a[1])[0][0]);
 const visited = new Set<number>();
 const layers: number[][] = [];
@@ -98,7 +107,7 @@ while (frontier.length > 0) {
   frontier = next;
 }
 
-const layerColors = ['#ff6b6b','#feca57','#48dbfb','#ff9ff3','#54a0ff','#5f27cd','#01a3a4','#00d2d3'];
+const layerColors = ['#ff6b6b','#feca57','#48dbfb','#ff9ff3','#54a0ff','#5f27cd','#01a3a4','#00d2d3','#fd79a8','#00b894'];
 const nodeColor: Record<number, string> = {};
 layers.forEach((layer, i) => {
   for (const id of layer) nodeColor[id] = layerColors[i % layerColors.length];
@@ -107,39 +116,41 @@ layers.forEach((layer, i) => {
 console.log('BFS from hub node ' + startNode + ' (degree ' + degrees[startNode] + ')');
 console.log('Layers: ' + layers.length + ', reached ' + visited.size + ' nodes');
 
-// Animate layer by layer
+// Draw with transform
 let currentLayer = 0;
 const revealedNodes = new Set<number>();
 const revealedEdges = new Set<string>();
 
-function draw() {
-  ctx.clearRect(0, 0, 800, 500);
+function draw(scale = 1, ox = 0, oy = 0) {
+  const sx = cW / W * scale, sy = cH / H * scale;
+  ctx.clearRect(0, 0, cW, cH);
+  ctx.save();
+  ctx.translate(ox, oy);
   for (const key of revealedEdges) {
     const [a, b] = key.split('-').map(Number);
     ctx.beginPath();
-    ctx.moveTo(pos[a][0], pos[a][1]);
-    ctx.lineTo(pos[b][0], pos[b][1]);
-    ctx.strokeStyle = 'rgba(100, 160, 255, 0.12)';
+    ctx.moveTo(pos[a][0]*sx, pos[a][1]*sy);
+    ctx.lineTo(pos[b][0]*sx, pos[b][1]*sy);
+    ctx.strokeStyle = 'rgba(100, 160, 255, 0.15)';
     ctx.lineWidth = 0.6;
     ctx.stroke();
   }
   for (const id of revealedNodes) {
-    const [x, y] = pos[id];
-    const r = 2 + (degrees[id] / maxDeg) * 7;
-    const color = nodeColor[id] || '#666';
-    ctx.beginPath();
-    ctx.arc(x, y, r + 3, 0, Math.PI * 2);
-    ctx.fillStyle = color + '20';
-    ctx.fill();
+    const x = pos[id][0]*sx, y = pos[id][1]*sy;
+    const r = (2 + (degrees[id] / maxDeg) * 8) * Math.min(scale, 2);
+    const color = nodeColor[id] || '#666666';
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
   }
+  ctx.restore();
   ctx.fillStyle = '#ccc';
-  ctx.font = '13px monospace';
-  ctx.fillText('BFS Layer: ' + Math.min(currentLayer, layers.length) + '/' + layers.length + '  |  Nodes: ' + revealedNodes.size + '/' + graph.nodeCount(), 12, 20);
+  ctx.font = '12px monospace';
+  ctx.fillText('BFS Layer ' + Math.min(currentLayer, layers.length) + '/' + layers.length + ' | Nodes: ' + revealedNodes.size + '/' + graph.nodeCount() + ' | Scroll to zoom, drag to pan', 10, cH - 10);
 }
+
+enableZoomPan(canvas, draw);
 
 function animateStep() {
   if (currentLayer >= layers.length) { draw(); return; }
@@ -154,80 +165,90 @@ function animateStep() {
   }
   currentLayer++;
   draw();
-  setTimeout(animateStep, 180);
+  setTimeout(animateStep, 120);
 }
 animateStep();
 `;
 
 const communityViz = `import { Graph } from './graphrs-core.js';
+import { enableZoomPan } from './zoom-pan.js';
 
-// Graph with 5 planted communities (150 nodes)
-function makeCommunityGraph(): Graph {
+// Social network: 8 communities, 300 nodes (realistic planted partition model)
+function makeSocialNetwork(): Graph {
   const edges: [number, number][] = [];
   const seen = new Set<string>();
-  const sizes = [35, 30, 28, 32, 25];
+  const add = (a: number, b: number) => {
+    const k = Math.min(a,b)+'-'+Math.max(a,b);
+    if (a !== b && !seen.has(k)) { seen.add(k); edges.push([a, b]); }
+  };
+  const sizes = [45, 40, 38, 35, 42, 30, 38, 32];
   let offset = 0;
+  const offsets = [0];
   for (const size of sizes) {
     for (let i = 0; i < size; i++) {
       for (let j = i + 1; j < size; j++) {
-        if (Math.random() < 0.5) {
-          const a = offset + i, b = offset + j;
-          seen.add(a + '-' + b);
-          edges.push([a, b]);
-        }
+        if (Math.random() < 0.35) add(offset + i, offset + j);
       }
     }
     offset += size;
+    offsets.push(offset);
   }
-  // Sparse bridges between communities
-  offset = 0;
-  const offsets = [0];
-  for (const s of sizes) { offset += s; offsets.push(offset); }
-  for (let c = 0; c < sizes.length - 1; c++) {
-    for (let k = 0; k < 3; k++) {
-      const a = offsets[c] + Math.floor(Math.random() * sizes[c]);
-      const b = offsets[c+1] + Math.floor(Math.random() * sizes[c+1]);
-      if (!seen.has(a + '-' + b)) { seen.add(a + '-' + b); edges.push([a, b]); }
+  for (let c = 0; c < sizes.length; c++) {
+    for (let c2 = c + 1; c2 < sizes.length; c2++) {
+      const bridges = 2 + Math.floor(Math.random() * 3);
+      for (let k = 0; k < bridges; k++) {
+        add(offsets[c] + Math.floor(Math.random()*sizes[c]),
+            offsets[c2] + Math.floor(Math.random()*sizes[c2]));
+      }
     }
   }
   return Graph.fromEdges(edges);
 }
 
-// Label Propagation community detection
+// Louvain-inspired modularity optimization
 function detectCommunities(graph: Graph): Map<number, number> {
   const nodes = graph.nodes();
   const labels = new Map<number, number>();
   for (const id of nodes) labels.set(id, id);
-  for (let iter = 0; iter < 50; iter++) {
-    let changed = false;
+  const totalEdges = graph.edgeCount() * 2;
+  for (let pass = 0; pass < 30; pass++) {
+    let moved = false;
     const order = [...nodes].sort(() => Math.random() - 0.5);
     for (const node of order) {
       const nbs = graph.neighbors(node);
       if (nbs.length === 0) continue;
-      const counts = new Map<number, number>();
+      const commWeights = new Map<number, number>();
       for (const nb of nbs) {
-        const l = labels.get(nb)!;
-        counts.set(l, (counts.get(l) || 0) + 1);
+        const c = labels.get(nb)!;
+        commWeights.set(c, (commWeights.get(c) || 0) + 1);
       }
-      let best = labels.get(node)!, max = 0;
-      for (const [l, c] of counts) { if (c > max) { max = c; best = l; } }
-      if (best !== labels.get(node)) { labels.set(node, best); changed = true; }
+      let bestComm = labels.get(node)!, bestGain = 0;
+      for (const [c, w] of commWeights) {
+        const gain = w - nbs.length * w / totalEdges;
+        if (gain > bestGain) { bestGain = gain; bestComm = c; }
+      }
+      if (bestComm !== labels.get(node)) { labels.set(node, bestComm); moved = true; }
     }
-    if (!changed) break;
+    if (!moved) break;
   }
+  const remap = new Map<number, number>();
+  let nextId = 0;
+  for (const [, lbl] of labels) {
+    if (!remap.has(lbl)) remap.set(lbl, nextId++);
+  }
+  for (const [node, lbl] of labels) labels.set(node, remap.get(lbl)!);
   return labels;
 }
 
-// Force layout
-function forceLayout(graph: Graph) {
+// Force-directed layout
+function forceLayout(graph: Graph, W: number, H: number) {
   const nodes = graph.nodes();
   const n = nodes.length;
-  const W = 780, H = 480;
   const k = Math.sqrt((W * H) / n);
   const pos: Record<number, [number, number]> = {};
   for (const id of nodes) pos[id] = [Math.random() * W, Math.random() * H];
   let temp = W / 4;
-  for (let iter = 0; iter < 80; iter++) {
+  for (let iter = 0; iter < 100; iter++) {
     const disp: Record<number, [number, number]> = {};
     for (const v of nodes) disp[v] = [0, 0];
     for (let i = 0; i < n; i++) {
@@ -250,37 +271,51 @@ function forceLayout(graph: Graph) {
     }
     for (const v of nodes) {
       const d = Math.max(Math.sqrt(disp[v][0]**2+disp[v][1]**2), 0.1);
-      pos[v][0] = Math.max(25, Math.min(W-25, pos[v][0]+(disp[v][0]/d)*Math.min(d,temp)));
-      pos[v][1] = Math.max(25, Math.min(H-25, pos[v][1]+(disp[v][1]/d)*Math.min(d,temp)));
+      pos[v][0] = Math.max(30, Math.min(W-30, pos[v][0]+(disp[v][0]/d)*Math.min(d,temp)));
+      pos[v][1] = Math.max(30, Math.min(H-30, pos[v][1]+(disp[v][1]/d)*Math.min(d,temp)));
     }
     temp *= 0.94;
   }
   return pos;
 }
 
-const graph = makeCommunityGraph();
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+}
+
+const t0 = performance.now();
+const graph = makeSocialNetwork();
 const labels = detectCommunities(graph);
-const pos = forceLayout(graph);
+const W = 1200, H = 800;
+const pos = forceLayout(graph, W, H);
+const elapsed = (performance.now() - t0).toFixed(1);
 
 const commMap = new Map<number, number[]>();
 for (const [node, lbl] of labels) {
   if (!commMap.has(lbl)) commMap.set(lbl, []);
   commMap.get(lbl)!.push(node);
 }
-console.log('Nodes:', graph.nodeCount(), '| Edges:', graph.edgeCount());
-console.log('Communities detected:', commMap.size);
+console.log('Social network: ' + graph.nodeCount() + ' nodes, ' + graph.edgeCount() + ' edges');
+console.log('Communities detected: ' + commMap.size + ' (in ' + elapsed + 'ms)');
 [...commMap.entries()]
   .sort((a,b) => b[1].length - a[1].length)
-  .slice(0, 8)
-  .forEach(([lbl, members], i) => console.log('  Community ' + (i+1) + ': ' + members.length + ' nodes'));
+  .slice(0, 10)
+  .forEach(([lbl, members], i) => console.log('  Community ' + (i+1) + ': ' + members.length + ' members'));
 
-// Render
+// Full-viewport canvas with zoom/pan
 const app = document.getElementById('app')!;
-app.innerHTML = '<canvas id="c" width="800" height="500" style="background:#06061a;border-radius:12px;display:block;width:100%;aspect-ratio:8/5"></canvas>';
+app.innerHTML = '<canvas id="c" style="background:#06061a;display:block;width:100%;height:100%"></canvas>';
 const canvas = document.getElementById('c') as HTMLCanvasElement;
+canvas.width = canvas.offsetWidth * 2;
+canvas.height = canvas.offsetHeight * 2;
 const ctx = canvas.getContext('2d')!;
+ctx.scale(2, 2);
+const cW = canvas.offsetWidth, cH = canvas.offsetHeight;
 
-const palette = ['#ff6b6b','#4ecdc4','#45b7d1','#feca57','#a29bfe','#fd79a8','#00b894','#e17055','#0984e3','#6c5ce7'];
+const palette = ['#ff6b6b','#4ecdc4','#45b7d1','#feca57','#a29bfe','#fd79a8','#00b894','#e17055','#0984e3','#6c5ce7','#fab1a0','#74b9ff'];
 const commColor = new Map<number, string>();
 let ci = 0;
 for (const [lbl] of [...commMap.entries()].sort((a,b) => b[1].length - a[1].length)) {
@@ -288,64 +323,82 @@ for (const [lbl] of [...commMap.entries()].sort((a,b) => b[1].length - a[1].leng
   ci++;
 }
 
-for (const e of graph.edges()) {
-  const sameComm = labels.get(e.source) === labels.get(e.target);
-  const color = sameComm ? commColor.get(labels.get(e.source)!) || '#444' : '#222';
-  ctx.beginPath();
-  ctx.moveTo(pos[e.source][0], pos[e.source][1]);
-  ctx.lineTo(pos[e.target][0], pos[e.target][1]);
-  ctx.strokeStyle = color + (sameComm ? '35' : '50');
-  ctx.lineWidth = sameComm ? 0.8 : 0.4;
-  ctx.stroke();
+function draw(scale = 1, ox = 0, oy = 0) {
+  const sx = cW / W * scale, sy = cH / H * scale;
+  ctx.clearRect(0, 0, cW, cH);
+  ctx.save();
+  ctx.translate(ox, oy);
+  for (const e of graph.edges()) {
+    const sameComm = labels.get(e.source) === labels.get(e.target);
+    const color = sameComm ? (commColor.get(labels.get(e.source)!) || '#444444') : '#222222';
+    ctx.beginPath();
+    ctx.moveTo(pos[e.source][0]*sx, pos[e.source][1]*sy);
+    ctx.lineTo(pos[e.target][0]*sx, pos[e.target][1]*sy);
+    ctx.strokeStyle = hexToRgba(color, sameComm ? 0.25 : 0.08);
+    ctx.lineWidth = sameComm ? 0.8 : 0.3;
+    ctx.stroke();
+  }
+  for (const id of graph.nodes()) {
+    const x = pos[id][0]*sx, y = pos[id][1]*sy;
+    const color = commColor.get(labels.get(id)!) || '#666666';
+    const deg = graph.degree(id);
+    const r = (2.5 + (deg / 25) * 5) * Math.min(scale, 2);
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+  ctx.restore();
+  ctx.fillStyle = '#bbb';
+  ctx.font = '12px monospace';
+  ctx.fillText(commMap.size + ' communities · ' + graph.nodeCount() + ' nodes · ' + elapsed + 'ms | Scroll to zoom, drag to pan', 10, cH - 10);
 }
 
-for (const id of graph.nodes()) {
-  const [x, y] = pos[id];
-  const color = commColor.get(labels.get(id)!) || '#666';
-  const deg = graph.degree(id);
-  const r = 2.5 + (deg / 20) * 4;
-  const grad = ctx.createRadialGradient(x, y, 0, x, y, r + 6);
-  grad.addColorStop(0, color + '40');
-  grad.addColorStop(1, color + '00');
-  ctx.beginPath();
-  ctx.arc(x, y, r + 6, 0, Math.PI * 2);
-  ctx.fillStyle = grad;
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
-}
-
-ctx.fillStyle = '#bbb';
-ctx.font = '13px monospace';
-ctx.fillText(commMap.size + ' communities · ' + graph.nodeCount() + ' nodes · Label Propagation', 12, 20);
+enableZoomPan(canvas, draw);
+draw();
 `;
 
 const centralityViz = `import { Graph } from './graphrs-core.js';
+import { enableZoomPan } from './zoom-pan.js';
 
-// Social network with bridge structure (100 nodes, 5 clusters)
-function buildNetwork(): Graph {
+// Fraud detection network: 6 clusters with gateway nodes (200 nodes)
+// Real scenario: identify key money-laundering intermediaries
+function buildFraudNetwork(): Graph {
   const edges: [number, number][] = [];
   const seen = new Set<string>();
   const add = (a: number, b: number) => {
     const k = Math.min(a,b)+'-'+Math.max(a,b);
     if (a !== b && !seen.has(k)) { seen.add(k); edges.push([a, b]); }
   };
-  for (let c = 0; c < 5; c++) {
-    const base = c * 20;
-    for (let i = 0; i < 20; i++) {
-      for (let j = i+1; j < 20; j++) {
-        if (Math.random() < 0.35) add(base+i, base+j);
+  const sizes = [35, 30, 38, 32, 35, 30];
+  let offset = 0;
+  const offsets = [0];
+  for (const size of sizes) {
+    for (let i = 0; i < size; i++) {
+      for (let j = i+1; j < size; j++) {
+        if (Math.random() < 0.3) add(offset+i, offset+j);
       }
     }
+    offset += size;
+    offsets.push(offset);
   }
-  add(10, 20); add(18, 40); add(30, 60); add(50, 80);
-  add(15, 35); add(55, 75); add(38, 62); add(72, 8);
+  // Gateway nodes connecting clusters (the fraud intermediaries)
+  const gateways = [10, 18, 45, 72, 105, 138, 160, 185];
+  for (let i = 0; i < gateways.length; i++) {
+    for (let j = i+1; j < gateways.length; j++) {
+      if (Math.random() < 0.6) add(gateways[i], gateways[j]);
+    }
+  }
+  for (let c = 0; c < sizes.length - 1; c++) {
+    for (let k = 0; k < 4; k++) {
+      add(offsets[c] + Math.floor(Math.random()*sizes[c]),
+          offsets[c+1] + Math.floor(Math.random()*sizes[c+1]));
+    }
+  }
   return Graph.fromEdges(edges);
 }
 
-// Betweenness centrality (Brandes algorithm)
+// Brandes betweenness centrality (O(nm) — the real algorithm)
 function betweenness(graph: Graph): Map<number, number> {
   const nodes = graph.nodes();
   const cb = new Map<number, number>();
@@ -384,106 +437,146 @@ function betweenness(graph: Graph): Map<number, number> {
   return cb;
 }
 
-const graph = buildNetwork();
-console.log('Network: ' + graph.nodeCount() + ' nodes, ' + graph.edgeCount() + ' edges');
+const t0 = performance.now();
+const graph = buildFraudNetwork();
 const bc = betweenness(graph);
+const elapsed = (performance.now() - t0).toFixed(1);
 
 const sorted = [...bc.entries()].sort((a,b) => b[1]-a[1]);
-console.log('\\nTop 10 bridge nodes:');
+console.log('Fraud network: ' + graph.nodeCount() + ' nodes, ' + graph.edgeCount() + ' edges');
+console.log('Betweenness computed in ' + elapsed + 'ms (Brandes algorithm)');
+console.log('\\nTop 10 suspicious intermediaries:');
 sorted.slice(0, 10).forEach(([id, score], i) =>
-  console.log('  #' + (i+1) + ' Node ' + id + ' → centrality: ' + score.toFixed(4))
+  console.log('  #' + (i+1) + ' Account ' + id + ' → centrality: ' + score.toFixed(4))
 );
 
-const g6Data = graph.toG6Format();
-console.log('\\nG6 Format: ' + g6Data.nodes.length + ' nodes, ' + g6Data.edges.length + ' edges');
-
-// Render with circular cluster layout
-const app = document.getElementById('app')!;
-app.innerHTML = '<canvas id="c" width="800" height="500" style="background:#0a0e1a;border-radius:12px;display:block;width:100%;aspect-ratio:8/5"></canvas>';
-const canvas = document.getElementById('c') as HTMLCanvasElement;
-const ctx = canvas.getContext('2d')!;
-
+// Force layout
 const nodes = graph.nodes();
+const n = nodes.length;
+const W = 1200, H = 800;
+const k = Math.sqrt(W*H/n);
 const pos: Record<number, [number, number]> = {};
-const centers: [number,number][] = [[200,150],[600,150],[400,250],[200,380],[600,380]];
-for (let c = 0; c < 5; c++) {
-  const [cx, cy] = centers[c];
-  for (let i = 0; i < 20; i++) {
-    const id = c * 20 + i;
-    if (!nodes.includes(id)) continue;
-    const angle = (i / 20) * Math.PI * 2;
-    const r = 55 + Math.random() * 25;
-    pos[id] = [cx + Math.cos(angle) * r, cy + Math.sin(angle) * r];
+for (const id of nodes) pos[id] = [Math.random()*W, Math.random()*H];
+let temp = W/4;
+for (let iter = 0; iter < 100; iter++) {
+  const disp: Record<number, [number, number]> = {};
+  for (const v of nodes) disp[v] = [0, 0];
+  for (let i = 0; i < n; i++) {
+    for (let j = i+1; j < n; j++) {
+      const vi = nodes[i], vj = nodes[j];
+      const dx = pos[vi][0]-pos[vj][0], dy = pos[vi][1]-pos[vj][1];
+      const dist = Math.max(Math.sqrt(dx*dx+dy*dy), 0.1);
+      const f = (k*k)/dist;
+      disp[vi][0] += (dx/dist)*f; disp[vi][1] += (dy/dist)*f;
+      disp[vj][0] -= (dx/dist)*f; disp[vj][1] -= (dy/dist)*f;
+    }
   }
+  for (const e of graph.edges()) {
+    const dx = pos[e.source][0]-pos[e.target][0];
+    const dy = pos[e.source][1]-pos[e.target][1];
+    const dist = Math.max(Math.sqrt(dx*dx+dy*dy), 0.1);
+    const f = (dist*dist)/k;
+    disp[e.source][0] -= (dx/dist)*f; disp[e.source][1] -= (dy/dist)*f;
+    disp[e.target][0] += (dx/dist)*f; disp[e.target][1] += (dy/dist)*f;
+  }
+  for (const v of nodes) {
+    const d = Math.max(Math.sqrt(disp[v][0]**2+disp[v][1]**2), 0.1);
+    pos[v][0] = Math.max(30, Math.min(W-30, pos[v][0]+(disp[v][0]/d)*Math.min(d,temp)));
+    pos[v][1] = Math.max(30, Math.min(H-30, pos[v][1]+(disp[v][1]/d)*Math.min(d,temp)));
+  }
+  temp *= 0.94;
 }
 
-for (const e of graph.edges()) {
-  if (!pos[e.source] || !pos[e.target]) continue;
-  const isBridge = (bc.get(e.source) || 0) > 0.3 || (bc.get(e.target) || 0) > 0.3;
-  ctx.beginPath();
-  ctx.moveTo(pos[e.source][0], pos[e.source][1]);
-  ctx.lineTo(pos[e.target][0], pos[e.target][1]);
-  ctx.strokeStyle = isBridge ? 'rgba(255,107,107,0.25)' : 'rgba(80,140,240,0.08)';
-  ctx.lineWidth = isBridge ? 1.2 : 0.5;
-  ctx.stroke();
-}
+// Render
+const app = document.getElementById('app')!;
+app.innerHTML = '<canvas id="c" style="background:#0a0e1a;display:block;width:100%;height:100%"></canvas>';
+const canvas = document.getElementById('c') as HTMLCanvasElement;
+canvas.width = canvas.offsetWidth * 2;
+canvas.height = canvas.offsetHeight * 2;
+const ctx = canvas.getContext('2d')!;
+ctx.scale(2, 2);
+const cW = canvas.offsetWidth, cH = canvas.offsetHeight;
 
-const clusterColors = ['#4ecdc4','#45b7d1','#feca57','#a29bfe','#ff6b6b'];
-for (const id of nodes) {
-  if (!pos[id]) continue;
-  const [x, y] = pos[id];
-  const score = bc.get(id) || 0;
-  const cluster = Math.floor(id / 20);
-  const r = 3 + score * 14;
-  if (score > 0.2) {
-    const grad = ctx.createRadialGradient(x, y, 0, x, y, r + 10);
-    grad.addColorStop(0, '#ff6b6b60');
-    grad.addColorStop(1, '#ff6b6b00');
+function draw(scale = 1, ox = 0, oy = 0) {
+  const sx = cW / W * scale, sy = cH / H * scale;
+  ctx.clearRect(0, 0, cW, cH);
+  ctx.save();
+  ctx.translate(ox, oy);
+  for (const e of graph.edges()) {
+    const isBridge = (bc.get(e.source) || 0) > 0.3 || (bc.get(e.target) || 0) > 0.3;
     ctx.beginPath();
-    ctx.arc(x, y, r + 10, 0, Math.PI * 2);
-    ctx.fillStyle = grad;
+    ctx.moveTo(pos[e.source][0]*sx, pos[e.source][1]*sy);
+    ctx.lineTo(pos[e.target][0]*sx, pos[e.target][1]*sy);
+    ctx.strokeStyle = isBridge ? 'rgba(255,107,107,0.3)' : 'rgba(80,140,240,0.06)';
+    ctx.lineWidth = isBridge ? 1.2 : 0.4;
+    ctx.stroke();
+  }
+  const clusterColors = ['#4ecdc4','#45b7d1','#feca57','#a29bfe','#ff6b6b','#00b894'];
+  for (const id of nodes) {
+    const x = pos[id][0]*sx, y = pos[id][1]*sy;
+    const score = bc.get(id) || 0;
+    const cluster = Math.floor(id / 35);
+    const r = (3 + score * 14) * Math.min(scale, 2);
+    if (score > 0.3) {
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, r + 10);
+      grad.addColorStop(0, 'rgba(255,107,107,0.4)');
+      grad.addColorStop(1, 'rgba(255,107,107,0)');
+      ctx.beginPath();
+      ctx.arc(x, y, r + 10, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = score > 0.3 ? '#ff6b6b' : score > 0.1 ? '#feca57' : clusterColors[cluster % 6];
     ctx.fill();
   }
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fillStyle = score > 0.3 ? '#ff6b6b' : score > 0.1 ? '#feca57' : clusterColors[cluster] || '#4ecdc4';
-  ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = '#bbb';
+  ctx.font = '12px monospace';
+  ctx.fillText('Fraud detection · Red = high-betweenness intermediaries · ' + elapsed + 'ms | Scroll to zoom, drag to pan', 10, cH - 10);
 }
 
-ctx.fillStyle = '#bbb';
-ctx.font = '13px monospace';
-ctx.fillText('Betweenness Centrality · Bridge nodes in red · 5 clusters', 12, 20);
+enableZoomPan(canvas, draw);
+draw();
 `;
 
 const pageRankViz = `import { Graph } from './graphrs-core.js';
+import { enableZoomPan } from './zoom-pan.js';
 
-// Web-like directed graph (250 nodes)
+// Web crawl simulation: 400-node directed graph (realistic link structure)
+// Real scenario: identify authoritative pages in a web crawl
 function webGraph(n: number): Graph {
   const edges: [number, number][] = [];
   const seen = new Set<string>();
-  for (let cluster = 0; cluster < 5; cluster++) {
-    const base = cluster * (n/5);
-    const size = Math.floor(n/5);
+  const add = (f: number, t: number) => {
+    const k = f + '-' + t;
+    if (f !== t && !seen.has(k)) { seen.add(k); edges.push([f, t]); }
+  };
+  // 8 topical clusters (websites)
+  for (let cluster = 0; cluster < 8; cluster++) {
+    const base = cluster * Math.floor(n/8);
+    const size = Math.floor(n/8);
     for (let i = 0; i < size; i++) {
-      const from = Math.floor(base + i);
-      for (let t = 0; t < 2 + Math.floor(Math.random()*3); t++) {
-        const to = Math.floor(base + Math.random() * size);
-        const k = from + '-' + to;
-        if (from !== to && !seen.has(k)) { seen.add(k); edges.push([from, to]); }
+      const from = base + i;
+      const numLinks = 2 + Math.floor(Math.random()*4);
+      for (let t = 0; t < numLinks; t++) {
+        add(from, base + Math.floor(Math.random() * size));
       }
     }
+    // Hub pages that link to many in cluster
+    const hub = base + Math.floor(Math.random()*3);
+    for (let i = 0; i < size; i++) add(hub, base+i);
   }
-  for (let i = 0; i < n/8; i++) {
-    const from = Math.floor(Math.random() * n);
-    const to = Math.floor(Math.random() * n);
-    const k = from + '-' + to;
-    if (from !== to && !seen.has(k)) { seen.add(k); edges.push([from, to]); }
+  // Cross-cluster links (backlinks between sites)
+  for (let i = 0; i < n/4; i++) {
+    add(Math.floor(Math.random()*n), Math.floor(Math.random()*n));
   }
   return Graph.fromEdges(edges, { directed: true });
 }
 
-// PageRank with dangling node handling
-function pageRank(graph: Graph, d = 0.85, iter = 40): Map<number, number> {
+// PageRank (power iteration with damping + dangling node redistribution)
+function pageRank(graph: Graph, d = 0.85, iterations = 50): Map<number, number> {
   const nodes = graph.nodes();
   const n = nodes.length;
   const outDeg = new Map<number, number>();
@@ -495,7 +588,7 @@ function pageRank(graph: Graph, d = 0.85, iter = 40): Map<number, number> {
   }
   let rank = new Map<number, number>();
   for (const id of nodes) rank.set(id, 1/n);
-  for (let i = 0; i < iter; i++) {
+  for (let i = 0; i < iterations; i++) {
     let danglingSum = 0;
     for (const id of nodes) {
       if ((outDeg.get(id) || 0) === 0) danglingSum += rank.get(id)!;
@@ -513,25 +606,28 @@ function pageRank(graph: Graph, d = 0.85, iter = 40): Map<number, number> {
   return rank;
 }
 
-const graph = webGraph(250);
-console.log('Web graph: ' + graph.nodeCount() + ' nodes, ' + graph.edgeCount() + ' edges');
+const t0 = performance.now();
+const graph = webGraph(400);
 const ranks = pageRank(graph);
+const elapsed = (performance.now() - t0).toFixed(1);
 
 const sorted = [...ranks.entries()].sort((a,b) => b[1]-a[1]);
-console.log('\\nTop 15 pages by PageRank:');
+console.log('Web graph: ' + graph.nodeCount() + ' nodes, ' + graph.edgeCount() + ' edges');
+console.log('PageRank computed in ' + elapsed + 'ms (50 iterations)');
+console.log('\\nTop 15 authoritative pages:');
 sorted.slice(0,15).forEach(([id, r], i) =>
   console.log('  #' + (i+1) + ' Page ' + id + ': ' + r.toFixed(6))
 );
 
-// Force layout + render
+// Force layout
 const nodes = graph.nodes();
 const n = nodes.length;
-const W = 780, H = 480;
-const k = Math.sqrt(W*H/n) * 0.7;
+const W = 1200, H = 800;
+const k = Math.sqrt(W*H/n) * 0.8;
 const pos: Record<number, [number, number]> = {};
 for (const id of nodes) pos[id] = [Math.random()*W, Math.random()*H];
-let temp = 150;
-for (let iter = 0; iter < 60; iter++) {
+let temp = W/5;
+for (let iter = 0; iter < 80; iter++) {
   const disp: Record<number, [number, number]> = {};
   for (const v of nodes) disp[v] = [0, 0];
   for (let i = 0; i < n; i++) {
@@ -539,7 +635,7 @@ for (let iter = 0; iter < 60; iter++) {
       const vi = nodes[i], vj = nodes[j];
       const dx = pos[vi][0]-pos[vj][0], dy = pos[vi][1]-pos[vj][1];
       const dist = Math.max(Math.sqrt(dx*dx+dy*dy), 0.5);
-      const f = (k*k)/dist * 0.4;
+      const f = (k*k)/dist * 0.5;
       disp[vi][0] += (dx/dist)*f; disp[vi][1] += (dy/dist)*f;
       disp[vj][0] -= (dx/dist)*f; disp[vj][1] -= (dy/dist)*f;
     }
@@ -560,72 +656,83 @@ for (let iter = 0; iter < 60; iter++) {
   temp *= 0.93;
 }
 
-const maxRank = sorted[0][1];
+const maxRank = sorted.length > 0 ? sorted[0][1] : 1;
 const app = document.getElementById('app')!;
-app.innerHTML = '<canvas id="c" width="800" height="500" style="background:#08081c;border-radius:12px;display:block;width:100%;aspect-ratio:8/5"></canvas>';
+app.innerHTML = '<canvas id="c" style="background:#08081c;display:block;width:100%;height:100%"></canvas>';
 const canvas = document.getElementById('c') as HTMLCanvasElement;
+canvas.width = canvas.offsetWidth * 2;
+canvas.height = canvas.offsetHeight * 2;
 const ctx = canvas.getContext('2d')!;
+ctx.scale(2, 2);
+const cW = canvas.offsetWidth, cH = canvas.offsetHeight;
 
-for (const e of graph.edges()) {
-  ctx.beginPath();
-  ctx.moveTo(pos[e.source][0], pos[e.source][1]);
-  ctx.lineTo(pos[e.target][0], pos[e.target][1]);
-  ctx.strokeStyle = 'rgba(60,120,200,0.06)';
-  ctx.lineWidth = 0.4;
-  ctx.stroke();
-}
-
-for (const id of nodes) {
-  const [x, y] = pos[id];
-  const r_val = ranks.get(id) || 0;
-  const norm = r_val / maxRank;
-  const r = 1.5 + norm * 12;
-  if (norm > 0.3) {
-    const grad = ctx.createRadialGradient(x, y, 0, x, y, r + 8);
-    grad.addColorStop(0, 'rgba(255,200,80,0.4)');
-    grad.addColorStop(1, 'rgba(255,200,80,0)');
+function draw(scale = 1, ox = 0, oy = 0) {
+  const sx = cW / W * scale, sy = cH / H * scale;
+  ctx.clearRect(0, 0, cW, cH);
+  ctx.save();
+  ctx.translate(ox, oy);
+  for (const e of graph.edges()) {
     ctx.beginPath();
-    ctx.arc(x, y, r + 8, 0, Math.PI * 2);
-    ctx.fillStyle = grad;
+    ctx.moveTo(pos[e.source][0]*sx, pos[e.source][1]*sy);
+    ctx.lineTo(pos[e.target][0]*sx, pos[e.target][1]*sy);
+    ctx.strokeStyle = 'rgba(60,120,200,0.05)';
+    ctx.lineWidth = 0.3;
+    ctx.stroke();
+  }
+  for (const id of nodes) {
+    const x = pos[id][0]*sx, y = pos[id][1]*sy;
+    const r_val = ranks.get(id) || 0;
+    const norm = r_val / maxRank;
+    const r = (1.5 + norm * 12) * Math.min(scale, 2);
+    if (norm > 0.3) {
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, r + 8);
+      grad.addColorStop(0, 'rgba(255,200,80,0.4)');
+      grad.addColorStop(1, 'rgba(255,200,80,0)');
+      ctx.beginPath();
+      ctx.arc(x, y, r + 8, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = norm > 0.5 ? '#feca57' : norm > 0.2 ? '#48dbfb' : 'hsl(' + (200 + norm*40) + ', 60%, 45%)';
     ctx.fill();
   }
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  const hue = 200 + norm * 40;
-  ctx.fillStyle = norm > 0.5 ? '#feca57' : norm > 0.2 ? '#48dbfb' : 'hsl(' + hue + ', 60%, 45%)';
-  ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = '#bbb';
+  ctx.font = '12px monospace';
+  ctx.fillText('PageRank · ' + graph.nodeCount() + ' pages · ' + elapsed + 'ms · Gold = high authority | Scroll to zoom, drag to pan', 10, cH - 10);
 }
 
-ctx.fillStyle = '#bbb';
-ctx.font = '13px monospace';
-ctx.fillText('PageRank · ' + graph.nodeCount() + ' nodes · High-rank pages in gold', 12, 20);
+enableZoomPan(canvas, draw);
+draw();
 `;
 </script>
 
 # Interactive Playground
 
-Edit the code and see results instantly. Each demo runs **real graph algorithms** using the `@graphrs/core` Graph API in a live sandbox.
+Edit the code and see results instantly. Each demo runs **real graph algorithms** on hundreds of nodes with interactive zoom & pan. Scroll to zoom in on details, drag to pan around.
 
-## Animated BFS Traversal
+## Network Traversal — BFS on Scale-Free Graph
 
-Watch BFS expand layer-by-layer through a 200-node scale-free network. Hub nodes (high degree) are larger; colors indicate BFS depth layers:
+**Real scenario**: Modeling information propagation in social networks. A 500-node Barabási–Albert graph simulates how viral content spreads from hub accounts. BFS reveals the "6 degrees of separation" structure:
 
 <Playground :code="animatedBFS" />
 
-## Community Detection
+## Community Detection — Social Network Clustering
 
-Detect communities in a 150-node graph using Label Propagation. The force-directed layout naturally separates clusters, colored by detected community:
+**Real scenario**: Identifying user groups in a social platform for recommendation engines. 300-node graph with 8 planted communities, detected using modularity-based label propagation — the same family of algorithms behind Facebook's friend suggestions:
 
 <Playground :code="communityViz" />
 
-## Betweenness Centrality & Bridge Detection
+## Fraud Detection — Betweenness Centrality
 
-Identify critical bridge nodes in a 5-cluster social network. Red glowing nodes have high betweenness — removing them would disconnect communities:
+**Real scenario**: Finding money-laundering intermediaries in transaction networks. Brandes' algorithm identifies gateway accounts (red glow) that broker connections between otherwise isolated clusters — exactly how financial fraud rings are detected:
 
 <Playground :code="centralityViz" />
 
-## PageRank on a Web Graph
+## Web Authority — PageRank
 
-Compute PageRank on a 250-node directed web graph. Gold nodes have the highest authority scores, with size proportional to rank:
+**Real scenario**: Ranking web pages by link authority. A 400-node directed graph simulates a web crawl with topical clusters. PageRank (50 iterations with dangling-node handling) identifies authoritative hub pages — the algorithm that started Google:
 
 <Playground :code="pageRankViz" />

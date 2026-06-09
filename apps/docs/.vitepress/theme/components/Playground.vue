@@ -93,6 +93,41 @@ export class Graph {
 }
 `;
 
+const zoomPanCode = `
+export function enableZoomPan(canvas, drawFn) {
+  let scale = 1, offsetX = 0, offsetY = 0;
+  let dragging = false, lastX = 0, lastY = 0;
+
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const zoom = e.deltaY < 0 ? 1.1 : 0.9;
+    offsetX = mx - (mx - offsetX) * zoom;
+    offsetY = my - (my - offsetY) * zoom;
+    scale *= zoom;
+    drawFn(scale, offsetX, offsetY);
+  }, { passive: false });
+
+  canvas.addEventListener('mousedown', (e) => {
+    dragging = true; lastX = e.clientX; lastY = e.clientY;
+    canvas.style.cursor = 'grabbing';
+  });
+  canvas.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    offsetX += e.clientX - lastX;
+    offsetY += e.clientY - lastY;
+    lastX = e.clientX; lastY = e.clientY;
+    drawFn(scale, offsetX, offsetY);
+  });
+  canvas.addEventListener('mouseup', () => { dragging = false; canvas.style.cursor = 'grab'; });
+  canvas.addEventListener('mouseleave', () => { dragging = false; canvas.style.cursor = 'grab'; });
+  canvas.style.cursor = 'grab';
+
+  return { getTransform: () => ({ scale, offsetX, offsetY }) };
+}
+`;
+
 const files = computed(() => ({
   '/index.ts': {
     code: props.code.trim(),
@@ -102,8 +137,12 @@ const files = computed(() => ({
     code: graphShimCode.trim(),
     hidden: true,
   },
+  '/zoom-pan.js': {
+    code: zoomPanCode.trim(),
+    hidden: true,
+  },
   '/index.html': {
-    code: '<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8" /><title>graphrs</title></head>\n<body>\n  <div id="app"></div>\n  <script type="module" src="./index.ts"><\/script>\n</body>\n</html>',
+    code: '<!DOCTYPE html>\n<html>\n<head><meta charset="UTF-8" /><title>graphrs</title></head>\n<body style="margin:0;overflow:hidden">\n  <div id="app" style="width:100vw;height:100vh"></div>\n  <script type="module" src="./index.ts"><\/script>\n</body>\n</html>',
     hidden: true,
   },
 }));
@@ -124,7 +163,8 @@ const customSetup = {
         :options="{
           showConsole: true,
           showConsoleButton: true,
-          editorHeight: 400,
+          editorHeight: 560,
+          layout: 'preview',
         }"
       />
     </div>
