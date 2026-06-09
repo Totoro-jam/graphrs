@@ -137,7 +137,7 @@ export default defineConfig({
 
     footer: {
       message: 'MIT License (TS code) · GPL-2.0 (WASM binary)',
-      copyright: 'Copyright © 2024-present Totoro-jam',
+      copyright: 'Copyright © 2026-present Totoro-jam',
     },
   },
 });

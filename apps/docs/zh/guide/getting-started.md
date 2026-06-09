@@ -1,3 +1,26 @@
+<script setup>
+const quickExample = `import { Graph } from '@graphrs/core';
+
+// 创建一个包含两个集群的图
+const graph = Graph.fromEdges([
+  [0, 1], [1, 2], [2, 0],  // 集群 1
+  [3, 4], [4, 5], [5, 3],  // 集群 2
+  [2, 3],                   // 桥接边
+]);
+
+console.log('节点数:', graph.nodeCount());
+console.log('边数:', graph.edgeCount());
+console.log('节点 2 的邻居:', graph.neighbors(2));
+console.log('节点 2 的度:', graph.degree(2));
+
+// 添加自定义数据
+graph.addNode(0, { role: 'bridge-left' });
+graph.addNode(3, { role: 'bridge-right' });
+console.log('\\n节点 0 数据:', JSON.stringify(graph.nodeData(0)));
+console.log('节点 3 数据:', JSON.stringify(graph.nodeData(3)));
+`;
+</script>
+
 # 快速开始
 
 ## 安装
@@ -51,6 +74,10 @@ console.log(communities.modularity); // ~0.357
 const pr = await pagerank(graph);
 console.log(pr.scores); // importance scores per node
 ```
+
+### 在线体验
+
+<Playground :code="quickExample" />
 
 ## 工作原理
 

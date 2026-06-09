@@ -1,3 +1,26 @@
+<script setup>
+const quickExample = `import { Graph } from '@graphrs/core';
+
+// Create a graph with two clusters
+const graph = Graph.fromEdges([
+  [0, 1], [1, 2], [2, 0],  // cluster 1
+  [3, 4], [4, 5], [5, 3],  // cluster 2
+  [2, 3],                   // bridge
+]);
+
+console.log('Nodes:', graph.nodeCount());
+console.log('Edges:', graph.edgeCount());
+console.log('Node 2 neighbors:', graph.neighbors(2));
+console.log('Node 2 degree:', graph.degree(2));
+
+// Add custom data
+graph.addNode(0, { role: 'bridge-left' });
+graph.addNode(3, { role: 'bridge-right' });
+console.log('\\nNode 0 data:', JSON.stringify(graph.nodeData(0)));
+console.log('Node 3 data:', JSON.stringify(graph.nodeData(3)));
+`;
+</script>
+
 # Getting Started
 
 ## Installation
@@ -47,6 +70,10 @@ console.log(communities.modularity); // ~0.357
 const pr = await pagerank(graph);
 console.log(pr.scores); // importance scores per node
 ```
+
+### Try It
+
+<Playground :code="quickExample" />
 
 ## How It Works
 

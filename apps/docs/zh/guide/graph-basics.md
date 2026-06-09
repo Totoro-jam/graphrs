@@ -1,3 +1,95 @@
+<script setup>
+const createAndQuery = `import { Graph } from '@graphrs/core';
+
+// 创建无向图
+const g = new Graph();
+g.addNode(0, { label: 'Alice' });
+g.addNode(1, { label: 'Bob' });
+g.addNode(2, { label: 'Carol' });
+g.addEdge(0, 1, { weight: 2.5 });
+g.addEdge(1, 2);
+g.addEdge(0, 2);
+
+console.log('节点数:', g.nodeCount());
+console.log('边数:', g.edgeCount());
+console.log('节点 0 数据:', JSON.stringify(g.nodeData(0)));
+console.log('节点 1 的邻居:', g.neighbors(1));
+console.log('节点 1 的度:', g.degree(1));
+console.log('存在边 0-1:', g.hasEdge(0, 1));
+console.log('存在边 1-0:', g.hasEdge(1, 0), '(无向图)');
+
+// 有向图
+const dg = new Graph({ directed: true });
+dg.addEdge(0, 1);
+dg.addEdge(1, 2);
+console.log('\\n有向图:');
+console.log('存在边 0→1:', dg.hasEdge(0, 1));
+console.log('存在边 1→0:', dg.hasEdge(1, 0));
+`;
+
+const factories = `import { Graph } from '@graphrs/core';
+
+// 从边列表创建
+const g1 = Graph.fromEdges([[0,1],[1,2],[2,3],[3,0]]);
+console.log('fromEdges:', g1.nodeCount(), '节点,', g1.edgeCount(), '边');
+
+// 从邻接矩阵创建
+const matrix = [
+  [0, 1, 0, 1],
+  [1, 0, 1, 0],
+  [0, 1, 0, 1],
+  [1, 0, 1, 0],
+];
+const g2 = Graph.fromAdjacencyMatrix(matrix);
+console.log('fromMatrix:', g2.nodeCount(), '节点,', g2.edgeCount(), '边');
+
+// 带权邻接矩阵
+const weighted = [
+  [0, 5, 0],
+  [5, 0, 3],
+  [0, 3, 0],
+];
+const g3 = Graph.fromAdjacencyMatrix(weighted);
+console.log('带权边:');
+g3.edges().forEach(e =>
+  console.log('  ' + e.source + '↔' + e.target, JSON.stringify(e.data))
+);
+
+// JSON 往返
+const json = g1.toJSON();
+console.log('\\nJSON:', JSON.stringify(json, null, 2));
+const restored = Graph.fromJSON(json);
+console.log('恢复:', restored.nodeCount(), '节点');
+`;
+
+const subgraphDemo = `import { Graph } from '@graphrs/core';
+
+const g = Graph.fromEdges([
+  [0,1],[1,2],[2,3],[3,4],[4,0],[1,3]
+]);
+g.addNode(0, { label: 'A' });
+g.addNode(1, { label: 'B' });
+g.addNode(2, { label: 'C' });
+g.addNode(3, { label: 'D' });
+g.addNode(4, { label: 'E' });
+
+console.log('完整图:', g.nodeCount(), '节点,', g.edgeCount(), '边');
+
+// 提取子图
+const sub = g.subgraph([0, 1, 2]);
+console.log('子图 {0,1,2}:', sub.nodeCount(), '节点,', sub.edgeCount(), '边');
+console.log('子图节点:', sub.nodes());
+console.log('子图边:');
+sub.edges().forEach(e => console.log('  ' + e.source + '↔' + e.target));
+
+// 删除操作
+g.removeEdge(1, 3);
+console.log('\\n删除边 1-3 后:', g.edgeCount(), '边');
+g.removeNode(4);
+console.log('删除节点 4 后:', g.nodeCount(), '节点,', g.edgeCount(), '边');
+`;
+</script>
+
 # 图基础
 
 `@graphrs/core` 中的 `Graph` 类是 graphrs 的基础。它表示一个包含节点和边的图，并提供创建、查询和序列化图数据的方法。
@@ -80,6 +172,10 @@ g.addEdge(1, 2); // auto-creates missing nodes
 g.addNode(3).addNode(4).addEdge(3, 4);
 ```
 
+### 在线体验 — 创建与查询
+
+<Playground :code="createAndQuery" />
+
 ## 查询图
 
 ```typescript
@@ -110,6 +206,10 @@ g.removeNode(2); // removes node and all its edges
 const sub = g.subgraph([0, 1, 2]);
 // New graph with only nodes 0, 1, 2 and edges between them
 ```
+
+### 在线体验 — 子图与删除
+
+<Playground :code="subgraphDemo" />
 
 ## 序列化
 
@@ -149,6 +249,10 @@ const g6Data = g.toG6Format(layout);
 ```
 
 完整用法请参见[集成示例](/zh/examples/antv-g6)。
+
+### 在线体验 — 工厂方法与序列化
+
+<Playground :code="factories" />
 
 ## 类型安全
 

@@ -1,3 +1,95 @@
+<script setup>
+const createAndQuery = `import { Graph } from '@graphrs/core';
+
+// Create an undirected graph
+const g = new Graph();
+g.addNode(0, { label: 'Alice' });
+g.addNode(1, { label: 'Bob' });
+g.addNode(2, { label: 'Carol' });
+g.addEdge(0, 1, { weight: 2.5 });
+g.addEdge(1, 2);
+g.addEdge(0, 2);
+
+console.log('Nodes:', g.nodeCount());
+console.log('Edges:', g.edgeCount());
+console.log('Node 0 data:', JSON.stringify(g.nodeData(0)));
+console.log('Neighbors of 1:', g.neighbors(1));
+console.log('Degree of 1:', g.degree(1));
+console.log('Has edge 0-1:', g.hasEdge(0, 1));
+console.log('Has edge 1-0:', g.hasEdge(1, 0), '(undirected)');
+
+// Directed graph
+const dg = new Graph({ directed: true });
+dg.addEdge(0, 1);
+dg.addEdge(1, 2);
+console.log('\\nDirected:');
+console.log('Has edge 0→1:', dg.hasEdge(0, 1));
+console.log('Has edge 1→0:', dg.hasEdge(1, 0));
+`;
+
+const factories = `import { Graph } from '@graphrs/core';
+
+// From edge list
+const g1 = Graph.fromEdges([[0,1],[1,2],[2,3],[3,0]]);
+console.log('fromEdges:', g1.nodeCount(), 'nodes,', g1.edgeCount(), 'edges');
+
+// From adjacency matrix
+const matrix = [
+  [0, 1, 0, 1],
+  [1, 0, 1, 0],
+  [0, 1, 0, 1],
+  [1, 0, 1, 0],
+];
+const g2 = Graph.fromAdjacencyMatrix(matrix);
+console.log('fromMatrix:', g2.nodeCount(), 'nodes,', g2.edgeCount(), 'edges');
+
+// Weighted adjacency matrix
+const weighted = [
+  [0, 5, 0],
+  [5, 0, 3],
+  [0, 3, 0],
+];
+const g3 = Graph.fromAdjacencyMatrix(weighted);
+console.log('Weighted edges:');
+g3.edges().forEach(e =>
+  console.log('  ' + e.source + '↔' + e.target, JSON.stringify(e.data))
+);
+
+// JSON roundtrip
+const json = g1.toJSON();
+console.log('\\nJSON:', JSON.stringify(json, null, 2));
+const restored = Graph.fromJSON(json);
+console.log('Restored:', restored.nodeCount(), 'nodes');
+`;
+
+const subgraphDemo = `import { Graph } from '@graphrs/core';
+
+const g = Graph.fromEdges([
+  [0,1],[1,2],[2,3],[3,4],[4,0],[1,3]
+]);
+g.addNode(0, { label: 'A' });
+g.addNode(1, { label: 'B' });
+g.addNode(2, { label: 'C' });
+g.addNode(3, { label: 'D' });
+g.addNode(4, { label: 'E' });
+
+console.log('Full graph:', g.nodeCount(), 'nodes,', g.edgeCount(), 'edges');
+
+// Extract subgraph
+const sub = g.subgraph([0, 1, 2]);
+console.log('Subgraph {0,1,2}:', sub.nodeCount(), 'nodes,', sub.edgeCount(), 'edges');
+console.log('Subgraph nodes:', sub.nodes());
+console.log('Subgraph edges:');
+sub.edges().forEach(e => console.log('  ' + e.source + '↔' + e.target));
+
+// Remove operations
+g.removeEdge(1, 3);
+console.log('\\nAfter removing edge 1-3:', g.edgeCount(), 'edges');
+g.removeNode(4);
+console.log('After removing node 4:', g.nodeCount(), 'nodes,', g.edgeCount(), 'edges');
+`;
+</script>
+
 # Graph Basics
 
 The `Graph` class from `@graphrs/core` is the foundation of graphrs. It represents a graph with nodes and edges, and provides methods to create, query, and serialize graph data.
@@ -82,6 +174,10 @@ g.addEdge(1, 2); // auto-creates missing nodes
 g.addNode(3).addNode(4).addEdge(3, 4);
 ```
 
+### Try It — Create & Query
+
+<Playground :code="createAndQuery" />
+
 ## Querying the Graph
 
 ```typescript
@@ -112,6 +208,10 @@ Both throw typed errors (`NodeNotFoundError`, `EdgeNotFoundError`) if the target
 const sub = g.subgraph([0, 1, 2]);
 // New graph with only nodes 0, 1, 2 and edges between them
 ```
+
+### Try It — Subgraph & Removal
+
+<Playground :code="subgraphDemo" />
 
 ## Serialization
 
@@ -151,6 +251,10 @@ const g6Data = g.toG6Format(layout);
 ```
 
 See [Integration Examples](/examples/antv-g6) for complete usage with each library.
+
+### Try It — Factories & Serialization
+
+<Playground :code="factories" />
 
 ## Type Safety
 
