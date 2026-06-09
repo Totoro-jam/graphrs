@@ -1,107 +1,214 @@
 # AntV G6 Integration
 
-[AntV G6](https://g6.antv.antgroup.com/) is a graph visualization engine from Ant Group, designed for large-scale relational data. graphrs provides a built-in `toG6Format()` serializer.
+[AntV G6](https://g6.antv.antgroup.com/) is a graph visualization engine from Ant Group. The `@graphrs/g6` package provides plug-and-play integration — layout engines, community detection, and centrality analysis that work directly with G6 5.x data formats.
 
 ## Installation
 
 ```bash
-npm install @graphrs/core @graphrs/community @graphrs/layout @antv/g6
+npm install @graphrs/g6 @antv/g6
 ```
 
-## Basic Example
+`@graphrs/g6` bundles `@graphrs/core`, `@graphrs/layout`, `@graphrs/community`, and `@graphrs/centrality` as dependencies — no need to install them separately.
+
+## Quick Start — Custom Layout
+
+The fastest way to use graphrs with G6: register graphrs layout algorithms as G6 custom layouts.
 
 ```typescript
-import { Graph } from '@graphrs/core';
-import { louvain } from '@graphrs/community';
-import { layoutFR } from '@graphrs/layout';
-import { Graph as G6Graph } from '@antv/g6';
+import { Graph } from '@antv/g6';
+import { createGraphrsLayout } from '@graphrs/g6';
 
-// Build a graph with graphrs
-const graph = Graph.fromEdges([
-  [0, 1], [1, 2], [2, 0],   // cluster A
-  [3, 4], [4, 5], [5, 3],   // cluster B
-  [2, 3],                    // bridge
-]);
+const graph = new Graph({
+  container: 'graph-container',
+  width: 800,
+  height: 600,
+  data: {
+    nodes: [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }],
+    edges: [
+      { source: 'a', target: 'b' },
+      { source: 'b', target: 'c' },
+      { source: 'c', target: 'd' },
+      { source: 'd', target: 'a' },
+    ],
+  },
+  layout: createGraphrsLayout({
+    algorithm: 'fruchterman-reingold',
+    iterations: 500,
+    center: [400, 300],
+    width: 800,
+    height: 600,
+  }),
+});
 
-// Run community detection
-const communities = await louvain(graph);
+graph.render();
+```
 
-// Compute layout
-const layout = await layoutFR(graph);
+### Available Layout Algorithms
 
-// Convert to G6 format (positions included)
-const data = graph.toG6Format(layout);
+| Algorithm | Key | Notes |
+|-----------|-----|-------|
+| Fruchterman-Reingold | `fruchterman-reingold` | Force-directed, good for general graphs |
+| Kamada-Kawai | `kamada-kawai` | Energy-minimized, aesthetic for small-medium graphs |
+| Circle | `circle` | Nodes on a circle |
+| Grid | `grid` | Nodes on a grid |
+| Star | `star` | Star topology |
+| Sugiyama | `sugiyama` | Layered/hierarchical |
+| Random | `random` | Random placement |
+
+## Community Detection
+
+Detect communities directly from G6 data — no manual graph conversion needed.
+
+```typescript
+import { detectCommunities } from '@graphrs/g6';
+import type { G6GraphData } from '@graphrs/g6';
+
+const data: G6GraphData = {
+  nodes: [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }, { id: 'f' }],
+  edges: [
+    { source: 'a', target: 'b' },
+    { source: 'b', target: 'c' },
+    { source: 'c', target: 'a' },
+    { source: 'd', target: 'e' },
+    { source: 'e', target: 'f' },
+    { source: 'f', target: 'd' },
+    { source: 'c', target: 'd' },  // bridge between clusters
+  ],
+};
+
+const result = await detectCommunities(data, 'louvain');
+
+// result.communities: Map<string, number> — node id → community index
+// result.modularity: number — quality score (0–1)
+// result.clusterCount: number — number of communities found
 
 // Color nodes by community
 const colors = ['#5B8DEF', '#F5A623', '#7ED321', '#D0021B'];
-data.nodes.forEach((node, i) => {
+data.nodes.forEach((node) => {
+  const community = result.communities.get(node.id) ?? 0;
+  node.style = { fill: colors[community % colors.length] };
+});
+```
+
+### Supported Algorithms
+
+`'louvain'` | `'leiden'` | `'infomap'` | `'label-propagation'` | `'walktrap'` | `'fast-greedy'`
+
+## Centrality Analysis
+
+Compute node importance directly from G6 data.
+
+```typescript
+import { computeCentrality } from '@graphrs/g6';
+
+const centrality = await computeCentrality(data, 'pagerank');
+
+// centrality.scores: Map<string, number> — node id → score
+
+// Scale node size by importance
+data.nodes.forEach((node) => {
+  const score = centrality.scores.get(node.id) ?? 0;
+  node.style = { ...node.style, size: 20 + score * 200 };
+});
+```
+
+### Supported Algorithms
+
+`'pagerank'` | `'betweenness'` | `'closeness'` | `'eigenvector'`
+
+## Full Example — Analysis + Visualization
+
+```typescript
+import { Graph } from '@antv/g6';
+import { createGraphrsLayout, detectCommunities, computeCentrality } from '@graphrs/g6';
+
+const data = {
+  nodes: [
+    { id: 'alice' }, { id: 'bob' }, { id: 'carol' },
+    { id: 'dave' }, { id: 'eve' }, { id: 'frank' },
+  ],
+  edges: [
+    { source: 'alice', target: 'bob' },
+    { source: 'bob', target: 'carol' },
+    { source: 'carol', target: 'alice' },
+    { source: 'dave', target: 'eve' },
+    { source: 'eve', target: 'frank' },
+    { source: 'frank', target: 'dave' },
+    { source: 'carol', target: 'dave' },
+  ],
+};
+
+// Run analysis in parallel
+const [communities, centrality] = await Promise.all([
+  detectCommunities(data, 'louvain'),
+  computeCentrality(data, 'pagerank'),
+]);
+
+// Apply results to node styles
+const colors = ['#5B8DEF', '#F5A623', '#7ED321', '#D0021B'];
+data.nodes.forEach((node) => {
+  const community = communities.communities.get(node.id) ?? 0;
+  const score = centrality.scores.get(node.id) ?? 0;
   node.style = {
-    fill: colors[communities.membership[i]! % colors.length],
+    fill: colors[community % colors.length],
+    size: 24 + score * 150,
   };
 });
 
-// Render with G6
-const g6 = new G6Graph({
+// Render with graphrs-powered layout
+const graph = new Graph({
   container: 'graph-container',
   width: 800,
   height: 600,
   data,
-  node: {
-    style: { size: 24 },
-  },
-  edge: {
-    style: { stroke: '#ccc' },
-  },
+  layout: createGraphrsLayout({ algorithm: 'fruchterman-reingold' }),
+  node: { style: { labelText: (d) => d.id } },
+  edge: { style: { stroke: '#ccc', lineWidth: 1.5 } },
 });
 
-g6.render();
+graph.render();
 ```
 
-## Data Format
+## Low-level API
 
-`toG6Format()` produces the format G6 expects:
+For advanced use cases, `@graphrs/g6` also exports adapter functions:
 
 ```typescript
-{
-  nodes: [
-    { id: "0", x: 120.5, y: 80.3, ...nodeData },
-    { id: "1", x: 200.1, y: 150.7, ...nodeData },
-  ],
-  edges: [
-    { source: "0", target: "1", ...edgeData },
-  ]
-}
+import { g6ToGraph, graphToG6, layoutResultToPositions } from '@graphrs/g6';
+
+// Convert G6 data → graphrs Graph (for custom algorithm pipelines)
+const { graph, idToIndex, indexToId } = g6ToGraph(data);
+
+// Run any graphrs algorithm on the converted graph...
+// then convert back to G6 format
+const g6Data = graphToG6(graph, indexToId, layoutResult);
 ```
 
-- Node `id` values are stringified (G6 requires string IDs)
-- `x` and `y` are included when a `LayoutResult` is passed
-- Any custom node/edge data is spread into each object
+### `g6ToGraph(data)`
 
-## Social Network Analysis
+Converts G6 graph data to a graphrs `Graph` with numeric indices.
+
+Returns `{ graph, idToIndex, indexToId }` — bidirectional maps between string IDs and numeric indices.
+
+### `graphToG6(graph, indexToId, layout?)`
+
+Converts a graphrs `Graph` back to G6 format, optionally applying layout positions as `style.x` / `style.y`.
+
+### `layoutResultToPositions(layout, nodeIds, center?, width?, height?)`
+
+Normalizes raw layout coordinates to a positioned map `{ [nodeId]: { x, y } }`, centered and scaled to fit the given dimensions.
+
+## Using `@graphrs/core` Directly
+
+If you only need basic graph construction without the G6-specific helpers:
 
 ```typescript
 import { Graph } from '@graphrs/core';
-import { pagerank } from '@graphrs/centrality';
-import { louvain } from '@graphrs/community';
 
-// Create a social network
-const graph = new Graph();
-graph.addNode(0, { name: 'Alice' });
-graph.addNode(1, { name: 'Bob' });
-graph.addNode(2, { name: 'Carol' });
-graph.addEdge(0, 1, { weight: 3 });
-graph.addEdge(1, 2, { weight: 1 });
-graph.addEdge(0, 2, { weight: 2 });
-
-// Compute importance and communities
-const pr = await pagerank(graph);
-const comm = await louvain(graph);
-
-// Build G6 data with analysis results
-const data = graph.toG6Format();
-data.nodes.forEach((node, i) => {
-  node.style = {
-    size: 20 + pr.scores[i]! * 100,  // size by importance
-  };
-});
+const g = Graph.fromEdges([[0, 1], [1, 2], [2, 3], [3, 0]]);
+const data = g.toG6Format();
+// data.nodes: [{ id: "0" }, { id: "1" }, ...]
+// data.edges: [{ source: "0", target: "1" }, ...]
 ```
+
+This is useful when you build graphs from scratch with numeric IDs and just need quick serialization.
