@@ -13,12 +13,15 @@ hero:
       text: 快速开始
       link: /zh/guide/getting-started
     - theme: alt
-      text: GitHub 仓库
+      text: 在线体验
+      link: /zh/examples/playground
+    - theme: alt
+      text: GitHub
       link: https://github.com/Totoro-jam/graphrs
 
 features:
   - title: 400+ 算法
-    details: 社区检测、中心性、最短路径、布局、图生成器、导入导出、网络流、同构 —— 全部通过 WASM 调用 igraph 实现。
+    details: 社区检测、中心性、最短路径、布局、图生成器、导入导出、网络流、同构 —— 全部通过 WASM 调用 rust-igraph 实现。
   - title: 可摇树优化
     details: 按需引入。每个算法族都在独立的包中 —— 你的构建产物只会包含你实际使用的函数。
   - title: TypeScript 优先

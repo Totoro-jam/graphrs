@@ -13,12 +13,15 @@ hero:
       text: Get Started
       link: /guide/getting-started
     - theme: alt
-      text: View on GitHub
+      text: Try in Browser
+      link: /examples/playground
+    - theme: alt
+      text: GitHub
       link: https://github.com/Totoro-jam/graphrs
 
 features:
   - title: 400+ Algorithms
-    details: Community detection, centrality, shortest paths, layouts, graph generators, I/O, flow, isomorphism — all backed by igraph via WASM.
+    details: Community detection, centrality, shortest paths, layouts, graph generators, I/O, flow, isomorphism — all backed by rust-igraph via WASM.
   - title: Tree-Shakable
     details: Import only what you need. Each algorithm family lives in its own package — your bundle only includes the functions you use.
   - title: TypeScript First
