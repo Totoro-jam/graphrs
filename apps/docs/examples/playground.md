@@ -1,6 +1,6 @@
-# Interactive Playground
+# Code Examples
 
-Try graphrs in your project — copy the code below and run it.
+Try graphrs in your project — install the package and run any example below.
 
 ```bash
 npm install @graphrs/core

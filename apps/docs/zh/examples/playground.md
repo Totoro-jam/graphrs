@@ -1,6 +1,6 @@
-# 交互式演练场
+# 代码示例
 
-在你的项目中试用 graphrs — 复制下方代码直接运行。
+在你的项目中试用 graphrs — 安装包后运行下方任意示例。
 
 ```bash
 npm install @graphrs/core
