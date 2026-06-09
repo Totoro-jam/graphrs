@@ -103,7 +103,7 @@ export function enableZoomPan(canvas, drawFn) {
     e.stopPropagation();
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-    const zoom = e.deltaY < 0 ? 1.15 : 0.87;
+    const zoom = e.deltaY < 0 ? 1.12 : 0.89;
     offsetX = mx - (mx - offsetX) * zoom;
     offsetY = my - (my - offsetY) * zoom;
     scale *= zoom;
@@ -129,11 +129,8 @@ export function enableZoomPan(canvas, drawFn) {
   let lastTouchDist = 0;
   canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
-    if (e.touches.length === 1) {
-      dragging = true;
-      lastX = e.touches[0].clientX;
-      lastY = e.touches[0].clientY;
-    } else if (e.touches.length === 2) {
+    if (e.touches.length === 1) { dragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; }
+    else if (e.touches.length === 2) {
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       lastTouchDist = Math.sqrt(dx*dx + dy*dy);
@@ -142,10 +139,8 @@ export function enableZoomPan(canvas, drawFn) {
   canvas.addEventListener('touchmove', (e) => {
     e.preventDefault();
     if (e.touches.length === 1 && dragging) {
-      offsetX += e.touches[0].clientX - lastX;
-      offsetY += e.touches[0].clientY - lastY;
-      lastX = e.touches[0].clientX;
-      lastY = e.touches[0].clientY;
+      offsetX += e.touches[0].clientX - lastX; offsetY += e.touches[0].clientY - lastY;
+      lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
       drawFn(scale, offsetX, offsetY);
     } else if (e.touches.length === 2) {
       const dx = e.touches[0].clientX - e.touches[1].clientX;
@@ -156,9 +151,8 @@ export function enableZoomPan(canvas, drawFn) {
         const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
         const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
         const rect = canvas.getBoundingClientRect();
-        const mx = cx - rect.left, my = cy - rect.top;
-        offsetX = mx - (mx - offsetX) * zoom;
-        offsetY = my - (my - offsetY) * zoom;
+        offsetX = (cx-rect.left) - ((cx-rect.left) - offsetX) * zoom;
+        offsetY = (cy-rect.top) - ((cy-rect.top) - offsetY) * zoom;
         scale *= zoom;
         drawFn(scale, offsetX, offsetY);
       }
@@ -166,38 +160,8 @@ export function enableZoomPan(canvas, drawFn) {
     }
   }, { passive: false });
   canvas.addEventListener('touchend', () => { dragging = false; lastTouchDist = 0; });
-
   canvas.style.cursor = 'grab';
   canvas.style.touchAction = 'none';
-
-  const wrapper = canvas.parentElement;
-  const controls = document.createElement('div');
-  controls.style.cssText = 'position:absolute;bottom:8px;right:8px;display:flex;gap:4px;z-index:10';
-  controls.innerHTML = '<button class="zctrl" id="zin">+</button><button class="zctrl" id="zout">−</button><button class="zctrl" id="zreset" style="padding:0 8px;width:auto">Reset</button>';
-  const style = document.createElement('style');
-  style.textContent = '.zctrl{width:28px;height:28px;border:1px solid rgba(255,255,255,0.15);background:rgba(10,10,30,0.8);color:#ccc;border-radius:6px;cursor:pointer;font-size:14px;backdrop-filter:blur(4px);transition:all 0.15s}.zctrl:hover{background:rgba(60,120,255,0.3);border-color:rgba(100,180,255,0.4)}';
-  document.head.appendChild(style);
-  if (wrapper) { wrapper.style.position = 'relative'; wrapper.appendChild(controls); }
-  document.getElementById('zin')?.addEventListener('click', () => {
-    const cx = canvas.clientWidth/2, cy = canvas.clientHeight/2;
-    const zoom = 1.3;
-    offsetX = cx - (cx - offsetX) * zoom;
-    offsetY = cy - (cy - offsetY) * zoom;
-    scale *= zoom;
-    drawFn(scale, offsetX, offsetY);
-  });
-  document.getElementById('zout')?.addEventListener('click', () => {
-    const cx = canvas.clientWidth/2, cy = canvas.clientHeight/2;
-    const zoom = 0.77;
-    offsetX = cx - (cx - offsetX) * zoom;
-    offsetY = cy - (cy - offsetY) * zoom;
-    scale *= zoom;
-    drawFn(scale, offsetX, offsetY);
-  });
-  document.getElementById('zreset')?.addEventListener('click', () => {
-    scale = 1; offsetX = 0; offsetY = 0;
-    drawFn(scale, offsetX, offsetY);
-  });
 
   return { getTransform: () => ({ scale, offsetX, offsetY }) };
 }
@@ -222,9 +186,19 @@ const files = computed(() => ({
   },
 }));
 
-const customSetup = {
-  dependencies: {},
-};
+const customSetup = { dependencies: {} };
+
+const sandpackOptions = computed(() => {
+  const base = {
+    showConsole: true,
+    showConsoleButton: true,
+    editorHeight: 480,
+  };
+  if (!showCode.value) {
+    return { ...base, layout: 'preview' as const };
+  }
+  return base;
+});
 </script>
 
 <template>
@@ -243,12 +217,7 @@ const customSetup = {
         :theme="isDark ? 'dark' : 'light'"
         :files="files"
         :custom-setup="customSetup"
-        :options="{
-          showConsole: true,
-          showConsoleButton: true,
-          editorHeight: 480,
-          layout: showCode ? 'console' : 'preview',
-        }"
+        :options="sandpackOptions"
       />
     </div>
   </ClientOnly>
@@ -257,7 +226,7 @@ const customSetup = {
 <style scoped>
 .playground-wrapper {
   margin: 16px 0;
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--vp-c-divider);
 }
