@@ -1,7 +1,6 @@
 {
   "name": "@graphrs/react-flow",
-  "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "license": "MIT",
   "description": "React Flow adapter for @graphrs — convert between React Flow and graphrs formats, run WASM-powered layouts",
