@@ -144,19 +144,21 @@ function draw(scale?: number, ox?: number, oy?: number) {
   }
 
   ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+  ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 3;
   const topHubs = Object.entries(deg).sort((a, b) => b[1] - a[1]).slice(0, 8);
   for (const [id, d] of topHubs) {
     const nid = Number(id);
     if (!revNodes.has(nid)) continue;
     const x = pos[nid][0] * sx, y = pos[nid][1] * sy;
     const r = (2.5 + (d / maxDeg) * 12) * Math.min(s, 2.5);
-    ctx.fillStyle = 'rgba(200,220,255,0.9)';
-    ctx.fillText('hub #' + id + ' (deg ' + d + ')', x, y - r - 5);
+    ctx.fillStyle = 'rgba(200,220,255,0.92)';
+    ctx.fillText('hub #' + id + ' (deg ' + d + ')', x, y - r - 6);
   }
+  ctx.shadowBlur = 0;
   ctx.restore();
 
   // Status bar
-  ctx.fillStyle = 'rgba(8,11,18,0.88)'; ctx.fillRect(0, cH - 26, cW, 26);
+  ctx.fillStyle = 'rgba(8,11,18,0.9)'; ctx.fillRect(0, cH - 26, cW, 26);
   ctx.strokeStyle = 'rgba(91,143,249,0.12)'; ctx.beginPath(); ctx.moveTo(0, cH - 26); ctx.lineTo(cW, cH - 26); ctx.stroke();
   ctx.font = '10px system-ui'; ctx.textAlign = 'left';
   ctx.fillStyle = '#8ab4f8'; ctx.fillText('Layer ' + Math.min(revealed, layers.length) + '/' + layers.length, 12, cH - 9);
@@ -176,7 +178,9 @@ function step() {
   }
   revealed++;
   draw();
-  setTimeout(step, Math.max(30, 120 - N / 8));
+  const progress = revealed / layers.length;
+  const delay = 40 + progress * 140;
+  setTimeout(step, delay);
 }
 
 setTimeout(() => {
@@ -511,12 +515,14 @@ function draw(scale?: number, ox?: number, oy?: number) {
     if (score > 0.5) { ctx.strokeStyle = 'rgba(255,200,150,0.55)'; ctx.lineWidth = 1.4; ctx.stroke(); }
   }
 
-  ctx.font = '10px system-ui'; ctx.fillStyle = 'rgba(255,220,200,0.9)'; ctx.textAlign = 'center';
+  ctx.font = '10px system-ui'; ctx.fillStyle = 'rgba(255,220,200,0.92)'; ctx.textAlign = 'center';
+  ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 3;
   sorted.slice(0, 6).forEach(([id, score]) => {
     const x = pos[id][0] * sx, y = pos[id][1] * sy;
     const r = (3 + score * 16) * Math.min(s, 2.5);
-    ctx.fillText('#' + id + ' (' + score.toFixed(2) + ')', x, y - r - 5);
+    ctx.fillText('#' + id + ' (' + score.toFixed(2) + ')', x, y - r - 6);
   });
+  ctx.shadowBlur = 0;
   ctx.restore();
 
   // Legend
@@ -676,12 +682,14 @@ function draw(scale?: number, ox?: number, oy?: number) {
     if (norm > 0.5) { ctx.strokeStyle = 'rgba(246,189,22,0.55)'; ctx.lineWidth = 1.5; ctx.stroke(); }
   }
 
-  ctx.font = '10px system-ui'; ctx.fillStyle = 'rgba(255,240,200,0.9)'; ctx.textAlign = 'center';
+  ctx.font = '10px system-ui'; ctx.fillStyle = 'rgba(255,240,200,0.92)'; ctx.textAlign = 'center';
+  ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 3;
   sorted.slice(0, 6).forEach(([id, rank]) => {
     const x = pos[id][0] * sx, y = pos[id][1] * sy;
     const r = (2 + (rank / maxR) * 18) * Math.min(s, 2.5);
-    ctx.fillText('page ' + id, x, y - r - 5);
+    ctx.fillText('page ' + id, x, y - r - 6);
   });
+  ctx.shadowBlur = 0;
   ctx.restore();
 
   ctx.fillStyle = 'rgba(8,11,18,0.92)'; ctx.fillRect(8, cH - 64, 130, 54);
@@ -796,6 +804,10 @@ function drawChart() {
   const w = cW - mg.left - mg.right, h = cH - mg.top - mg.bottom;
   if (w < 100 || h < 100) return;
   ctx.save(); ctx.translate(mg.left, mg.top);
+
+  // Chart area background
+  ctx.fillStyle = 'rgba(20,25,35,0.5)';
+  ctx.beginPath(); ctx.roundRect(-10, -55, w + 20, h + 80, 8); ctx.fill();
 
   ctx.fillStyle = '#e8e8ec'; ctx.font = 'bold 14px system-ui';
   ctx.fillText('Algorithm Performance: Pure JS Baseline', 0, -42);
