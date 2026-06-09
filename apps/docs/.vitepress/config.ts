@@ -5,7 +5,7 @@ export default defineConfig({
   description:
     'Modular TypeScript graph library powered by Rust/WASM — 400+ algorithms at native speed',
   base: '/graphrs/',
-  head: [['link', { rel: 'icon', type: 'image/svg+xml', href: '/graphrs/logo.svg' }]],
+  head: [['link', { rel: 'icon', type: 'image/svg+xml', href: '/graphrs/favicon.svg' }]],
 
   locales: {
     root: {

@@ -7,7 +7,7 @@ const props = defineProps<{ code: string }>();
 const { isDark } = useData();
 
 const files = computed(() => ({
-  '/src/main.ts': {
+  '/index.ts': {
     code: props.code.trim(),
     active: true,
   },
@@ -29,7 +29,7 @@ const customSetup = {
         :options="{
           showConsole: true,
           showConsoleButton: true,
-          editorHeight: 320,
+          editorHeight: 400,
         }"
       />
     </div>
