@@ -7,7 +7,7 @@ const props = defineProps<{ code: string }>();
 const { isDark } = useData();
 
 const files = computed(() => ({
-  '/src/index.ts': {
+  '/src/main.ts': {
     code: props.code.trim(),
     active: true,
   },
