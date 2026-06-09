@@ -54,7 +54,7 @@ console.log(pr.scores); // importance scores per node
 
 ## 工作原理
 
-graphrs 是 [igraph](https://igraph.org/) 的 TypeScript 封装，igraph 是一个成熟的 C 语言图算法库，通过 Rust 编译为 WebAssembly。当你调用一个算法函数时：
+graphrs 是 [rust-igraph](https://github.com/Totoro-jam/rust-igraph) 的 TypeScript 封装，rust-igraph 是 [igraph](https://igraph.org/) 图算法库的 Rust 绑定，编译为 WebAssembly。当你调用一个算法函数时：
 
 1. WASM 模块在首次使用时惰性加载
 2. 你的图数据被序列化到 WASM 内存中

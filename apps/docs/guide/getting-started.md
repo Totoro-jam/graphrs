@@ -50,7 +50,7 @@ console.log(pr.scores); // importance scores per node
 
 ## How It Works
 
-graphrs is a TypeScript wrapper around [igraph](https://igraph.org/), compiled to WebAssembly. When you call an algorithm function:
+graphrs is a TypeScript wrapper around [rust-igraph](https://github.com/Totoro-jam/rust-igraph) (Rust bindings to [igraph](https://igraph.org/)), compiled to WebAssembly. When you call an algorithm function:
 
 1. The WASM module is lazily loaded on first use
 2. Your graph data is marshalled to the WASM memory

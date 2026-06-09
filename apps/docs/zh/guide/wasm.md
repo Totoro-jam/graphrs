@@ -2,14 +2,14 @@
 
 ## 架构
 
-graphrs 封装了 [igraph](https://igraph.org/) —— 一个包含 400+ 图算法的成熟 C 语言库 —— 通过 Rust 编译为 WebAssembly。架构如下：
+graphrs 封装了 [rust-igraph](https://github.com/Totoro-jam/rust-igraph) —— [igraph](https://igraph.org/) 图算法库的 Rust 绑定 —— 编译为 WebAssembly。架构如下：
 
 ```
 Your TypeScript code
-  → @graphrs/* packages (MIT)
+  → @graphrs/* packages (MIT, TypeScript)
     → @graphrs/core WASM loader
       → igraph-wasm binary (GPL-2.0)
-        → igraph C library (compiled to WASM)
+        → rust-igraph (igraph 的 Rust FFI 绑定)
 ```
 
 ## 许可协议

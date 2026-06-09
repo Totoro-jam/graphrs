@@ -2,14 +2,14 @@
 
 ## Architecture
 
-graphrs wraps [igraph](https://igraph.org/) — a mature C library with 400+ graph algorithms — compiled to WebAssembly via Rust. The architecture looks like this:
+graphrs wraps [rust-igraph](https://github.com/Totoro-jam/rust-igraph) — Rust bindings to the [igraph](https://igraph.org/) graph library — compiled to WebAssembly. The architecture looks like this:
 
 ```
 Your TypeScript code
-  → @graphrs/* packages (MIT)
+  → @graphrs/* packages (MIT, TypeScript)
     → @graphrs/core WASM loader
       → igraph-wasm binary (GPL-2.0)
-        → igraph C library (compiled to WASM)
+        → rust-igraph (Rust FFI bindings to igraph)
 ```
 
 ## Licensing
