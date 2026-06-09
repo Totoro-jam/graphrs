@@ -5,6 +5,9 @@ hero:
   name: graphrs
   text: 原生速度的图算法
   tagline: 模块化、可摇树的 TypeScript 图算法库，由 Rust/WASM 驱动。400+ 算法，支持浏览器和 Node.js。
+  image:
+    src: /logo.svg
+    alt: graphrs logo
   actions:
     - theme: brand
       text: 快速开始

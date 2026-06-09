@@ -73,6 +73,82 @@ Creates a graph from a serialized JSON object.
 | `toReactFlowFormat(layout?)` | `ReactFlowData` | Convert for React Flow |
 | `toCytoscapeFormat(layout?)` | `CytoscapeData` | Convert for Cytoscape.js |
 
+## Try It
+
+### Graph Creation & Querying
+
+::: sandbox
+
+```ts /src/index.ts
+import { Graph } from '@graphrs/core';
+
+// Directed graph with node data
+const g = new Graph(true);
+g.addNode(0, { name: 'Alice' });
+g.addNode(1, { name: 'Bob' });
+g.addNode(2, { name: 'Carol' });
+g.addEdge(0, 1);
+g.addEdge(1, 2);
+g.addEdge(2, 0);
+
+console.log('Directed graph:');
+console.log(`  Nodes: ${g.nodeCount()}, Edges: ${g.edgeCount()}`);
+console.log(`  Neighbors of 0: ${g.neighbors(0)}`);
+console.log(`  Has edge 0→1: ${g.hasEdge(0, 1)}`);
+console.log(`  Has edge 1→0: ${g.hasEdge(1, 0)}`);
+console.log(`  Degree of 1: ${g.degree(1)}`);
+console.log(`  Node 0 data:`, g.nodeData(0));
+
+// Static factory
+const g2 = Graph.fromEdges([[0,1],[1,2],[2,3],[3,0]]);
+console.log(`\nFrom edges: ${g2.nodeCount()} nodes, ${g2.edgeCount()} edges`);
+
+// Subgraph
+const sub = g2.subgraph([0, 1, 2]);
+console.log(`Subgraph {0,1,2}: ${sub.nodeCount()} nodes, ${sub.edgeCount()} edges`);
+```
+
+```json /package.json
+{
+  "dependencies": {
+    "@graphrs/core": "^0.2.0"
+  }
+}
+```
+
+:::
+
+### Serialization Round-trip
+
+::: sandbox
+
+```ts /src/index.ts
+import { Graph } from '@graphrs/core';
+
+const g = Graph.fromEdges([[0,1],[1,2],[2,0]]);
+g.addNode(0, { label: 'A' });
+g.addNode(1, { label: 'B' });
+g.addNode(2, { label: 'C' });
+
+// Serialize → deserialize
+const json = g.toJSON();
+console.log('Serialized:', JSON.stringify(json, null, 2));
+
+const restored = Graph.fromJSON(json);
+console.log(`\nRestored: ${restored.nodeCount()} nodes, ${restored.edgeCount()} edges`);
+console.log('Node 0 data:', restored.nodeData(0));
+```
+
+```json /package.json
+{
+  "dependencies": {
+    "@graphrs/core": "^0.2.0"
+  }
+}
+```
+
+:::
+
 ## Types
 
 ```typescript
