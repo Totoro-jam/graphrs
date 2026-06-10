@@ -79,5 +79,8 @@
     "@antv/g6": {
       "optional": true
     }
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

@@ -4,21 +4,47 @@
   "type": "module",
   "license": "MIT",
   "description": "Graph operators (union, intersection, complement, simplify, reverse) for @graphrs",
-  "keywords": ["graph", "operators", "union", "intersection", "complement"],
+  "keywords": [
+    "graph",
+    "operators",
+    "union",
+    "intersection",
+    "complement"
+  ],
   "author": "Totoro-jam <moqiuchen66@gmail.com>",
   "homepage": "https://github.com/Totoro-jam/graphrs#readme",
-  "bugs": { "url": "https://github.com/Totoro-jam/graphrs/issues" },
-  "repository": { "type": "git", "url": "https://github.com/Totoro-jam/graphrs", "directory": "packages/operators" },
+  "bugs": {
+    "url": "https://github.com/Totoro-jam/graphrs/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Totoro-jam/graphrs",
+    "directory": "packages/operators"
+  },
   "sideEffects": false,
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-    "./set-operations": { "types": "./dist/set-operations.d.ts", "import": "./dist/set-operations.js" },
-    "./transforms": { "types": "./dist/transforms.d.ts", "import": "./dist/transforms.js" },
-    "./subgraph": { "types": "./dist/subgraph.d.ts", "import": "./dist/subgraph.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./set-operations": {
+      "types": "./dist/set-operations.d.ts",
+      "import": "./dist/set-operations.js"
+    },
+    "./transforms": {
+      "types": "./dist/transforms.d.ts",
+      "import": "./dist/transforms.js"
+    },
+    "./subgraph": {
+      "types": "./dist/subgraph.d.ts",
+      "import": "./dist/subgraph.js"
+    }
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "test": "vitest run --passWithNoTests",
@@ -27,5 +53,10 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "peerDependencies": { "@graphrs/core": "workspace:^" }
+  "peerDependencies": {
+    "@graphrs/core": "workspace:^"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
 }

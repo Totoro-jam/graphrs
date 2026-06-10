@@ -4,23 +4,55 @@
   "type": "module",
   "license": "MIT",
   "description": "Shortest path and traversal algorithms (Dijkstra, Bellman-Ford, BFS, DFS) for @graphrs",
-  "keywords": ["graph", "shortest-path", "dijkstra", "bfs", "dfs"],
+  "keywords": [
+    "graph",
+    "shortest-path",
+    "dijkstra",
+    "bfs",
+    "dfs"
+  ],
   "author": "Totoro-jam <moqiuchen66@gmail.com>",
   "homepage": "https://github.com/Totoro-jam/graphrs#readme",
-  "bugs": { "url": "https://github.com/Totoro-jam/graphrs/issues" },
-  "repository": { "type": "git", "url": "https://github.com/Totoro-jam/graphrs", "directory": "packages/path" },
+  "bugs": {
+    "url": "https://github.com/Totoro-jam/graphrs/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Totoro-jam/graphrs",
+    "directory": "packages/path"
+  },
   "sideEffects": false,
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-    "./dijkstra": { "types": "./dist/dijkstra.d.ts", "import": "./dist/dijkstra.js" },
-    "./bellman-ford": { "types": "./dist/bellman-ford.d.ts", "import": "./dist/bellman-ford.js" },
-    "./bfs": { "types": "./dist/bfs.d.ts", "import": "./dist/bfs.js" },
-    "./dfs": { "types": "./dist/dfs.d.ts", "import": "./dist/dfs.js" },
-    "./all-pairs": { "types": "./dist/all-pairs.d.ts", "import": "./dist/all-pairs.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./dijkstra": {
+      "types": "./dist/dijkstra.d.ts",
+      "import": "./dist/dijkstra.js"
+    },
+    "./bellman-ford": {
+      "types": "./dist/bellman-ford.d.ts",
+      "import": "./dist/bellman-ford.js"
+    },
+    "./bfs": {
+      "types": "./dist/bfs.d.ts",
+      "import": "./dist/bfs.js"
+    },
+    "./dfs": {
+      "types": "./dist/dfs.d.ts",
+      "import": "./dist/dfs.js"
+    },
+    "./all-pairs": {
+      "types": "./dist/all-pairs.d.ts",
+      "import": "./dist/all-pairs.js"
+    }
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "test": "vitest run --passWithNoTests",
@@ -29,5 +61,10 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "peerDependencies": { "@graphrs/core": "workspace:^" }
+  "peerDependencies": {
+    "@graphrs/core": "workspace:^"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
 }

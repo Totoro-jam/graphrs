@@ -4,21 +4,47 @@
   "type": "module",
   "license": "MIT",
   "description": "Graph isomorphism algorithms (VF2, canonical form, automorphism) for @graphrs",
-  "keywords": ["graph", "isomorphism", "vf2", "canonical", "automorphism"],
+  "keywords": [
+    "graph",
+    "isomorphism",
+    "vf2",
+    "canonical",
+    "automorphism"
+  ],
   "author": "Totoro-jam <moqiuchen66@gmail.com>",
   "homepage": "https://github.com/Totoro-jam/graphrs#readme",
-  "bugs": { "url": "https://github.com/Totoro-jam/graphrs/issues" },
-  "repository": { "type": "git", "url": "https://github.com/Totoro-jam/graphrs", "directory": "packages/isomorphism" },
+  "bugs": {
+    "url": "https://github.com/Totoro-jam/graphrs/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Totoro-jam/graphrs",
+    "directory": "packages/isomorphism"
+  },
   "sideEffects": false,
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-    "./vf2": { "types": "./dist/vf2.d.ts", "import": "./dist/vf2.js" },
-    "./canonical": { "types": "./dist/canonical.d.ts", "import": "./dist/canonical.js" },
-    "./automorphism": { "types": "./dist/automorphism.d.ts", "import": "./dist/automorphism.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./vf2": {
+      "types": "./dist/vf2.d.ts",
+      "import": "./dist/vf2.js"
+    },
+    "./canonical": {
+      "types": "./dist/canonical.d.ts",
+      "import": "./dist/canonical.js"
+    },
+    "./automorphism": {
+      "types": "./dist/automorphism.d.ts",
+      "import": "./dist/automorphism.js"
+    }
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "test": "vitest run --passWithNoTests",
@@ -27,5 +53,10 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "peerDependencies": { "@graphrs/core": "workspace:^" }
+  "peerDependencies": {
+    "@graphrs/core": "workspace:^"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
 }

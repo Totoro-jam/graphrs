@@ -4,20 +4,43 @@
   "type": "module",
   "license": "MIT",
   "description": "Graph generators (Erdos-Renyi, Barabasi-Albert, Watts-Strogatz, lattice, etc.) for @graphrs",
-  "keywords": ["graph", "generators", "random-graph", "barabasi-albert", "erdos-renyi"],
+  "keywords": [
+    "graph",
+    "generators",
+    "random-graph",
+    "barabasi-albert",
+    "erdos-renyi"
+  ],
   "author": "Totoro-jam <moqiuchen66@gmail.com>",
   "homepage": "https://github.com/Totoro-jam/graphrs#readme",
-  "bugs": { "url": "https://github.com/Totoro-jam/graphrs/issues" },
-  "repository": { "type": "git", "url": "https://github.com/Totoro-jam/graphrs", "directory": "packages/generators" },
+  "bugs": {
+    "url": "https://github.com/Totoro-jam/graphrs/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Totoro-jam/graphrs",
+    "directory": "packages/generators"
+  },
   "sideEffects": false,
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-    "./random": { "types": "./dist/random.d.ts", "import": "./dist/random.js" },
-    "./deterministic": { "types": "./dist/deterministic.d.ts", "import": "./dist/deterministic.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./random": {
+      "types": "./dist/random.d.ts",
+      "import": "./dist/random.js"
+    },
+    "./deterministic": {
+      "types": "./dist/deterministic.d.ts",
+      "import": "./dist/deterministic.js"
+    }
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "test": "vitest run --passWithNoTests",
@@ -26,5 +49,10 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "peerDependencies": { "@graphrs/core": "workspace:^" }
+  "peerDependencies": {
+    "@graphrs/core": "workspace:^"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
 }

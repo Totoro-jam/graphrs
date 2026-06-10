@@ -4,22 +4,51 @@
   "type": "module",
   "license": "MIT",
   "description": "Graph layout algorithms (force-directed, hierarchical, geometric, MDS) for @graphrs",
-  "keywords": ["graph", "layout", "force-directed", "fruchterman-reingold", "visualization"],
+  "keywords": [
+    "graph",
+    "layout",
+    "force-directed",
+    "fruchterman-reingold",
+    "visualization"
+  ],
   "author": "Totoro-jam <moqiuchen66@gmail.com>",
   "homepage": "https://github.com/Totoro-jam/graphrs#readme",
-  "bugs": { "url": "https://github.com/Totoro-jam/graphrs/issues" },
-  "repository": { "type": "git", "url": "https://github.com/Totoro-jam/graphrs", "directory": "packages/layout" },
+  "bugs": {
+    "url": "https://github.com/Totoro-jam/graphrs/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Totoro-jam/graphrs",
+    "directory": "packages/layout"
+  },
   "sideEffects": false,
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
-    "./force-directed": { "types": "./dist/force-directed.d.ts", "import": "./dist/force-directed.js" },
-    "./hierarchical": { "types": "./dist/hierarchical.d.ts", "import": "./dist/hierarchical.js" },
-    "./geometric": { "types": "./dist/geometric.d.ts", "import": "./dist/geometric.js" },
-    "./dimensional": { "types": "./dist/dimensional.d.ts", "import": "./dist/dimensional.js" }
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./force-directed": {
+      "types": "./dist/force-directed.d.ts",
+      "import": "./dist/force-directed.js"
+    },
+    "./hierarchical": {
+      "types": "./dist/hierarchical.d.ts",
+      "import": "./dist/hierarchical.js"
+    },
+    "./geometric": {
+      "types": "./dist/geometric.d.ts",
+      "import": "./dist/geometric.js"
+    },
+    "./dimensional": {
+      "types": "./dist/dimensional.d.ts",
+      "import": "./dist/dimensional.js"
+    }
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "test": "vitest run --passWithNoTests",
@@ -28,5 +57,10 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "peerDependencies": { "@graphrs/core": "workspace:^" }
+  "peerDependencies": {
+    "@graphrs/core": "workspace:^"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
 }
