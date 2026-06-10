@@ -126,8 +126,11 @@ static fromJSON<N, E>(data: SerializedGraph): Graph<N, E>
 
 ## 类型
 
+### 图类型
+
 ```typescript
 type VertexId = number;
+type EdgeId = number;
 
 interface GraphOptions {
   directed?: boolean;
@@ -142,30 +145,75 @@ interface EdgeData {
   [key: string]: unknown;
 }
 
+interface SerializedGraph {
+  directed: boolean;
+  nodes: Array<{ id: VertexId; data?: Record<string, unknown> }>;
+  edges: Array<{ source: VertexId; target: VertexId; data?: Record<string, unknown> }>;
+}
+```
+
+### 算法结果类型
+
+```typescript
 interface CommunityResult {
-  membership: number[];
-  modularity: number;
-  clusters: number;
+  membership: number[];  // 每个节点的社区索引
+  modularity: number;    // 模块度分数
+  clusters: number;      // 社区数量
 }
 
 interface CentralityResult {
-  scores: number[];
+  scores: number[];  // 每个节点的中心性分数
 }
 
 interface LayoutResult {
-  positions: [number, number][];
+  positions: [number, number][];  // 每个节点的 [x, y] 坐标
+}
+
+interface Layout3DResult {
+  positions: [number, number, number][];  // 每个节点的 [x, y, z] 坐标
 }
 
 interface PathResult {
-  path: number[];
-  distance: number;
+  path: number[];     // 最短路径上的节点 ID
+  distance: number;   // 总距离（不可达时为 Infinity）
 }
 
 interface FlowResult {
-  value: number;
-  flow: number[];
+  value: number;   // 最大流总量
+  flow: number[];  // 每条边的流量值
 }
 ```
+
+### 可视化格式类型
+
+这些类型描述 `toG6Format()`、`toReactFlowFormat()` 和 `toCytoscapeFormat()` 的输出格式。
+
+```typescript
+interface G6GraphData {
+  nodes: Array<{ id: string; x?: number; y?: number; [key: string]: unknown }>;
+  edges: Array<{ source: string; target: string; [key: string]: unknown }>;
+}
+
+interface ReactFlowData {
+  nodes: Array<{
+    id: string;
+    position: { x: number; y: number };
+    data: Record<string, unknown>;
+  }>;
+  edges: Array<{ id: string; source: string; target: string }>;
+}
+
+interface CytoscapeData {
+  elements: {
+    nodes: Array<{ data: { id: string; [key: string]: unknown } }>;
+    edges: Array<{ data: { source: string; target: string; [key: string]: unknown } }>;
+  };
+}
+```
+
+::: tip
+其他结果类型（`BfsResult`、`DfsResult`、`HitsResult`、`MinCutResult`）从各自的包中导出。请参阅 [path](/zh/api/path)、[centrality](/zh/api/centrality) 和 [flow](/zh/api/flow) API 参考。
+:::
 
 ## 错误
 

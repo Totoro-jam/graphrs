@@ -126,8 +126,11 @@ Creates a graph from a serialized JSON object.
 
 ## Types
 
+### Graph Types
+
 ```typescript
 type VertexId = number;
+type EdgeId = number;
 
 interface GraphOptions {
   directed?: boolean;
@@ -142,30 +145,75 @@ interface EdgeData {
   [key: string]: unknown;
 }
 
+interface SerializedGraph {
+  directed: boolean;
+  nodes: Array<{ id: VertexId; data?: Record<string, unknown> }>;
+  edges: Array<{ source: VertexId; target: VertexId; data?: Record<string, unknown> }>;
+}
+```
+
+### Algorithm Result Types
+
+```typescript
 interface CommunityResult {
-  membership: number[];
-  modularity: number;
-  clusters: number;
+  membership: number[];  // community index per node
+  modularity: number;    // modularity score
+  clusters: number;      // number of communities
 }
 
 interface CentralityResult {
-  scores: number[];
+  scores: number[];  // centrality score per node
 }
 
 interface LayoutResult {
-  positions: [number, number][];
+  positions: [number, number][];  // [x, y] per node
+}
+
+interface Layout3DResult {
+  positions: [number, number, number][];  // [x, y, z] per node
 }
 
 interface PathResult {
-  path: number[];
-  distance: number;
+  path: number[];     // node IDs along the shortest path
+  distance: number;   // total distance (Infinity if unreachable)
 }
 
 interface FlowResult {
-  value: number;
-  flow: number[];
+  value: number;   // total maximum flow value
+  flow: number[];  // flow value per edge
 }
 ```
+
+### Visualization Format Types
+
+These types describe the output of `toG6Format()`, `toReactFlowFormat()`, and `toCytoscapeFormat()`.
+
+```typescript
+interface G6GraphData {
+  nodes: Array<{ id: string; x?: number; y?: number; [key: string]: unknown }>;
+  edges: Array<{ source: string; target: string; [key: string]: unknown }>;
+}
+
+interface ReactFlowData {
+  nodes: Array<{
+    id: string;
+    position: { x: number; y: number };
+    data: Record<string, unknown>;
+  }>;
+  edges: Array<{ id: string; source: string; target: string }>;
+}
+
+interface CytoscapeData {
+  elements: {
+    nodes: Array<{ data: { id: string; [key: string]: unknown } }>;
+    edges: Array<{ data: { source: string; target: string; [key: string]: unknown } }>;
+  };
+}
+```
+
+::: tip
+Additional result types (`BfsResult`, `DfsResult`, `HitsResult`, `MinCutResult`) are exported from their respective packages. See the [path](/api/path), [centrality](/api/centrality), and [flow](/api/flow) API references.
+:::
 
 ## Errors
 
