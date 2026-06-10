@@ -1,5 +1,5 @@
 <script setup>
-const animatedBFS = `import { Graph } from './graphrs-core.js';
+const forceConvergence = `import { Graph } from './graphrs-core.js';
 import { enableZoomPan } from './zoom-pan.js';
 import { createCanvas } from './canvas-util.js';
 
@@ -21,167 +21,153 @@ function barabasiAlbert(n: number, m: number): Graph {
   return Graph.fromEdges(edges);
 }
 
-function forceLayout(graph: Graph, W: number, H: number, iter = 180) {
-  const nodes = graph.nodes(), n = nodes.length, k = Math.sqrt(W * H / n) * 1.1;
-  const pos: Record<number, [number, number]> = {};
-  for (const id of nodes) pos[id] = [80 + Math.random() * (W - 160), 80 + Math.random() * (H - 160)];
-  let temp = W / 3;
-  for (let it = 0; it < iter; it++) {
-    const disp: Record<number, [number, number]> = {};
-    for (const v of nodes) disp[v] = [0, 0];
-    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
-      const vi = nodes[i], vj = nodes[j];
-      const dx = pos[vi][0] - pos[vj][0], dy = pos[vi][1] - pos[vj][1];
-      const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 0.1);
-      const f = (k * k) / dist;
-      disp[vi][0] += (dx / dist) * f; disp[vi][1] += (dy / dist) * f;
-      disp[vj][0] -= (dx / dist) * f; disp[vj][1] -= (dy / dist) * f;
-    }
-    for (const e of graph.edges()) {
-      const dx = pos[e.source][0] - pos[e.target][0], dy = pos[e.source][1] - pos[e.target][1];
-      const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 0.1);
-      const f = (dist * dist) / k;
-      disp[e.source][0] -= (dx / dist) * f; disp[e.source][1] -= (dy / dist) * f;
-      disp[e.target][0] += (dx / dist) * f; disp[e.target][1] += (dy / dist) * f;
-    }
-    for (const v of nodes) {
-      const d = Math.max(Math.sqrt(disp[v][0] ** 2 + disp[v][1] ** 2), 0.1);
-      pos[v][0] = Math.max(40, Math.min(W - 40, pos[v][0] + (disp[v][0] / d) * Math.min(d, temp)));
-      pos[v][1] = Math.max(40, Math.min(H - 40, pos[v][1] + (disp[v][1] / d) * Math.min(d, temp)));
-    }
-    temp *= 0.95;
-  }
-  return pos;
-}
-
 const app = document.getElementById('app')!;
-let N = 300;
+let N = 250;
 const ctrl = document.createElement('div');
 ctrl.style.cssText = 'position:absolute;top:10px;left:10px;z-index:10;display:flex;gap:8px;align-items:center;padding:6px 12px;background:rgba(10,10,18,0.92);border-radius:8px;border:1px solid rgba(100,160,255,0.15);backdrop-filter:blur(8px)';
-ctrl.innerHTML = '<span style="color:#8ab4f8;font:11px/1 system-ui;font-weight:500">Nodes</span><input id="ns" type="range" min="100" max="2000" value="300" style="width:100px;accent-color:#5b8ff9"><span id="nv" style="color:#bbb;font:11px system-ui;width:36px;text-align:center">300</span><button id="go" style="padding:3px 14px;background:linear-gradient(135deg,rgba(91,143,249,0.25),rgba(91,143,249,0.05));border:1px solid rgba(91,143,249,0.4);border-radius:6px;color:#8ab4f8;font:11px system-ui;font-weight:600;cursor:pointer;transition:all 0.15s">Run</button>';
+ctrl.innerHTML = '<span style="color:#8ab4f8;font:11px/1 system-ui;font-weight:500">Nodes</span><input id="ns" type="range" min="50" max="600" value="250" style="width:100px;accent-color:#5b8ff9"><span id="nv" style="color:#bbb;font:11px system-ui;width:36px;text-align:center">250</span><button id="go" style="padding:3px 14px;background:linear-gradient(135deg,rgba(91,143,249,0.25),rgba(91,143,249,0.05));border:1px solid rgba(91,143,249,0.4);border-radius:6px;color:#8ab4f8;font:11px system-ui;font-weight:600;cursor:pointer;transition:all 0.15s">Run</button>';
 
 const cv = createCanvas(app);
 cv.wrapper.appendChild(ctrl);
 
 let graph: Graph, pos: Record<number, [number, number]>, deg: Record<number, number>, maxDeg: number;
-let layers: number[][], nodeLayer: Record<number, number>, maxLayer: number;
-let revealed = 0, revNodes = new Set<number>(), revEdges = new Set<string>();
+let animId = 0, iteration = 0, maxIter = 200, temp = 0, k = 0;
+let energy = 0, converged = false;
 let zp: ReturnType<typeof enableZoomPan>;
+const W = 1400, H = 1000;
 
 function run() {
+  cancelAnimationFrame(animId);
   graph = barabasiAlbert(N, 3);
-  const W = 1400, H = 1000;
-  pos = forceLayout(graph, W, H);
-  deg = {}; for (const id of graph.nodes()) deg[id] = graph.degree(id);
+  const nodes = graph.nodes();
+  deg = {}; for (const id of nodes) deg[id] = graph.degree(id);
   maxDeg = Math.max(...Object.values(deg));
+  pos = {};
+  for (const id of nodes) pos[id] = [80 + Math.random() * (W - 160), 80 + Math.random() * (H - 160)];
+  k = Math.sqrt(W * H / nodes.length) * 1.1;
+  temp = W / 3;
+  iteration = 0;
+  maxIter = 200;
+  converged = false;
+  energy = Infinity;
+  if (!zp) zp = enableZoomPan(cv.canvas, draw);
+  animate();
+}
 
-  const hub = Number(Object.entries(deg).sort((a, b) => b[1] - a[1])[0][0]);
-  const visited = new Set<number>(); layers = [];
-  let frontier = [hub]; visited.add(hub);
-  while (frontier.length > 0) {
-    layers.push([...frontier]);
-    const next: number[] = [];
-    for (const nd of frontier) for (const nb of graph.neighbors(nd)) {
-      if (!visited.has(nb)) { visited.add(nb); next.push(nb); }
-    }
-    frontier = next;
+function stepLayout() {
+  if (converged) return;
+  const nodes = graph.nodes(), n = nodes.length;
+  const disp: Record<number, [number, number]> = {};
+  for (const v of nodes) disp[v] = [0, 0];
+
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    const vi = nodes[i], vj = nodes[j];
+    const dx = pos[vi][0] - pos[vj][0], dy = pos[vi][1] - pos[vj][1];
+    const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 0.1);
+    const f = (k * k) / dist;
+    disp[vi][0] += (dx / dist) * f; disp[vi][1] += (dy / dist) * f;
+    disp[vj][0] -= (dx / dist) * f; disp[vj][1] -= (dy / dist) * f;
   }
 
-  nodeLayer = {}; layers.forEach((layer, i) => { for (const id of layer) nodeLayer[id] = i; });
-  maxLayer = layers.length - 1;
-  revealed = 0; revNodes = new Set(); revEdges = new Set();
+  for (const e of graph.edges()) {
+    const dx = pos[e.source][0] - pos[e.target][0], dy = pos[e.source][1] - pos[e.target][1];
+    const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 0.1);
+    const f = (dist * dist) / k;
+    disp[e.source][0] -= (dx / dist) * f; disp[e.source][1] -= (dy / dist) * f;
+    disp[e.target][0] += (dx / dist) * f; disp[e.target][1] += (dy / dist) * f;
+  }
 
-  if (!zp) zp = enableZoomPan(cv.canvas, draw);
-  step();
-  console.log(graph.nodeCount() + ' nodes, ' + graph.edgeCount() + ' edges, ' + layers.length + ' BFS layers from hub #' + hub);
+  let totalDisp = 0;
+  for (const v of nodes) {
+    const d = Math.max(Math.sqrt(disp[v][0] ** 2 + disp[v][1] ** 2), 0.1);
+    const dx = (disp[v][0] / d) * Math.min(d, temp);
+    const dy = (disp[v][1] / d) * Math.min(d, temp);
+    pos[v][0] = Math.max(40, Math.min(W - 40, pos[v][0] + dx));
+    pos[v][1] = Math.max(40, Math.min(H - 40, pos[v][1] + dy));
+    totalDisp += Math.abs(dx) + Math.abs(dy);
+  }
+
+  energy = totalDisp / n;
+  temp *= 0.96;
+  iteration++;
+  if (iteration >= maxIter || energy < 0.3) converged = true;
 }
 
 function draw(scale?: number, ox?: number, oy?: number) {
   if (!graph) return;
-  const cW = cv.width, cH = cv.height;
+  const cW = cv.width, cH = cv.height, ctx = cv.ctx;
   const t = zp ? zp.getTransform() : { scale: 1, offsetX: 0, offsetY: 0 };
   const s = scale ?? t.scale, oX = ox ?? t.offsetX, oY = oy ?? t.offsetY;
-  const W = 1400, H = 1000;
   const sx = cW / W * s, sy = cH / H * s;
-  const ctx = cv.ctx;
-  ctx.clearRect(0, 0, cW, cH);
-  ctx.fillStyle = '#080b12'; ctx.fillRect(0, 0, cW, cH);
+  ctx.clearRect(0, 0, cW, cH); ctx.fillStyle = '#080b12'; ctx.fillRect(0, 0, cW, cH);
   ctx.save(); ctx.translate(oX, oY);
   ctx.lineCap = 'round';
 
-  for (const key of revEdges) {
-    const [a, b] = key.split('-').map(Number);
-    const importance = Math.max(deg[a] / maxDeg, deg[b] / maxDeg);
+  const progress = Math.min(iteration / maxIter, 1);
+  const edgeAlpha = 0.03 + progress * 0.15;
+
+  for (const e of graph.edges()) {
+    const importance = Math.max(deg[e.source] / maxDeg, deg[e.target] / maxDeg);
     ctx.beginPath();
-    ctx.moveTo(pos[a][0] * sx, pos[a][1] * sy);
-    ctx.lineTo(pos[b][0] * sx, pos[b][1] * sy);
-    ctx.strokeStyle = 'rgba(91,143,249,' + (0.05 + importance * 0.18) + ')';
-    ctx.lineWidth = 0.5 + importance * 1.2;
+    ctx.moveTo(pos[e.source][0] * sx, pos[e.source][1] * sy);
+    ctx.lineTo(pos[e.target][0] * sx, pos[e.target][1] * sy);
+    ctx.strokeStyle = 'rgba(91,143,249,' + (edgeAlpha + importance * 0.12) + ')';
+    ctx.lineWidth = 0.4 + importance * 1.0;
     ctx.stroke();
   }
 
-  for (const id of revNodes) {
+  for (const id of graph.nodes()) {
     const x = pos[id][0] * sx, y = pos[id][1] * sy;
     const norm = deg[id] / maxDeg;
-    const r = (2.5 + norm * 12) * Math.min(s, 2.5);
-    const depth = (nodeLayer[id] || 0) / Math.max(maxLayer, 1);
+    const r = (2 + norm * 10) * Math.min(s, 2.5);
 
     if (norm > 0.3) {
-      const grd = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 2.8);
-      grd.addColorStop(0, 'rgba(91,143,249,0.3)');
+      const grd = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 2.5);
+      grd.addColorStop(0, 'rgba(91,143,249,' + (0.15 + progress * 0.2) + ')');
       grd.addColorStop(1, 'rgba(91,143,249,0)');
       ctx.fillStyle = grd;
-      ctx.fillRect(x - r * 2.8, y - r * 2.8, r * 5.6, r * 5.6);
+      ctx.fillRect(x - r * 2.5, y - r * 2.5, r * 5, r * 5);
     }
 
     ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-    const h = 215, sat = 80, l = 72 - depth * 40;
-    ctx.fillStyle = 'hsl(' + h + ',' + sat + '%,' + l + '%)';
+    const hue = 200 + norm * 30;
+    const sat = 65 + progress * 20;
+    const lgt = 45 + norm * 25 + progress * 10;
+    ctx.fillStyle = 'hsl(' + hue + ',' + sat + '%,' + lgt + '%)';
     ctx.fill();
 
-    if (norm > 0.4) {
-      ctx.strokeStyle = 'rgba(138,180,248,0.6)'; ctx.lineWidth = 1.2; ctx.stroke();
+    if (norm > 0.5 && progress > 0.5) {
+      ctx.strokeStyle = 'rgba(138,180,248,0.5)'; ctx.lineWidth = 1; ctx.stroke();
     }
   }
-
-  ctx.font = '10px system-ui'; ctx.textAlign = 'center';
-  ctx.shadowColor = 'rgba(0,0,0,0.7)'; ctx.shadowBlur = 3;
-  const topHubs = Object.entries(deg).sort((a, b) => b[1] - a[1]).slice(0, 8);
-  for (const [id, d] of topHubs) {
-    const nid = Number(id);
-    if (!revNodes.has(nid)) continue;
-    const x = pos[nid][0] * sx, y = pos[nid][1] * sy;
-    const r = (2.5 + (d / maxDeg) * 12) * Math.min(s, 2.5);
-    ctx.fillStyle = 'rgba(200,220,255,0.92)';
-    ctx.fillText('hub #' + id + ' (deg ' + d + ')', x, y - r - 6);
-  }
-  ctx.shadowBlur = 0;
   ctx.restore();
 
   // Status bar
-  ctx.fillStyle = 'rgba(8,11,18,0.9)'; ctx.fillRect(0, cH - 26, cW, 26);
-  ctx.strokeStyle = 'rgba(91,143,249,0.12)'; ctx.beginPath(); ctx.moveTo(0, cH - 26); ctx.lineTo(cW, cH - 26); ctx.stroke();
+  ctx.fillStyle = 'rgba(8,11,18,0.9)'; ctx.fillRect(0, cH - 28, cW, 28);
+  ctx.strokeStyle = 'rgba(91,143,249,0.12)'; ctx.beginPath(); ctx.moveTo(0, cH - 28); ctx.lineTo(cW, cH - 28); ctx.stroke();
   ctx.font = '10px system-ui'; ctx.textAlign = 'left';
-  ctx.fillStyle = '#8ab4f8'; ctx.fillText('Layer ' + Math.min(revealed, layers.length) + '/' + layers.length, 12, cH - 9);
-  ctx.fillStyle = '#667'; ctx.fillText(revNodes.size + ' / ' + graph.nodeCount() + ' nodes  ·  ' + revEdges.size + ' edges  ·  zoom & pan', 110, cH - 9);
+  ctx.fillStyle = '#8ab4f8';
+  ctx.fillText('Iteration ' + iteration + '/' + maxIter + (converged ? '  CONVERGED' : ''), 12, cH - 10);
+  ctx.fillStyle = '#667';
+  ctx.fillText(graph.nodeCount() + ' nodes  ·  ' + graph.edgeCount() + ' edges  ·  energy: ' + energy.toFixed(2) + '  ·  zoom & pan', 180, cH - 10);
+
+  // Energy bar
+  const barW = 120, barH = 4, barX = cW - barW - 12, barY = cH - 16;
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.fillRect(barX, barY, barW, barH);
+  const eNorm = Math.min(energy / 20, 1);
+  const bColor = converged ? '#5ad8a6' : '#5b8ff9';
+  ctx.fillStyle = bColor;
+  ctx.fillRect(barX, barY, barW * (1 - eNorm), barH);
 }
 
 cv.onResize(draw);
 
-function step() {
-  if (revealed >= layers.length) return;
-  const layer = layers[revealed];
-  for (const id of layer) {
-    revNodes.add(id);
-    for (const nb of graph.neighbors(id)) {
-      if (revNodes.has(nb)) revEdges.add(Math.min(id, nb) + '-' + Math.max(id, nb));
-    }
-  }
-  revealed++;
+function animate() {
+  const stepsPerFrame = N > 300 ? 1 : 2;
+  for (let i = 0; i < stepsPerFrame; i++) stepLayout();
   draw();
-  const progress = revealed / layers.length;
-  const delay = 40 + progress * 140;
-  setTimeout(step, delay);
+  if (!converged) animId = requestAnimationFrame(animate);
 }
 
 setTimeout(() => {
@@ -1137,17 +1123,422 @@ document.getElementById('go')!.addEventListener('click', run);
 
 run();
 `;
+
+const g6PerfDemo = `import { Graph } from './graphrs-core.js';
+import { enableZoomPan } from './zoom-pan.js';
+import { createCanvas } from './canvas-util.js';
+
+function barabasiAlbert(n: number, m: number): Graph {
+  const edges: [number, number][] = [];
+  const degree: number[] = new Array(n).fill(0);
+  for (let i = 0; i <= m; i++) for (let j = i + 1; j <= m; j++) {
+    edges.push([i, j]); degree[i]++; degree[j]++;
+  }
+  for (let i = m + 1; i < n; i++) {
+    const targets = new Set<number>();
+    const total = degree.reduce((a, b) => a + b, 0);
+    while (targets.size < m) {
+      let r = Math.random() * total;
+      for (let j = 0; j < i; j++) { r -= degree[j]; if (r <= 0) { targets.add(j); break; } }
+    }
+    for (const t of targets) { edges.push([i, t]); degree[i]++; degree[t]++; }
+  }
+  return Graph.fromEdges(edges);
+}
+
+function detectCommunities(graph: Graph): Map<number, number> {
+  const nodes = graph.nodes(), labels = new Map<number, number>();
+  for (const id of nodes) labels.set(id, id);
+  const m2 = Math.max(graph.edgeCount() * 2, 1);
+  for (let pass = 0; pass < 50; pass++) {
+    let moved = false;
+    for (const node of [...nodes].sort(() => Math.random() - 0.5)) {
+      const nbs = graph.neighbors(node); if (!nbs.length) continue;
+      const w = new Map<number, number>();
+      for (const nb of nbs) { const c = labels.get(nb)!; w.set(c, (w.get(c) || 0) + 1); }
+      let best = labels.get(node)!, bestG = 0;
+      for (const [c, v] of w) { const g = v - nbs.length * v / m2; if (g > bestG) { bestG = g; best = c; } }
+      if (best !== labels.get(node)) { labels.set(node, best); moved = true; }
+    }
+    if (!moved) break;
+  }
+  const remap = new Map<number, number>(); let next = 0;
+  for (const [, v] of labels) if (!remap.has(v)) remap.set(v, next++);
+  for (const [k, v] of labels) labels.set(k, remap.get(v)!);
+  return labels;
+}
+
+function forceLayout(graph: Graph, W: number, H: number, iter = 120) {
+  const nodes = graph.nodes(), n = nodes.length, k = Math.sqrt(W * H / n) * 1.1;
+  const pos: Record<number, [number, number]> = {};
+  for (const id of nodes) pos[id] = [80 + Math.random() * (W - 160), 80 + Math.random() * (H - 160)];
+  let temp = W / 3;
+  for (let it = 0; it < iter; it++) {
+    const disp: Record<number, [number, number]> = {};
+    for (const v of nodes) disp[v] = [0, 0];
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      const vi = nodes[i], vj = nodes[j];
+      const dx = pos[vi][0] - pos[vj][0], dy = pos[vi][1] - pos[vj][1];
+      const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 0.1);
+      const f = (k * k) / dist;
+      disp[vi][0] += (dx / dist) * f; disp[vi][1] += (dy / dist) * f;
+      disp[vj][0] -= (dx / dist) * f; disp[vj][1] -= (dy / dist) * f;
+    }
+    for (const e of graph.edges()) {
+      const dx = pos[e.source][0] - pos[e.target][0], dy = pos[e.source][1] - pos[e.target][1];
+      const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 0.1);
+      const f = (dist * dist) / k;
+      disp[e.source][0] -= (dx / dist) * f; disp[e.source][1] -= (dy / dist) * f;
+      disp[e.target][0] += (dx / dist) * f; disp[e.target][1] += (dy / dist) * f;
+    }
+    for (const v of nodes) {
+      const d = Math.max(Math.sqrt(disp[v][0] ** 2 + disp[v][1] ** 2), 0.1);
+      pos[v][0] = Math.max(40, Math.min(W - 40, pos[v][0] + (disp[v][0] / d) * Math.min(d, temp)));
+      pos[v][1] = Math.max(40, Math.min(H - 40, pos[v][1] + (disp[v][1] / d) * Math.min(d, temp)));
+    }
+    temp *= 0.95;
+  }
+  return pos;
+}
+
+const palette = ['#5B8FF9', '#5AD8A6', '#F6BD16', '#E86B5A', '#6DC8EC', '#9270CA', '#269A99', '#FF9845', '#FF6B81', '#61DDAA'];
+const app = document.getElementById('app')!;
+let N = 500;
+const ctrl = document.createElement('div');
+ctrl.style.cssText = 'position:absolute;top:10px;left:10px;z-index:10;display:flex;gap:8px;align-items:center;padding:6px 12px;background:rgba(10,10,18,0.92);border-radius:8px;border:1px solid rgba(38,154,153,0.25);backdrop-filter:blur(8px)';
+ctrl.innerHTML = '<span style="color:#269a99;font:11px/1 system-ui;font-weight:500">Nodes</span><input id="ns" type="range" min="200" max="2000" value="500" style="width:100px;accent-color:#269a99"><span id="nv" style="color:#bbb;font:11px system-ui;width:42px;text-align:center">500</span><button id="go" style="padding:3px 14px;background:linear-gradient(135deg,rgba(38,154,153,0.25),rgba(38,154,153,0.05));border:1px solid rgba(38,154,153,0.4);border-radius:6px;color:#269a99;font:11px system-ui;font-weight:600;cursor:pointer">Run Pipeline</button>';
+
+const cv = createCanvas(app);
+cv.wrapper.appendChild(ctrl);
+let graph: Graph, pos: Record<number, [number, number]>, labels: Map<number, number>;
+let commColor: Map<number, string>, timings: { layout: number; community: number; total: number } | null = null;
+let zp: ReturnType<typeof enableZoomPan>;
+
+function run() {
+  const t0 = performance.now();
+  graph = barabasiAlbert(N, 3);
+  const tGraph = performance.now() - t0;
+
+  const t1 = performance.now();
+  const W = 1400, H = 1000;
+  pos = forceLayout(graph, W, H);
+  const tLayout = performance.now() - t1;
+
+  const t2 = performance.now();
+  labels = detectCommunities(graph);
+  const tComm = performance.now() - t2;
+
+  const communities = new Map<number, number[]>();
+  for (const [nd, lbl] of labels) { if (!communities.has(lbl)) communities.set(lbl, []); communities.get(lbl)!.push(nd); }
+  commColor = new Map();
+  let ci = 0;
+  for (const [lbl] of [...communities.entries()].sort((a, b) => b[1].length - a[1].length)) {
+    commColor.set(lbl, palette[ci % palette.length]); ci++;
+  }
+
+  timings = { layout: tLayout, community: tComm, total: performance.now() - t0 };
+  if (!zp) zp = enableZoomPan(cv.canvas, draw);
+  draw();
+  console.log('Pipeline: ' + graph.nodeCount() + ' nodes, ' + graph.edgeCount() + ' edges');
+  console.log('  Graph build: ' + tGraph.toFixed(1) + 'ms  Layout: ' + tLayout.toFixed(1) + 'ms  Community: ' + tComm.toFixed(1) + 'ms  Total: ' + timings.total.toFixed(1) + 'ms');
+  console.log('  Communities found: ' + communities.size);
+}
+
+function draw(scale?: number, ox?: number, oy?: number) {
+  if (!graph) return;
+  const cW = cv.width, cH = cv.height, ctx = cv.ctx;
+  const t = zp ? zp.getTransform() : { scale: 1, offsetX: 0, offsetY: 0 };
+  const s = scale ?? t.scale, oX = ox ?? t.offsetX, oY = oy ?? t.offsetY;
+  const W = 1400, H = 1000, sx = cW / W * s, sy = cH / H * s;
+  ctx.clearRect(0, 0, cW, cH); ctx.fillStyle = '#080b12'; ctx.fillRect(0, 0, cW, cH);
+  ctx.save(); ctx.translate(oX, oY);
+  ctx.lineCap = 'round';
+
+  for (const e of graph.edges()) {
+    const same = labels.get(e.source) === labels.get(e.target);
+    ctx.beginPath();
+    ctx.moveTo(pos[e.source][0] * sx, pos[e.source][1] * sy);
+    ctx.lineTo(pos[e.target][0] * sx, pos[e.target][1] * sy);
+    ctx.strokeStyle = same ? (commColor.get(labels.get(e.source)!) || '#555566') + '30' : 'rgba(60,70,90,0.03)';
+    ctx.lineWidth = same ? 0.8 : 0.2;
+    ctx.stroke();
+  }
+
+  for (const id of graph.nodes()) {
+    const x = pos[id][0] * sx, y = pos[id][1] * sy;
+    const color = commColor.get(labels.get(id)!) || '#555566';
+    const d = graph.degree(id);
+    const r = (2 + d * 0.5) * Math.min(s, 2.5);
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.globalAlpha = 0.9; ctx.fill(); ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+
+  // Timing panel
+  if (timings) {
+    const pH = 70, pW = 240, px = cW - pW - 12, py = 10;
+    ctx.fillStyle = 'rgba(8,11,18,0.92)';
+    ctx.beginPath(); ctx.roundRect(px, py, pW, pH, 6); ctx.fill();
+    ctx.strokeStyle = 'rgba(38,154,153,0.2)'; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.roundRect(px, py, pW, pH, 6); ctx.stroke();
+    ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+    ctx.fillStyle = '#269a99'; ctx.fillText('G6 Performance Pipeline', px + 10, py + 16);
+    ctx.font = '10px system-ui';
+    ctx.fillStyle = '#8ab4f8'; ctx.fillText('Layout (FR):  ' + timings.layout.toFixed(1) + ' ms', px + 10, py + 32);
+    ctx.fillStyle = '#5ad8a6'; ctx.fillText('Community:  ' + timings.community.toFixed(1) + ' ms', px + 10, py + 46);
+    ctx.fillStyle = '#f6bd16'; ctx.fillText('Total pipeline:  ' + timings.total.toFixed(1) + ' ms', px + 10, py + 60);
+  }
+
+  // Status bar
+  ctx.fillStyle = 'rgba(8,11,18,0.9)'; ctx.fillRect(0, cH - 26, cW, 26);
+  ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+  ctx.fillStyle = '#269a99'; ctx.fillText('G6 bottleneck solved: layout + community detection in one pipeline', 12, cH - 9);
+  ctx.fillStyle = '#667'; ctx.textAlign = 'right';
+  ctx.fillText(graph.nodeCount() + ' nodes · ' + graph.edgeCount() + ' edges · zoom & pan', cW - 12, cH - 9);
+}
+
+cv.onResize(draw);
+
+setTimeout(() => {
+  document.getElementById('ns')!.addEventListener('input', (e: any) => { N = +e.target.value; document.getElementById('nv')!.textContent = N + ''; });
+  document.getElementById('go')!.addEventListener('click', run);
+  run();
+}, 30);
+`;
+
+const reactFlowPerfDemo = `import { Graph } from './graphrs-core.js';
+import { enableZoomPan } from './zoom-pan.js';
+import { createCanvas } from './canvas-util.js';
+
+function generateDAG(layers: number, nodesPerLayer: number): Graph {
+  const edges: [number, number][] = [];
+  let id = 0;
+  const layerNodes: number[][] = [];
+  for (let l = 0; l < layers; l++) {
+    const count = Math.max(1, nodesPerLayer + Math.floor((Math.random() - 0.5) * nodesPerLayer * 0.6));
+    const nodes: number[] = [];
+    for (let i = 0; i < count; i++) nodes.push(id++);
+    layerNodes.push(nodes);
+  }
+  for (let l = 0; l < layers - 1; l++) {
+    const src = layerNodes[l], dst = layerNodes[l + 1];
+    for (const s of src) {
+      const targets = Math.max(1, Math.floor(Math.random() * 3));
+      const picked = new Set<number>();
+      for (let t = 0; t < targets; t++) {
+        const d = dst[Math.floor(Math.random() * dst.length)];
+        if (!picked.has(d)) { picked.add(d); edges.push([s, d]); }
+      }
+    }
+    for (const d of dst) {
+      const hasIncoming = edges.some(([, t]) => t === d);
+      if (!hasIncoming) edges.push([src[Math.floor(Math.random() * src.length)], d]);
+    }
+  }
+  return Graph.fromEdges(edges, true);
+}
+
+function sugiyamaLayout(graph: Graph, W: number, H: number): Record<number, [number, number]> {
+  const nodes = graph.nodes(), n = nodes.length;
+  const inDeg = new Map<number, number>();
+  const children = new Map<number, number[]>();
+  for (const id of nodes) { inDeg.set(id, 0); children.set(id, []); }
+  for (const e of graph.edges()) {
+    inDeg.set(e.target, (inDeg.get(e.target) || 0) + 1);
+    children.get(e.source)!.push(e.target);
+  }
+
+  const layers: number[][] = [];
+  const layerOf = new Map<number, number>();
+  const queue = nodes.filter(id => inDeg.get(id) === 0);
+  const visited = new Set<number>(queue);
+  let current = [...queue];
+  while (current.length > 0) {
+    layers.push([...current]);
+    for (const id of current) layerOf.set(id, layers.length - 1);
+    const next: number[] = [];
+    for (const id of current) {
+      for (const child of children.get(id)!) {
+        if (!visited.has(child)) {
+          const allParentsLayered = graph.edges()
+            .filter(e => e.target === child)
+            .every(e => visited.has(e.source));
+          if (allParentsLayered) { visited.add(child); next.push(child); }
+        }
+      }
+    }
+    if (next.length === 0 && visited.size < n) {
+      for (const id of nodes) if (!visited.has(id)) { visited.add(id); next.push(id); break; }
+    }
+    current = next;
+  }
+
+  // Minimize crossings with barycenter heuristic
+  for (let sweep = 0; sweep < 8; sweep++) {
+    for (let l = 1; l < layers.length; l++) {
+      const bary = new Map<number, number>();
+      for (const id of layers[l]) {
+        const parents = graph.edges().filter(e => e.target === id && layerOf.get(e.source) === l - 1).map(e => e.source);
+        if (parents.length > 0) {
+          const avg = parents.reduce((sum, p) => sum + layers[l - 1].indexOf(p), 0) / parents.length;
+          bary.set(id, avg);
+        } else { bary.set(id, layers[l].indexOf(id)); }
+      }
+      layers[l].sort((a, b) => (bary.get(a) || 0) - (bary.get(b) || 0));
+    }
+  }
+
+  const pos: Record<number, [number, number]> = {};
+  const marginX = 80, marginY = 60;
+  const layerH = (H - marginY * 2) / Math.max(layers.length - 1, 1);
+  for (let l = 0; l < layers.length; l++) {
+    const layer = layers[l];
+    const layerW = (W - marginX * 2) / Math.max(layer.length - 1, 1);
+    for (let i = 0; i < layer.length; i++) {
+      const x = layer.length === 1 ? W / 2 : marginX + i * layerW;
+      pos[layer[i]] = [x, marginY + l * layerH];
+    }
+  }
+  return pos;
+}
+
+const app = document.getElementById('app')!;
+let layers = 8, nodesPerLayer = 6;
+const ctrl = document.createElement('div');
+ctrl.style.cssText = 'position:absolute;top:10px;left:10px;z-index:10;display:flex;gap:8px;align-items:center;padding:6px 12px;background:rgba(10,10,18,0.92);border-radius:8px;border:1px solid rgba(146,112,202,0.25);backdrop-filter:blur(8px);flex-wrap:wrap';
+ctrl.innerHTML = '<span style="color:#9270ca;font:11px/1 system-ui;font-weight:500">Layers</span><input id="ls" type="range" min="4" max="20" value="8" style="width:70px;accent-color:#9270ca"><span id="lv" style="color:#bbb;font:11px system-ui;width:20px">8</span><span style="color:#9270ca;font:11px/1 system-ui;font-weight:500">Width</span><input id="ws" type="range" min="3" max="15" value="6" style="width:70px;accent-color:#9270ca"><span id="wv" style="color:#bbb;font:11px system-ui;width:20px">6</span><button id="go" style="padding:3px 14px;background:linear-gradient(135deg,rgba(146,112,202,0.25),rgba(146,112,202,0.05));border:1px solid rgba(146,112,202,0.4);border-radius:6px;color:#9270ca;font:11px system-ui;font-weight:600;cursor:pointer">Auto-Layout</button>';
+
+const cv = createCanvas(app);
+cv.wrapper.appendChild(ctrl);
+let graph: Graph, pos: Record<number, [number, number]>;
+let timing = 0;
+let zp: ReturnType<typeof enableZoomPan>;
+const W = 1400, H = 1000;
+
+function run() {
+  const t0 = performance.now();
+  graph = generateDAG(layers, nodesPerLayer);
+  pos = sugiyamaLayout(graph, W, H);
+  timing = performance.now() - t0;
+  if (!zp) zp = enableZoomPan(cv.canvas, draw);
+  draw();
+  console.log('DAG: ' + graph.nodeCount() + ' nodes, ' + graph.edgeCount() + ' edges, ' + layers + ' layers');
+  console.log('Auto-layout computed in ' + timing.toFixed(1) + 'ms (React Flow has NO built-in layout)');
+}
+
+function draw(scale?: number, ox?: number, oy?: number) {
+  if (!graph) return;
+  const cW = cv.width, cH = cv.height, ctx = cv.ctx;
+  const t = zp ? zp.getTransform() : { scale: 1, offsetX: 0, offsetY: 0 };
+  const s = scale ?? t.scale, oX = ox ?? t.offsetX, oY = oy ?? t.offsetY;
+  const sx = cW / W * s, sy = cH / H * s;
+  ctx.clearRect(0, 0, cW, cH); ctx.fillStyle = '#080b12'; ctx.fillRect(0, 0, cW, cH);
+  ctx.save(); ctx.translate(oX, oY);
+
+  // Draw edges with arrows
+  ctx.lineCap = 'round';
+  for (const e of graph.edges()) {
+    const p1 = pos[e.source], p2 = pos[e.target];
+    if (!p1 || !p2) continue;
+    const x1 = p1[0] * sx, y1 = p1[1] * sy, x2 = p2[0] * sx, y2 = p2[1] * sy;
+
+    // Bezier curve for smooth edges
+    const midY = (y1 + y2) / 2;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.bezierCurveTo(x1, midY, x2, midY, x2, y2);
+    ctx.strokeStyle = 'rgba(146,112,202,0.3)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // Arrow head pointing into target node
+    const aLen = 6 * Math.min(s, 2);
+    const nodeH = 16 * Math.min(s, 2.5);
+    const ay = y2 - nodeH / 2;
+    ctx.beginPath();
+    ctx.moveTo(x2, ay);
+    ctx.lineTo(x2 - aLen * 0.5, ay - aLen);
+    ctx.lineTo(x2 + aLen * 0.5, ay - aLen);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(146,112,202,0.5)';
+    ctx.fill();
+  }
+
+  // Draw nodes as React Flow-style rounded rectangles
+  const deg: Record<number, number> = {};
+  for (const id of graph.nodes()) deg[id] = graph.degree(id);
+  const maxDeg = Math.max(...Object.values(deg), 1);
+
+  for (const id of graph.nodes()) {
+    const p = pos[id]; if (!p) continue;
+    const x = p[0] * sx, y = p[1] * sy;
+    const norm = deg[id] / maxDeg;
+    const w = (28 + norm * 20) * Math.min(s, 2.5);
+    const h = (16 + norm * 8) * Math.min(s, 2.5);
+
+    // Node shadow
+    ctx.fillStyle = 'rgba(146,112,202,0.08)';
+    ctx.beginPath(); ctx.roundRect(x - w/2 + 2, y - h/2 + 2, w, h, 4); ctx.fill();
+
+    // Node body
+    ctx.beginPath(); ctx.roundRect(x - w/2, y - h/2, w, h, 4);
+    const grad = ctx.createLinearGradient(x, y - h/2, x, y + h/2);
+    grad.addColorStop(0, 'hsl(270,' + (50 + norm * 30) + '%,' + (22 + norm * 15) + '%)');
+    grad.addColorStop(1, 'hsl(270,' + (40 + norm * 20) + '%,' + (16 + norm * 8) + '%)');
+    ctx.fillStyle = grad; ctx.fill();
+    ctx.strokeStyle = 'rgba(146,112,202,' + (0.3 + norm * 0.4) + ')';
+    ctx.lineWidth = 1; ctx.stroke();
+
+    // Node label
+    if (s > 0.6) {
+      ctx.font = (8 * Math.min(s, 2)) + 'px system-ui';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = 'rgba(200,180,240,' + (0.6 + norm * 0.4) + ')';
+      ctx.fillText('' + id, x, y);
+    }
+  }
+  ctx.restore();
+
+  // Timing panel
+  const pH = 52, pW = 260, px = cW - pW - 12, py = 10;
+  ctx.fillStyle = 'rgba(8,11,18,0.92)';
+  ctx.beginPath(); ctx.roundRect(px, py, pW, pH, 6); ctx.fill();
+  ctx.strokeStyle = 'rgba(146,112,202,0.2)'; ctx.lineWidth = 0.5;
+  ctx.beginPath(); ctx.roundRect(px, py, pW, pH, 6); ctx.stroke();
+  ctx.font = 'bold 10px system-ui'; ctx.textAlign = 'left';
+  ctx.fillStyle = '#9270ca'; ctx.fillText('React Flow Auto-Layout (graphrs)', px + 10, py + 16);
+  ctx.font = '10px system-ui';
+  ctx.fillStyle = '#8ab4f8'; ctx.fillText('Sugiyama hierarchical:  ' + timing.toFixed(1) + ' ms', px + 10, py + 32);
+  ctx.fillStyle = '#f6bd16'; ctx.fillText('React Flow built-in layout:  NONE (requires dagre/elkjs)', px + 10, py + 46);
+
+  // Status bar
+  ctx.fillStyle = 'rgba(8,11,18,0.9)'; ctx.fillRect(0, cH - 26, cW, 26);
+  ctx.font = '10px system-ui'; ctx.textAlign = 'left';
+  ctx.fillStyle = '#9270ca'; ctx.fillText('React Flow has no built-in layout — graphrs provides instant hierarchical DAG layout', 12, cH - 9);
+  ctx.fillStyle = '#667'; ctx.textAlign = 'right';
+  ctx.fillText(graph.nodeCount() + ' nodes · ' + graph.edgeCount() + ' edges · zoom & pan', cW - 12, cH - 9);
+}
+
+cv.onResize(draw);
+
+setTimeout(() => {
+  document.getElementById('ls')!.addEventListener('input', (e: any) => { layers = +e.target.value; document.getElementById('lv')!.textContent = layers + ''; });
+  document.getElementById('ws')!.addEventListener('input', (e: any) => { nodesPerLayer = +e.target.value; document.getElementById('wv')!.textContent = nodesPerLayer + ''; });
+  document.getElementById('go')!.addEventListener('click', run);
+  run();
+}, 30);
+`;
 </script>
 
 # 交互式演练场
 
 实时图算法演示，由 `@graphrs/core` 驱动。通过滑块调整参数，点击 **Run** 重新生成。滚轮缩放，拖拽平移。点击 **Show Code** 查看源代码，**Fullscreen** 进入全屏沉浸式体验。
 
-## BFS — 广度优先遍历
+## 力导向布局 — 实时收敛
 
-逐层动画展示 Barabási–Albert 无标度网络（m=3）的广度优先搜索过程。蓝色越深 = 距离最高度数枢纽节点的 BFS 层越远。边在枢纽节点附近发光更强：
+观看无标度网络实时自组织。节点从随机位置出发，通过 Fruchterman–Reingold 算法逐步收敛为结构化布局 — 斥力推开节点，边上的引力拉近连接节点。能量条随系统收敛而下降：
 
-<Playground :code="animatedBFS" />
+<Playground :code="forceConvergence" />
 
 ## 社区发现
 
@@ -1178,3 +1569,15 @@ Brandes 算法计算每个节点被最短路径经过的频率。暖色调（红
 点击 **Run Benchmark** 测量 BFS、Dijkstra、PageRank 和介数中心性在不同规模下的性能。图表展示 O(V+E) 与 O(V²·E) 的复杂度差异 — 1000 节点的介数中心性在纯 JS 中需要数秒，而 `@graphrs` WASM 可提供 10-500 倍加速：
 
 <Playground :code="perfBenchmark" />
+
+## G6 — 布局 + 社区检测管线
+
+AntV G6 缺少内置社区检测功能，且布局在大规模图上性能下降。此演示展示 `@graphrs` 在 500+ 节点上作为**单一管线**同时计算力导向布局和社区检测 — 解决 G6 的分析性能瓶颈，附带计时结果：
+
+<Playground :code="g6PerfDemo" />
+
+## React Flow — 即时分层布局
+
+React Flow **没有内置布局功能** — 用户需要依赖外部库（dagre、elkjs），这些库速度慢且增加包体积。此演示展示 `@graphrs` 为 DAG 工作流即时计算 Sugiyama 分层布局，包含贝塞尔曲线边和正确的层级排序：
+
+<Playground :code="reactFlowPerfDemo" />
