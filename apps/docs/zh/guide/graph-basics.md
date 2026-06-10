@@ -1,5 +1,5 @@
 <script setup>
-const createAndQuery = `import { Graph } from '@graphrs/core';
+const createAndQuery = `import { Graph } from './graphrs-core.js';
 
 // 创建无向图
 const g = new Graph();
@@ -27,7 +27,7 @@ console.log('存在边 0→1:', dg.hasEdge(0, 1));
 console.log('存在边 1→0:', dg.hasEdge(1, 0));
 `;
 
-const factories = `import { Graph } from '@graphrs/core';
+const factories = `import { Graph } from './graphrs-core.js';
 
 // 从边列表创建
 const g1 = Graph.fromEdges([[0,1],[1,2],[2,3],[3,0]]);
@@ -62,7 +62,7 @@ const restored = Graph.fromJSON(json);
 console.log('恢复:', restored.nodeCount(), '节点');
 `;
 
-const subgraphDemo = `import { Graph } from '@graphrs/core';
+const subgraphDemo = `import { Graph } from './graphrs-core.js';
 
 const g = Graph.fromEdges([
   [0,1],[1,2],[2,3],[3,4],[4,0],[1,3]

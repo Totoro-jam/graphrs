@@ -1,5 +1,5 @@
 <script setup>
-const quickExample = `import { Graph } from '@graphrs/core';
+const quickExample = `import { Graph } from './graphrs-core.js';
 
 // 创建一个包含两个集群的图
 const graph = Graph.fromEdges([

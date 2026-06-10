@@ -1,5 +1,5 @@
 <script setup>
-const quickExample = `import { Graph } from '@graphrs/core';
+const quickExample = `import { Graph } from './graphrs-core.js';
 
 // Create a graph with two clusters
 const graph = Graph.fromEdges([

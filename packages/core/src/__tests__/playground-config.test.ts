@@ -11,6 +11,17 @@ const PLAYGROUND_MD_PATH = resolve(__dirname, '../../../../apps/docs/examples/pl
 
 const PLAYGROUND_ZH_MD_PATH = resolve(__dirname, '../../../../apps/docs/zh/examples/playground.md');
 
+const PAGES_WITH_PLAYGROUND = [
+  resolve(__dirname, '../../../../apps/docs/examples/playground.md'),
+  resolve(__dirname, '../../../../apps/docs/zh/examples/playground.md'),
+  resolve(__dirname, '../../../../apps/docs/guide/getting-started.md'),
+  resolve(__dirname, '../../../../apps/docs/zh/guide/getting-started.md'),
+  resolve(__dirname, '../../../../apps/docs/guide/graph-basics.md'),
+  resolve(__dirname, '../../../../apps/docs/zh/guide/graph-basics.md'),
+  resolve(__dirname, '../../../../apps/docs/api/core.md'),
+  resolve(__dirname, '../../../../apps/docs/zh/api/core.md'),
+];
+
 describe('Playground Sandpack configuration', () => {
   const vueContent = readFileSync(PLAYGROUND_VUE_PATH, 'utf-8');
   const mdContent = readFileSync(PLAYGROUND_MD_PATH, 'utf-8');
@@ -47,6 +58,14 @@ describe('Playground Sandpack configuration', () => {
   it('demo code should import from local shim, not @graphrs/core', () => {
     expect(mdContent).not.toContain("from '@graphrs/core'");
     expect(mdContent).toContain("from './graphrs-core.js'");
+  });
+
+  it.each(PAGES_WITH_PLAYGROUND)('no @graphrs/core in playground template literals: %s', (pagePath) => {
+    const content = readFileSync(pagePath, 'utf-8');
+    const templateLiterals = content.match(/= `import[\s\S]*?`;/g) || [];
+    for (const tpl of templateLiterals) {
+      expect(tpl).not.toContain("from '@graphrs/core'");
+    }
   });
 
   it('should use vanilla-ts template', () => {

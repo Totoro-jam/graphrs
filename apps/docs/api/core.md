@@ -1,5 +1,5 @@
 <script setup>
-const creation = `import { Graph } from '@graphrs/core';
+const creation = `import { Graph } from './graphrs-core.js';
 
 const g = new Graph(true);
 g.addNode(0, { name: 'Alice' });
@@ -23,7 +23,7 @@ const sub = g2.subgraph([0, 1, 2]);
 console.log('Subgraph {0,1,2}:', sub.nodeCount(), 'nodes,', sub.edgeCount(), 'edges');
 `;
 
-const roundtrip = `import { Graph } from '@graphrs/core';
+const roundtrip = `import { Graph } from './graphrs-core.js';
 
 const g = Graph.fromEdges([[0,1],[1,2],[2,0]]);
 g.addNode(0, { label: 'A' });

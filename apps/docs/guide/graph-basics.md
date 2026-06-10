@@ -1,5 +1,5 @@
 <script setup>
-const createAndQuery = `import { Graph } from '@graphrs/core';
+const createAndQuery = `import { Graph } from './graphrs-core.js';
 
 // Create an undirected graph
 const g = new Graph();
@@ -27,7 +27,7 @@ console.log('Has edge 0→1:', dg.hasEdge(0, 1));
 console.log('Has edge 1→0:', dg.hasEdge(1, 0));
 `;
 
-const factories = `import { Graph } from '@graphrs/core';
+const factories = `import { Graph } from './graphrs-core.js';
 
 // From edge list
 const g1 = Graph.fromEdges([[0,1],[1,2],[2,3],[3,0]]);
@@ -62,7 +62,7 @@ const restored = Graph.fromJSON(json);
 console.log('Restored:', restored.nodeCount(), 'nodes');
 `;
 
-const subgraphDemo = `import { Graph } from '@graphrs/core';
+const subgraphDemo = `import { Graph } from './graphrs-core.js';
 
 const g = Graph.fromEdges([
   [0,1],[1,2],[2,3],[3,4],[4,0],[1,3]
