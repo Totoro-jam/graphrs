@@ -86,6 +86,149 @@ graphrs is a TypeScript wrapper around [rust-igraph](https://github.com/Totoro-j
 
 All algorithm functions are `async` because the WASM module loads asynchronously on first call. Subsequent calls are instant.
 
+## Async Patterns
+
+Every algorithm function returns a `Promise`. Here are the common ways to work with them:
+
+### Sequential calls
+
+```typescript
+const communities = await louvain(graph);
+const pr = await pagerank(graph);
+```
+
+### Parallel calls
+
+Run independent algorithms concurrently with `Promise.all`:
+
+```typescript
+const [communities, pr, layout] = await Promise.all([
+  louvain(graph),
+  pagerank(graph),
+  layoutFR(graph),
+]);
+```
+
+### Top-level await
+
+In ESM modules or modern bundlers, use top-level `await`:
+
+```typescript
+// app.ts (ESM)
+import { Graph } from '@graphrs/core';
+import { louvain } from '@graphrs/community';
+
+const graph = Graph.fromEdges([[0,1],[1,2],[2,0]]);
+const result = await louvain(graph);
+```
+
+### In non-async contexts
+
+Wrap in an async IIFE or use `.then()`:
+
+```typescript
+(async () => {
+  const result = await louvain(graph);
+  console.log(result.clusters);
+})();
+```
+
+## Error Handling
+
+graphrs throws typed errors you can catch and handle:
+
+```typescript
+import { Graph, NodeNotFoundError, EdgeNotFoundError } from '@graphrs/core';
+
+const g = new Graph();
+g.addNode(0);
+
+try {
+  g.neighbors(99); // node 99 doesn't exist
+} catch (e) {
+  if (e instanceof NodeNotFoundError) {
+    console.log(`Node ${e.message} not found`);
+  }
+}
+
+try {
+  g.removeEdge(0, 1); // edge doesn't exist
+} catch (e) {
+  if (e instanceof EdgeNotFoundError) {
+    console.log('Edge not found');
+  }
+}
+```
+
+WASM algorithm errors reject the promise:
+
+```typescript
+import { maxFlow } from '@graphrs/flow';
+
+try {
+  await maxFlow(graph, 0, 0); // source === target
+} catch (e) {
+  console.log('Algorithm error:', e.message);
+}
+```
+
+## Common Patterns
+
+### Build → Analyze → Visualize
+
+The typical workflow: create a graph, run algorithms, then export for rendering.
+
+```typescript
+import { Graph } from '@graphrs/core';
+import { louvain } from '@graphrs/community';
+import { layoutFR } from '@graphrs/layout';
+
+// 1. Build the graph
+const graph = Graph.fromEdges([
+  [0,1],[1,2],[2,0],[3,4],[4,5],[5,3],[2,3],
+]);
+
+// 2. Analyze
+const [communities, layout] = await Promise.all([
+  louvain(graph),
+  layoutFR(graph),
+]);
+
+// 3. Export for visualization
+const g6Data = graph.toG6Format(layout);
+// Pass g6Data to your rendering library
+```
+
+### Graph from external data
+
+```typescript
+// From an API response
+const response = await fetch('/api/network');
+const { nodes, edges } = await response.json();
+
+const graph = new Graph();
+for (const node of nodes) {
+  graph.addNode(node.id, node);
+}
+for (const edge of edges) {
+  graph.addEdge(edge.from, edge.to, { weight: edge.weight });
+}
+```
+
+### Chaining mutations
+
+All mutation methods return `this` for chaining:
+
+```typescript
+const graph = new Graph()
+  .addNode(0, { label: 'A' })
+  .addNode(1, { label: 'B' })
+  .addNode(2, { label: 'C' })
+  .addEdge(0, 1)
+  .addEdge(1, 2)
+  .addEdge(2, 0);
+```
+
 ## Requirements
 
 - **Node.js** >= 20.0.0
@@ -96,4 +239,5 @@ All algorithm functions are `async` because the WASM module loads asynchronously
 
 - [Graph Basics](/guide/graph-basics) — Learn how to create and manipulate graphs
 - [Algorithms](/guide/algorithms) — Overview of all available algorithm packages
-- [Integration Examples](/examples/antv-g6) — Use graphrs with popular visualization libraries
+- [Interactive Playground](/examples/playground) — Live demos: force layout, community detection, PageRank, benchmarks
+- [Integration Examples](/examples/antv-g6) — Use graphrs with AntV G6, React Flow, Cytoscape.js, D3

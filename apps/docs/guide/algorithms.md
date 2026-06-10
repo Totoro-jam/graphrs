@@ -4,6 +4,8 @@ graphrs organizes 400+ graph algorithms into modular packages. Each package is i
 
 ## Package Overview
 
+### Algorithm Packages
+
 | Package | Description | Functions |
 |---------|-------------|-----------|
 | [`@graphrs/community`](/api/community) | Community detection | louvain, leiden, infomap, labelPropagation, walktrap, fastGreedy, spinglass, fluidCommunities |
@@ -15,6 +17,52 @@ graphrs organizes 400+ graph algorithms into modular packages. Each package is i
 | [`@graphrs/operators`](/api/operators) | Graph transforms | union, intersection, difference, simplify, reverse, toDirected, toUndirected, inducedSubgraph, complement |
 | [`@graphrs/flow`](/api/flow) | Network flow | maxFlow, minCut, vertexConnectivity, edgeConnectivity, isConnected |
 | [`@graphrs/isomorphism`](/api/isomorphism) | Structural matching | isIsomorphic, subgraphIsomorphic, canonicalPermutation, automorphismGroupSize |
+
+### Integration Packages
+
+| Package | Description | What it does |
+|---------|-------------|--------------|
+| [`@graphrs/g6`](/api/g6) | AntV G6 adapter | Provides G6-compatible layout functions, community coloring, and centrality sizing |
+| [`@graphrs/react-flow`](/api/react-flow) | React Flow adapter | `useGraphrsLayout` hook for auto-positioning React Flow nodes |
+
+## Choosing the Right Algorithm
+
+### Community Detection
+
+| Algorithm | Speed | Quality | Best For |
+|-----------|-------|---------|----------|
+| `louvain` | Fast | Good | General-purpose, first try |
+| `leiden` | Fast | Best | When you need guaranteed connected communities |
+| `labelPropagation` | Fastest | Variable | Very large graphs (>100k nodes) |
+| `infomap` | Medium | Best | Information flow / routing networks |
+| `walktrap` | Medium | Good | Small-medium graphs with clear structure |
+| `fastGreedy` | Fast | Good | Hierarchical community structure |
+| `spinglass` | Slow | Good | When you need precise control (spin count) |
+| `fluidCommunities` | Fast | Variable | When you know `k` (number of communities) in advance |
+
+### Centrality Measures
+
+| Algorithm | Measures | Best For |
+|-----------|----------|----------|
+| `pagerank` | Global importance | Ranking nodes by influence (web, social) |
+| `betweenness` | Bridge / broker role | Finding bottlenecks and brokers |
+| `closeness` | Distance to all others | Finding nodes with fastest access |
+| `eigenvector` | Neighbor importance | Nodes connected to important nodes |
+| `hits` | Hub / authority scores | Directed networks (web link analysis) |
+| `katz` | Attenuated walk count | Networks with long-range influence |
+| `harmonic` | Harmonic mean distance | Disconnected graphs (graceful fallback) |
+
+### Layout Algorithms
+
+| Algorithm | Type | Best For |
+|-----------|------|----------|
+| `layoutFR` | Force-directed | General-purpose visualization |
+| `layoutKK` | Force-directed | Emphasizing shortest-path distances |
+| `layoutSugiyama` | Layered | DAGs, hierarchies, workflows |
+| `layoutReingoldTilford` | Tree | Tree structures |
+| `layoutCircle` | Geometric | Ring/cycle topologies |
+| `layoutGrid` | Geometric | Uniform arrangement |
+| `layoutDRL` | Force-directed | Very large graphs (>10k nodes) |
 
 ## Common Pattern
 
@@ -73,6 +121,39 @@ const result2 = await betweenness(graph);
 ```
 
 The WASM module is a singleton — it loads once and is reused across all packages.
+
+## Combining Algorithms
+
+A common pattern is chaining multiple algorithms for a full analysis pipeline:
+
+```typescript
+import { Graph } from '@graphrs/core';
+import { louvain } from '@graphrs/community';
+import { pagerank } from '@graphrs/centrality';
+import { layoutFR } from '@graphrs/layout';
+
+const graph = Graph.fromEdges([
+  [0,1],[1,2],[2,0],
+  [3,4],[4,5],[5,3],
+  [2,3],
+]);
+
+// Run in parallel — they're independent
+const [communities, pr, layout] = await Promise.all([
+  louvain(graph),
+  pagerank(graph),
+  layoutFR(graph),
+]);
+
+// Combine for visualization
+const nodes = graph.nodes().map((id, i) => ({
+  id,
+  x: layout.positions[i]![0],
+  y: layout.positions[i]![1],
+  community: communities.membership[i],
+  importance: pr.scores[i],
+}));
+```
 
 ## Subpath Imports
 
