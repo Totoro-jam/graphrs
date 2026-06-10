@@ -239,4 +239,72 @@ describe('@graphrs/operators integration (WASM)', () => {
       expect(result.edgeCount()).toBe(3);
     });
   });
+
+  describe('edge cases', () => {
+    it('complement of path(4) has correct edges', async () => {
+      const g = Graph.fromEdges([
+        [0, 1],
+        [1, 2],
+        [2, 3],
+      ]);
+      const result = await complement(g);
+      expect(result.edgeCount()).toBe(3);
+    });
+
+    it('simplify on already-simple graph is identity', async () => {
+      const g = Graph.fromEdges([
+        [0, 1],
+        [1, 2],
+      ]);
+      const result = await simplify(g);
+      expect(result.edgeCount()).toBe(2);
+      expect(result.nodeCount()).toBe(3);
+    });
+
+    it('union is commutative', async () => {
+      const g1 = Graph.fromEdges([[0, 1]]);
+      const g2 = Graph.fromEdges([[1, 2]]);
+      const [ab, ba] = await Promise.all([union(g1, g2), union(g2, g1)]);
+      expect(ab.edgeCount()).toBe(ba.edgeCount());
+      expect(ab.nodeCount()).toBe(ba.nodeCount());
+    });
+
+    it('intersection is commutative', async () => {
+      const g1 = Graph.fromEdges([
+        [0, 1],
+        [1, 2],
+      ]);
+      const g2 = Graph.fromEdges([
+        [1, 2],
+        [2, 3],
+      ]);
+      const [ab, ba] = await Promise.all([intersection(g1, g2), intersection(g2, g1)]);
+      expect(ab.edgeCount()).toBe(ba.edgeCount());
+    });
+
+    it('reverse of reverse restores original edge directions', async () => {
+      const g = Graph.fromEdges(
+        [
+          [0, 1],
+          [1, 2],
+        ],
+        { directed: true },
+      );
+      const rr = await reverse(g).then((r) => reverse(r));
+      const edges = rr._getEdgePairs();
+      expect(edges.some(([u, v]) => u === 0 && v === 1)).toBe(true);
+      expect(edges.some(([u, v]) => u === 1 && v === 2)).toBe(true);
+    });
+
+    it('toDirected then toUndirected preserves edge count', async () => {
+      const g = Graph.fromEdges([
+        [0, 1],
+        [1, 2],
+      ]);
+      const directed = await toDirected(g);
+      const undirected = await toUndirected(directed);
+      expect(undirected.edgeCount()).toBe(2);
+      expect(undirected.directed).toBe(false);
+    });
+  });
 });

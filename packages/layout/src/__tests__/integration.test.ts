@@ -145,3 +145,67 @@ describe('@graphrs/layout integration (Karate Club, 34 nodes)', () => {
     expectValidLayout(result, 34);
   });
 });
+
+describe('@graphrs/layout edge cases', () => {
+  it('layoutFR on single-edge graph', async () => {
+    const g = Graph.fromEdges([[0, 1]]);
+    const result = await layoutFR(g);
+    expectValidLayout(result, 2);
+  });
+
+  it('layoutCircle on 3-node triangle', async () => {
+    const g = Graph.fromEdges([
+      [0, 1],
+      [1, 2],
+      [2, 0],
+    ]);
+    const result = await layoutCircle(g);
+    expectValidLayout(result, 3);
+    const radii = result.positions.map(([x, y]) => Math.sqrt(x * x + y * y));
+    for (const r of radii) {
+      expect(r).toBeCloseTo(radii[0]!, 3);
+    }
+  });
+
+  it('layoutGrid on 4-node graph produces 2x2 grid', async () => {
+    const g = Graph.fromEdges([
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 0],
+    ]);
+    const result = await layoutGrid(g);
+    expectValidLayout(result, 4);
+    const unique = new Set(result.positions.map(([x, y]) => `${x},${y}`));
+    expect(unique.size).toBe(4);
+  });
+
+  it('layoutKK on path graph', async () => {
+    const g = Graph.fromEdges([
+      [0, 1],
+      [1, 2],
+      [2, 3],
+    ]);
+    const result = await layoutKK(g);
+    expectValidLayout(result, 4);
+  });
+
+  it('layoutStar with 2 nodes', async () => {
+    const g = Graph.fromEdges([[0, 1]]);
+    const result = await layoutStar(g);
+    expectValidLayout(result, 2);
+  });
+
+  it('layoutRandom with different seeds produces different layouts', async () => {
+    const g = Graph.fromEdges([
+      [0, 1],
+      [1, 2],
+    ]);
+    const a = await layoutRandom(g, 1);
+    const b = await layoutRandom(g, 999);
+    const same = a.positions.every(
+      ([ax, ay], i) => ax === b.positions[i]![0] && ay === b.positions[i]![1],
+    );
+    expect(same).toBe(false);
+  });
+});

@@ -146,3 +146,71 @@ describe('@graphrs/centrality integration (Karate Club)', () => {
     }
   });
 });
+
+describe('@graphrs/centrality edge cases', () => {
+  it('pagerank on single-edge graph', async () => {
+    const g = Graph.fromEdges([[0, 1]]);
+    const result = await pagerank(g);
+    expect(result.scores).toHaveLength(2);
+    expect(result.scores[0]).toBeCloseTo(result.scores[1]!, 2);
+  });
+
+  it('pagerank on star graph: center has highest score', async () => {
+    const g = Graph.fromEdges([
+      [0, 1],
+      [0, 2],
+      [0, 3],
+      [0, 4],
+    ]);
+    const result = await pagerank(g);
+    const maxIdx = result.scores.indexOf(Math.max(...result.scores));
+    expect(maxIdx).toBe(0);
+  });
+
+  it('betweenness on path graph: middle nodes have highest score', async () => {
+    const g = Graph.fromEdges([
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 4],
+    ]);
+    const result = await betweenness(g);
+    expect(result.scores).toHaveLength(5);
+    expect(result.scores[2]).toBeGreaterThan(result.scores[0]!);
+    expect(result.scores[2]).toBeGreaterThan(result.scores[4]!);
+  });
+
+  it('closeness on triangle: all nodes have equal closeness', async () => {
+    const g = Graph.fromEdges([
+      [0, 1],
+      [1, 2],
+      [2, 0],
+    ]);
+    const result = await closeness(g);
+    expect(result.scores[0]).toBeCloseTo(result.scores[1]!, 5);
+    expect(result.scores[1]).toBeCloseTo(result.scores[2]!, 5);
+  });
+
+  it('hits: hubs and authorities on directed star', async () => {
+    const g = Graph.fromEdges(
+      [
+        [0, 1],
+        [0, 2],
+        [0, 3],
+      ],
+      { directed: true },
+    );
+    const result = await hits(g);
+    expect(result.hubs).toHaveLength(4);
+    expect(result.authorities).toHaveLength(4);
+  });
+
+  it('eigenvector on single edge', async () => {
+    const g = Graph.fromEdges([[0, 1]]);
+    const result = await eigenvector(g);
+    expect(result.scores).toHaveLength(2);
+    for (const s of result.scores) {
+      expect(Number.isFinite(s)).toBe(true);
+    }
+  });
+});

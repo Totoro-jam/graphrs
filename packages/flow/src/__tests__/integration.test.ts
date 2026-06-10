@@ -199,4 +199,67 @@ describe('@graphrs/flow integration (WASM)', () => {
       expect(result).toBe(2);
     });
   });
+
+  describe('undirected flow', () => {
+    it('max flow on undirected graph treats edges as bidirectional', async () => {
+      const g = Graph.fromEdges([
+        [0, 1],
+        [1, 2],
+      ]);
+      const result = await maxFlow(g, 0, 2);
+      expect(result.value).toBe(1);
+    });
+
+    it('min cut on undirected triangle', async () => {
+      const g = Graph.fromEdges([
+        [0, 1],
+        [1, 2],
+        [2, 0],
+      ]);
+      const result = await minCut(g, 0, 2);
+      expect(result.value).toBe(2);
+    });
+  });
+
+  describe('edge cases', () => {
+    it('isConnected on two-node connected graph', async () => {
+      const g = Graph.fromEdges([[0, 1]]);
+      const result = await isConnected(g);
+      expect(result).toBe(true);
+    });
+
+    it('edgeConnectivity of single edge is 1', async () => {
+      const g = Graph.fromEdges([[0, 1]]);
+      const result = await edgeConnectivity(g);
+      expect(result).toBe(1);
+    });
+
+    it('max flow from source to self throws', async () => {
+      const g = Graph.fromEdges(
+        [
+          [0, 1],
+          [1, 2],
+        ],
+        { directed: true },
+      );
+      await expect(maxFlow(g, 0, 0)).rejects.toThrow();
+    });
+
+    it('K5 has edge connectivity 4', async () => {
+      const g = Graph.fromEdges([
+        [0, 1],
+        [0, 2],
+        [0, 3],
+        [0, 4],
+        [1, 2],
+        [1, 3],
+        [1, 4],
+        [2, 3],
+        [2, 4],
+        [3, 4],
+      ]);
+      const result = await edgeConnectivity(g);
+      expect(result).toBe(4);
+    });
+  });
 });

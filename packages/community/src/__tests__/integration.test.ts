@@ -165,4 +165,81 @@ describe('@graphrs/community integration (WASM)', () => {
     expect(result.membership).toHaveLength(3);
     expect(result.clusters).toBe(1);
   });
+
+  it('two disconnected cliques form two communities', async () => {
+    const g = Graph.fromEdges([
+      [0, 1],
+      [1, 2],
+      [2, 0],
+      [3, 4],
+      [4, 5],
+      [5, 3],
+    ]);
+    const result = await louvain(g);
+    expect(result.membership).toHaveLength(6);
+    expect(result.clusters).toBe(2);
+    expect(result.membership[0]).toBe(result.membership[1]);
+    expect(result.membership[3]).toBe(result.membership[4]);
+    expect(result.membership[0]).not.toBe(result.membership[3]);
+  });
+
+  it('single edge graph puts both nodes in same community', async () => {
+    const g = Graph.fromEdges([[0, 1]]);
+    const result = await louvain(g);
+    expect(result.membership).toHaveLength(2);
+    expect(result.clusters).toBe(1);
+    expect(result.membership[0]).toBe(result.membership[1]);
+  });
+
+  it('leiden produces connected communities', async () => {
+    const g = Graph.fromEdges([
+      [0, 1],
+      [1, 2],
+      [2, 0],
+      [3, 4],
+      [4, 5],
+      [5, 3],
+      [2, 3],
+    ]);
+    const result = await leiden(g);
+    expect(result.membership).toHaveLength(6);
+    expect(result.clusters).toBeGreaterThanOrEqual(1);
+  });
+
+  it('fluidCommunities with k=1 assigns all to same community', async () => {
+    const g = Graph.fromEdges([
+      [0, 1],
+      [1, 2],
+      [2, 3],
+    ]);
+    const result = await fluidCommunities(g, { numCommunities: 1 });
+    expect(result.clusters).toBe(1);
+    expect(new Set(result.membership).size).toBe(1);
+  });
+
+  it('fastGreedy on complete graph K4', async () => {
+    const g = Graph.fromEdges([
+      [0, 1],
+      [0, 2],
+      [0, 3],
+      [1, 2],
+      [1, 3],
+      [2, 3],
+    ]);
+    const result = await fastGreedy(g);
+    expect(result.membership).toHaveLength(4);
+    expect(result.clusters).toBeGreaterThanOrEqual(1);
+  });
+
+  it('walktrap on path graph', async () => {
+    const g = Graph.fromEdges([
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 4],
+    ]);
+    const result = await walktrap(g);
+    expect(result.membership).toHaveLength(5);
+    expect(result.clusters).toBeGreaterThanOrEqual(1);
+  });
 });
