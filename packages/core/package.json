@@ -4,7 +4,13 @@
   "type": "module",
   "license": "MIT",
   "description": "Core graph data structure and WASM runtime for @graphrs — high-performance graph algorithms via WebAssembly",
-  "keywords": ["graph", "wasm", "webassembly", "graph-algorithms", "network-analysis"],
+  "keywords": [
+    "graph",
+    "wasm",
+    "webassembly",
+    "graph-algorithms",
+    "network-analysis"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/Totoro-jam/graphrs",
@@ -12,7 +18,9 @@
   },
   "author": "Totoro-jam <moqiuchen66@gmail.com>",
   "homepage": "https://github.com/Totoro-jam/graphrs#readme",
-  "bugs": { "url": "https://github.com/Totoro-jam/graphrs/issues" },
+  "bugs": {
+    "url": "https://github.com/Totoro-jam/graphrs/issues"
+  },
   "sideEffects": false,
   "exports": {
     ".": {
@@ -40,11 +48,15 @@
     "build": "tsup",
     "test": "vitest run --passWithNoTests",
     "test:ci": "vitest run --reporter=default --passWithNoTests",
+    "test:coverage": "vitest run --coverage",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "engines": {
     "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.1.9"
   }
 }
