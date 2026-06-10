@@ -12,7 +12,7 @@ import {
 import type { LayoutAlgorithm, UseGraphrsLayoutOptions, UseGraphrsLayoutResult } from './types.js';
 import { reactFlowToGraph, applyLayout } from './adapters.js';
 
-async function executeLayout(
+export async function executeLayout(
   nodes: Node[],
   edges: Edge[],
   algorithm: LayoutAlgorithm,
