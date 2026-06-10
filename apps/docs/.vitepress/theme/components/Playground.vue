@@ -87,7 +87,8 @@ export class Graph {
   }
 
   static fromEdges(edges, options) {
-    const g = new Graph(options);
+    const opts = typeof options === 'boolean' ? { directed: options } : options;
+    const g = new Graph(opts);
     for (const e of edges) g.addEdge(e[0], e[1]);
     return g;
   }

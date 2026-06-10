@@ -5,7 +5,32 @@ export default defineConfig({
   description:
     'Modular TypeScript graph library powered by Rust/WASM — 400+ algorithms at native speed',
   base: '/graphrs/',
-  head: [['link', { rel: 'icon', type: 'image/svg+xml', href: '/graphrs/favicon.svg' }]],
+  sitemap: { hostname: 'https://totoro-jam.github.io/graphrs' },
+  lastUpdated: true,
+  head: [
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/graphrs/favicon.svg' }],
+    ['meta', { property: 'og:type', content: 'website' }],
+    ['meta', { property: 'og:title', content: 'graphrs — Graph Algorithms at Native Speed' }],
+    [
+      'meta',
+      {
+        property: 'og:description',
+        content:
+          'The igraph for JavaScript — 400+ graph algorithms powered by Rust/WASM. Community detection, centrality, layout, flow, isomorphism. Tree-shakable. TypeScript.',
+      },
+    ],
+    ['meta', { property: 'og:url', content: 'https://totoro-jam.github.io/graphrs/' }],
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+    ['meta', { name: 'twitter:title', content: 'graphrs — Graph Algorithms at Native Speed' }],
+    [
+      'meta',
+      {
+        name: 'twitter:description',
+        content:
+          '400+ graph algorithms at native speed. Rust/WASM. TypeScript. Browser & Node.js.',
+      },
+    ],
+  ],
 
   locales: {
     root: {
@@ -51,11 +76,20 @@ export default defineConfig({
           ],
           '/examples/': [
             {
-              text: 'Interactive',
-              items: [{ text: 'Playground', link: '/examples/playground' }],
+              text: 'Interactive Playground',
+              items: [
+                { text: 'Force Layout Animation', link: '/examples/playground#force-directed-layout-live-convergence' },
+                { text: 'Community Detection', link: '/examples/playground#community-detection' },
+                { text: 'Betweenness Centrality', link: '/examples/playground#betweenness-centrality' },
+                { text: 'PageRank', link: '/examples/playground#pagerank' },
+                { text: 'Graph Generators', link: '/examples/playground#graph-generators' },
+                { text: 'Performance Benchmark', link: '/examples/playground#performance-benchmark' },
+                { text: 'G6 Layout Pipeline', link: '/examples/playground#g6-layout-community-pipeline' },
+                { text: 'React Flow Auto-Layout', link: '/examples/playground#react-flow-instant-hierarchical-layout' },
+              ],
             },
             {
-              text: 'Integration Examples',
+              text: 'Integration Guides',
               items: [
                 { text: 'AntV G6', link: '/examples/antv-g6' },
                 { text: 'React Flow', link: '/examples/react-flow' },
@@ -112,11 +146,20 @@ export default defineConfig({
           ],
           '/zh/examples/': [
             {
-              text: '交互式',
-              items: [{ text: '演练场', link: '/zh/examples/playground' }],
+              text: '交互式演练场',
+              items: [
+                { text: '力导向布局动画', link: '/zh/examples/playground#力导向布局-—-实时收敛' },
+                { text: '社区发现', link: '/zh/examples/playground#社区发现' },
+                { text: '介数中心性', link: '/zh/examples/playground#介数中心性' },
+                { text: 'PageRank', link: '/zh/examples/playground#pagerank' },
+                { text: '图生成器', link: '/zh/examples/playground#图生成器' },
+                { text: '性能基准测试', link: '/zh/examples/playground#性能基准测试' },
+                { text: 'G6 布局管线', link: '/zh/examples/playground#g6-—-布局-社区检测管线' },
+                { text: 'React Flow 分层布局', link: '/zh/examples/playground#react-flow-—-即时分层布局' },
+              ],
             },
             {
-              text: '集成示例',
+              text: '集成指南',
               items: [
                 { text: 'AntV G6', link: '/zh/examples/antv-g6' },
                 { text: 'React Flow', link: '/zh/examples/react-flow' },
