@@ -60,13 +60,16 @@ describe('Playground Sandpack configuration', () => {
     expect(mdContent).toContain("from './graphrs-core.js'");
   });
 
-  it.each(PAGES_WITH_PLAYGROUND)('no @graphrs/core in playground template literals: %s', (pagePath) => {
-    const content = readFileSync(pagePath, 'utf-8');
-    const templateLiterals = content.match(/= `import[\s\S]*?`;/g) || [];
-    for (const tpl of templateLiterals) {
-      expect(tpl).not.toContain("from '@graphrs/core'");
-    }
-  });
+  it.each(PAGES_WITH_PLAYGROUND)(
+    'no @graphrs/core in playground template literals: %s',
+    (pagePath) => {
+      const content = readFileSync(pagePath, 'utf-8');
+      const templateLiterals = content.match(/= `import[\s\S]*?`;/g) || [];
+      for (const tpl of templateLiterals) {
+        expect(tpl).not.toContain("from '@graphrs/core'");
+      }
+    },
+  );
 
   it('should use vanilla-ts template', () => {
     expect(vueContent).toContain('vanilla-ts');
